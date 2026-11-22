@@ -1,0 +1,11 @@
+{
+  "name": "portdoctor",
+  "version": "0.1.0",
+  "description": "Static scanner for QNX 8.0 porting blockers in C/C++/CMake/Makefile/autotools trees",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "portdoctor": "bin/portdoctor.mjs" },
+  "engines": { "node": ">=22.18" },
+  "scripts": { "test": "node --test tests/" },
+  "files": ["bin", "src", "rules", "README.md", "LICENSE"]
+}

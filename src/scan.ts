@@ -1,0 +1,343 @@
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join, sep, basename, resolve } from 'node:path';
+import { loadRules } from './rules.ts';
+import type { CompiledRule, Finding, Kind, ScanOptions, ScanResult, Severity, ContextLine } from './types.ts';
+
+export const VERSION = '0.1.0';
+export const DISCLAIMER =
+  'PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. ' +
+  "Rules marked 'guess' are unverified claims about QNX 8.0 and must be checked against the SDP.";
+
+const SKIP_DIRS = new Set(['.git', '.hg', '.svn', 'node_modules', 'CMakeFiles', '.idea', '.vscode']);
+const C_EXT = new Set(['.c', '.h', '.cc', '.cpp', '.cxx', '.hpp', '.hh', '.hxx', '.c++', '.h++', '.inl', '.ipp']);
+
+export function detectKind(name: string): Kind | null {
+  const b = name.toLowerCase();
+  if (b === 'cmakelists.txt' || b.endsWith('.cmake') || b.endsWith('.cmake.in')) return 'cmake';
+  if (b === 'configure.ac' || b === 'configure.in' || b === 'acinclude.m4') return 'autoconf';
+  if (/^(gnu)?makefile(\.[a-z0-9_-]+)?$/.test(b) && !b.endsWith('.in')) return 'make';
+  if (b.endsWith('.mk') || b === 'makefile.am') return 'make';
+  const dot = b.lastIndexOf('.');
+  if (dot >= 0 && C_EXT.has(b.slice(dot))) return 'c';
+  return null;
+}
+
+/** Blank out comments (and optionally string/char literal bodies) keeping offsets and newlines. */
+export function maskC(text: string): { noComment: string; code: string } {
+  const n = text.length;
+  const a = text.split('');
+  const c = text.split('');
+  const blank = (arr: string[], i: number) => {
+    if (arr[i] !== '\n') arr[i] = ' ';
+  };
+  let i = 0;
+  while (i < n) {
+    const ch = text[i];
+    const nx = text[i + 1];
+    if (ch === '/' && nx === '/') {
+      while (i < n && !(text[i] === '\n' && text[i - 1] !== '\\')) {
+        blank(a, i);
+        blank(c, i);
+        i++;
+      }
+    } else if (ch === '/' && nx === '*') {
+      const end = text.indexOf('*/', i + 2);
+      const stop = end < 0 ? n : end + 2;
+      for (; i < stop; i++) {
+        blank(a, i);
+        blank(c, i);
+      }
+    } else if (ch === '"' || ch === "'") {
+      let j = i + 1;
+      let closed = false;
+      while (j < n && text[j] !== '\n') {
+        if (text[j] === '\\') {
+          j += 2;
+          continue;
+        }
+        if (text[j] === ch) {
+          closed = true;
+          break;
+        }
+        j++;
+      }
+      if (!closed) {
+        i++;
+        continue;
+      }
+      for (let k = i + 1; k < j; k++) blank(c, k);
+      i = j + 1;
+    } else i++;
+  }
+  return { noComment: a.join(''), code: c.join('') };
+}
+
+export function maskScript(text: string, kind: Kind): string {
+  const lines = text.split('\n');
+  for (let li = 0; li < lines.length; li++) {
+    const l = lines[li];
+    let q = '';
+    let cut = -1;
+    for (let k = 0; k < l.length; k++) {
+      const ch = l[k];
+      if (q) {
+        if (ch === '\\') k++;
+        else if (ch === q) q = '';
+      } else if (ch === '"') q = ch;
+      else if (ch === '#' && l[k - 1] !== '\\' && l[k - 1] !== '$') {
+        cut = k;
+        break;
+      } else if (kind === 'autoconf' && ch === 'd' && l.startsWith('dnl', k) && (k === 0 || /[\s;]/.test(l[k - 1]))) {
+        cut = k;
+        break;
+      }
+    }
+    if (cut >= 0) lines[li] = l.slice(0, cut) + ' '.repeat(l.length - cut);
+  }
+  return lines.join('\n');
+}
+
+type Cls = 'linux' | 'notlinux' | 'qnx' | 'notqnx' | 'other' | 'plain';
+interface Frame {
+  cls: Cls;
+  text: string;
+}
+
+function classify(directive: string, expr: string): Cls {
+  const lin = /\b(?:__linux__|__linux|__gnu_linux__)\b/.test(expr);
+  const qnx = /\b(?:__QNX__|__QNXNTO__)\b/.test(expr);
+  if (lin && qnx) return 'other';
+  if (!lin && !qnx) return 'plain';
+  const neg = directive === 'ifndef' || /!\s*(?:defined\s*\(?\s*)?(?:__linux__|__linux|__gnu_linux__|__QNX__|__QNXNTO__)/.test(expr);
+  if (/\|\||\bor\b/.test(expr)) return 'other';
+  if (lin) return neg ? 'notlinux' : 'linux';
+  return neg ? 'notqnx' : 'qnx';
+}
+
+const FLIP: Record<Cls, Cls> = { linux: 'notlinux', notlinux: 'linux', qnx: 'notqnx', notqnx: 'qnx', other: 'other', plain: 'plain' };
+
+/** For each line (0-based) the stack of conditional frames in effect when the line is reached. */
+export function conditionalFrames(noComment: string): Frame[][] {
+  const lines = noComment.split('\n');
+  const stack: Frame[] = [];
+  const out: Frame[][] = [];
+  for (const l of lines) {
+    out.push(stack.slice());
+    const m = /^[ \t]*#[ \t]*(ifdef|ifndef|if|elif|else|endif)\b(.*)$/.exec(l);
+    if (!m) continue;
+    const [, d, rest] = m;
+    const text = `#${d}${rest.trim() ? ' ' + rest.trim() : ''}`;
+    if (d === 'if' || d === 'ifdef' || d === 'ifndef') stack.push({ cls: classify(d, rest), text });
+    else if (d === 'elif') {
+      if (stack.length) stack[stack.length - 1] = { cls: classify('if', rest), text };
+    } else if (d === 'else') {
+      if (stack.length) {
+        const top = stack[stack.length - 1];
+        stack[stack.length - 1] = { cls: FLIP[top.cls], text: top.text + ' (#else)' };
+      }
+    } else if (d === 'endif') stack.pop();
+  }
+  return out;
+}
+
+function walk(root: string, rel: string, out: string[], skipped: { n: number }): void {
+  let ents;
+  try {
+    ents = readdirSync(join(root, rel), { withFileTypes: true });
+  } catch {
+    skipped.n++;
+    return;
+  }
+  ents.sort((x, y) => (x.name < y.name ? -1 : x.name > y.name ? 1 : 0));
+  for (const e of ents) {
+    const r = rel ? rel + '/' + e.name : e.name;
+    if (e.isSymbolicLink()) continue;
+    if (e.isDirectory()) {
+      if (!SKIP_DIRS.has(e.name)) walk(root, r, out, skipped);
+    } else if (e.isFile() && detectKind(e.name)) out.push(r);
+  }
+}
+
+export function scanText(
+  relFile: string,
+  kind: Kind,
+  text: string,
+  rules: CompiledRule[],
+  contextLines = 3,
+  counters = { suppressed: 0 },
+  seenRuleFile = new Set<string>(),
+): Finding[] {
+  const raw = text.replace(/\r\n?/g, '\n');
+  const rawLines = raw.split('\n');
+  let noComment: string;
+  let code: string;
+  let frames: Frame[][] | null = null;
+  if (kind === 'c') {
+    const m = maskC(raw);
+    noComment = m.noComment;
+    code = m.code;
+    frames = conditionalFrames(noComment);
+  } else {
+    noComment = code = maskScript(raw, kind);
+  }
+  const lineStarts: number[] = [0];
+  for (let i = 0; i < raw.length; i++) if (raw[i] === '\n') lineStarts.push(i + 1);
+  const lineOf = (off: number): number => {
+    let lo = 0;
+    let hi = lineStarts.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (lineStarts[mid] <= off) lo = mid;
+      else hi = mid - 1;
+    }
+    return lo;
+  };
+  const findings: Finding[] = [];
+  for (const r of rules) {
+    if (!r.re || !r.appliesTo.includes(kind)) continue;
+    const hay = r.scope === 'code' ? code : noComment;
+    const re = new RegExp(r.re.source, r.re.flags);
+    const seenLines = new Set<number>();
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(hay))) {
+      if (m[0] === '') {
+        re.lastIndex++;
+        continue;
+      }
+      if (r.scope === 'string' && code[m.index] === noComment[m.index]) continue;
+      const li = lineOf(m.index);
+      if (seenLines.has(li)) continue;
+      seenLines.add(li);
+      let guard: Finding['guard'] = 'none';
+      const guards: string[] = [];
+      if (frames) {
+        const fs = frames[li] ?? [];
+        if (fs.some((f) => f.cls === 'qnx' || f.cls === 'notqnx')) {
+          counters.suppressed++;
+          continue;
+        }
+        for (const f of fs) guards.push(f.text);
+        if (fs.some((f) => f.cls === 'linux')) guard = 'linux-only';
+        else if (fs.length) guard = 'other';
+      }
+      const key = r.id + '\0' + relFile;
+      const repeat = seenRuleFile.has(key);
+      seenRuleFile.add(key);
+      let effort = r.effort * (repeat ? 0.3 : 1) * (guard === 'linux-only' ? 0.5 : 1);
+      if (r.effort > 0) effort = Math.max(1, Math.round(effort));
+      const ctx: ContextLine[] = [];
+      for (let k = Math.max(0, li - contextLines); k <= Math.min(rawLines.length - 1, li + contextLines); k++) {
+        ctx.push({ n: k + 1, text: rawLines[k].slice(0, 400) });
+      }
+      findings.push({
+        ruleId: r.id,
+        title: r.title,
+        category: r.category,
+        severity: r.severity,
+        confidence: r.confidence,
+        file: relFile,
+        line: li + 1,
+        column: m.index - lineStarts[li] + 1,
+        match: m[0].trim().slice(0, 120),
+        context: ctx,
+        message: r.message,
+        remedy: r.remedy,
+        verify: r.verify,
+        effort,
+        guard,
+        guards,
+      });
+    }
+  }
+  return findings;
+}
+
+const SEV_ORDER: Record<Severity, number> = { blocker: 0, major: 1, minor: 2, info: 3 };
+
+export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
+  const rules = loadRules(opts.rulesDir, opts.ruleIds);
+  const maxBytes = opts.maxFileBytes ?? 2_000_000;
+  const files: string[] = [];
+  const skipped = { n: 0 };
+  walk(root, '', files, skipped);
+  const findings: Finding[] = [];
+  const counters = { suppressed: 0 };
+  const seenRuleFile = new Set<string>();
+  const byKind: Record<string, string[]> = { c: [], cmake: [], make: [], autoconf: [] };
+  const projRules = rules.filter((r) => r.project);
+  const mentions = new Map<string, boolean>();
+  const absentRes = new Map<string, RegExp>();
+  for (const r of projRules) absentRes.set(r.id, new RegExp(r.project!.absent));
+  let scanned = 0;
+  const kindCount: Record<string, number> = {};
+  for (const rel of files) {
+    const abs = join(root, rel.split('/').join(sep));
+    const kind = detectKind(basename(rel))!;
+    let text: string;
+    try {
+      if (statSync(abs).size > maxBytes) {
+        skipped.n++;
+        continue;
+      }
+      const buf = readFileSync(abs);
+      if (buf.includes(0)) {
+        skipped.n++;
+        continue;
+      }
+      text = buf.toString('utf8');
+    } catch {
+      skipped.n++;
+      continue;
+    }
+    scanned++;
+    kindCount[kind] = (kindCount[kind] ?? 0) + 1;
+    byKind[kind].push(rel);
+    for (const r of projRules) if (!mentions.get(r.id) && absentRes.get(r.id)!.test(text)) mentions.set(r.id, true);
+    findings.push(...scanText(rel, kind, text, rules, opts.contextLines ?? 3, counters, seenRuleFile));
+  }
+  for (const r of projRules) {
+    const list = byKind[r.project!.requireKind];
+    const target = byKind[r.project!.reportOnKind];
+    if (!list.length || !target.length || mentions.get(r.id)) continue;
+    const first = target.slice().sort((x, y) => x.split('/').length - y.split('/').length || (x < y ? -1 : 1))[0];
+    findings.push({
+      ruleId: r.id, title: r.title, category: r.category, severity: r.severity, confidence: r.confidence,
+      file: first, line: 1, column: 1, match: '(project-level)', context: [], message: r.message,
+      remedy: r.remedy, verify: r.verify, effort: r.effort, guard: 'none', guards: [],
+    });
+  }
+  findings.sort(
+    (a, b) =>
+      SEV_ORDER[a.severity] - SEV_ORDER[b.severity] ||
+      (a.file < b.file ? -1 : a.file > b.file ? 1 : 0) ||
+      a.line - b.line ||
+      (a.ruleId < b.ruleId ? -1 : 1),
+  );
+  const bySeverity: Record<Severity, number> = { blocker: 0, major: 0, minor: 0, info: 0 };
+  let effort = 0;
+  for (const f of findings) {
+    bySeverity[f.severity]++;
+    effort += f.effort;
+  }
+  const used = new Set(findings.map((f) => f.ruleId));
+  return {
+    tool: 'portdoctor',
+    version: VERSION,
+    root: basename(resolve(root)),
+    disclaimer: DISCLAIMER,
+    stats: {
+      filesScanned: scanned,
+      filesByKind: kindCount,
+      filesSkipped: skipped.n,
+      findings: findings.length,
+      suppressedQnxBranch: counters.suppressed,
+      rules: rules.length,
+      bySeverity,
+      effortMinutes: effort,
+    },
+    findings,
+    rules: rules
+      .filter((r) => used.has(r.id))
+      .map((r) => ({ id: r.id, title: r.title, category: r.category, severity: r.severity, confidence: r.confidence, remedy: r.remedy, verify: r.verify, refs: r.refs, message: r.message })),
+  };
+}

@@ -3,7 +3,7 @@
 # Builds a QNX 8.0 x86_64 QEMU image (mkqnximage, TCG: no KVM needed) that contains the patched demo server and a client, and starts them at boot.
 # If qemu-system-x86_64 is on PATH it boots the image headless for 120 s and keeps the UART log; otherwise it records the exact error.
 set -u
-OUT=out/qnx-run; rm -rf $OUT; mkdir -p $OUT; ABS=$(cd $OUT && pwd)
+BIN=out/qnx-bin; OUT=out/qnx-run; rm -rf $BIN $OUT; mkdir -p $BIN $OUT; ABS=$(cd $BIN && pwd)
 qcc -Vgcc_ntox86_64 -o $ABS/pd-server out/after-epoll/server.c -lsocket && qcc -Vgcc_ntox86_64 -o $ABS/pd-client examples/qnx-run/client.c -lsocket || { echo "build failed"; exit 1; }
 file $ABS/pd-server | sed 's/, BuildID.*//'
 cd $OUT

@@ -1,0 +1,16 @@
+Build-file checks run in the SDP sandbox with real qcc (PD4 item 2). Format: rule, file, loop status, check status, qcc/make error count before -> after.
+
+examples/demo-epoll (recorded patches), --check qcc --sdp-manifest:
+QNX-API-EPOLL server.c applied check=pass errors 1->0
+QNX-BLD-LSOCKET Makefile applied check=pass errors 1->0 | make -n (qcc toolchain) ok; link probe ok for 2 libraries: -lsocket -lm
+QNX-HDR-SYS-LINUX server.c already-resolved
+
+examples/demo (stub provider):
+QNX-BLD-LSOCKET Makefile applied check=no-worse errors 1->1 | -lrt: cannot find -lrt: No such file or directory
+QNX-BLD-LRT Makefile applied check=pass errors 1->0 | make -n (qcc toolchain) ok; link probe ok for 1 library: -lsocket
+QNX-PATH-DEV-SHM main.c applied check=pass errors 0->0
+
+CMake (project with target_link_libraries(t rt)), runBuildCheck('cmake', ...) for both targets:
+gcc_ntox86_64    fail  1 error: -lrt: cannot find -lrt: No such file or directory
+gcc_ntoaarch64le fail  1 error: -lrt: cannot find -lrt: No such file or directory
+(configure itself succeeded with the generated qnx-toolchain.cmake; the failure is the link probe on the -lrt found in link.txt)

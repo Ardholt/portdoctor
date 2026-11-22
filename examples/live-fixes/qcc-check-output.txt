@@ -18,7 +18,7 @@ configure iperf: exit 0
     src/compat.h:59:27: error: expected ')' before 'inp'
     src/compat.h:60:27: error: expected ')' before 'inp'
     src/compat.h:61:27: error: expected ')' before 'inp'
--- loop result: applied | check: no-worse | qcc errors before/after: 4/4 | findings 41 -> 41
+-- loop result: applied | check: no-worse | qcc errors before/after: 4/4 | findings 45 -> 45
    model confidence: medium needsHuman: false
    qcc: In file included from $QNX_SDP/target/qnx/usr/include/netinet/in.h:46,
    qcc:                  from $WORK/out/live/after-dropbear/src/includes.h:77,
@@ -34,7 +34,7 @@ configure iperf: exit 0
 === iperf: QNX-API-SENDFILE in src/net.c
 -- baseline (original code), qcc -Vgcc_ntox86_64 -c src/net.c:
     src/portable_endian.h:155:17: fatal error: endian.h: No such file or directory
--- loop result: applied | check: no-worse | qcc errors before/after: 1/1 | findings 34 -> 31
+-- loop result: applied | check: no-worse | qcc errors before/after: 1/1 | findings 42 -> 39
    model confidence: medium needsHuman: true
    qcc: In file included from $WORK/out/live/after-iperf/src/iperf.h:57,
    qcc:                  from $WORK/out/live/after-iperf/src/net.c:70:

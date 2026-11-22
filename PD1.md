@@ -1,7 +1,7 @@
 # PD1: PortDoctor build report
 
-Slice PD1, QNX Global Hackathon (Developer Tooling & Host Tools). Repo: `<repo>` on the build box.
-Date: 2026-11-22. Built on a VPS seat; repo work over `ssh the build box` (node v26.13.0, git 2.43, headless Chrome).
+Slice PD1, QNX Global Hackathon (Developer Tooling & Host Tools). Repo: this repository.
+Date: 2026-11-22. Built on a Linux host (node v26.13.0, git 2.43, headless Chrome).
 
 ## What was built (one commit per step)
 
@@ -23,7 +23,7 @@ Date: 2026-11-22. Built on a VPS seat; repo work over `ssh the build box` (node 
 
 ## What passed (measured)
 
-- `node --test tests/` on the build box, Node 26.13.0: 133 tests, 133 pass, 0 fail (run after the last rule change).
+- `node --test tests/` , Node 26.13.0: 133 tests, 133 pass, 0 fail (run after the last rule change).
 - Seven corpus scans complete: 516 findings over 1,464 files (libuv 352, dropbear 45, iperf 38, libev 55, cJSON 21, Lua 4, kilo 1).
 - Hand review of 30 sampled findings: 16 true positives, 4 right-but-file-never-built-on-QNX, 3 other-OS/vendored, 3 info noise,
   4 rule bugs (fixed, each with a regression test). Strict precision 16/30 (53%) on that sample, 20/30 if file-level platform

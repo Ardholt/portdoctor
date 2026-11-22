@@ -1,6 +1,6 @@
 # PD2: PortDoctor build report
 
-Slice PD2, QNX Global Hackathon. Repo `<repo>` on the build box (Node v26.13.0, git 2.43, headless Chrome, gcc).
+Slice PD2, QNX Global Hackathon. Repo `<repo>`  (Node v26.13.0, git 2.43, headless Chrome, gcc).
 Built on top of PD1 and the fresh judge report J1 (T7 D8 I6 AI5, trust 5, eight ranked changes). One commit per item.
 Version bumped to 0.2.0. No QNX SDP exists yet: every QNX claim below is `known` (recalled) or `guess`.
 
@@ -34,7 +34,7 @@ Version bumped to 0.2.0. No QNX SDP exists yet: every QNX claim below is `known`
 
 ## What passed (measured)
 
-- `node --test tests/` on the build box: 163 tests, 163 pass, 0 fail (includes 4 headless-Chrome tests with real mouse events, the fix loop end to end, SARIF, init-toolchain, build awareness).
+- `node --test tests/` : 163 tests, 163 pass, 0 fail (includes 4 headless-Chrome tests with real mouse events, the fix loop end to end, SARIF, init-toolchain, build awareness).
 - Seven corpus scans re-run after each change: libuv 344, dropbear 43, iperf 35, libev 51, cJSON 21, Lua 4, kilo 1 findings (PD1: 516 total; now 499, mostly
   from the identifier and rule-bug fixes). Whole corpus scans in about 10 s.
 - The fix demo: 4 findings -> 0 on the patched copy; original untouched; a deliberately broken patch is caught by the check and reverted; a patch with a `..` path is refused.

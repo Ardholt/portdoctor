@@ -8,12 +8,13 @@ export interface SdpManifest {
   sdp: { product: string; build: string | null; gcc: string | null; qccTargets: string[] };
   names: Record<string, { kind: string; verdict: NameVerdict; x86_64?: ArchName; aarch64le?: ArchName }>;
   headers: Record<string, { verdict: 'present' | 'absent' | 'mixed' }>;
+  flags?: Record<string, { verdict: 'present' | 'absent' | 'mixed'; x86_64?: { firstError?: string }; aarch64le?: { firstError?: string } }>;
   libs: Record<string, { verdict: 'present' | 'absent' | 'mixed'; x86_64?: { fileInSdp: boolean; linksWithQcc: boolean }; aarch64le?: { fileInSdp: boolean; linksWithQcc: boolean } }>;
 }
 
 export interface SdpEvidence {
   verdict: 'present' | 'absent' | 'partial';
-  items: Array<{ what: string; kind: 'name' | 'header' | 'lib'; result: string; evidence: string; needsLib?: string }>;
+  items: Array<{ what: string; kind: 'name' | 'header' | 'lib' | 'flag'; result: string; evidence: string; needsLib?: string }>;
   build: string;
 }
 
@@ -54,6 +55,18 @@ export function classify(f: Pick<Finding, 'ruleId' | 'match'>, m: SdpManifest): 
     if (!h) { uncovered.add('header ' + hdr[1]); return null; }
     items.push({ what: hdr[1], kind: 'header', result: h.verdict, evidence: `<${hdr[1]}> ${h.verdict === 'present' ? 'compiles' : 'not found / does not compile'} with qcc on x86_64 and aarch64le` });
     return { verdict: h.verdict === 'present' ? 'present' : h.verdict === 'absent' ? 'absent' : 'partial', items, build };
+  }
+  if (/^QNX-BLD-(PIE|FPIC|SANITIZE|LDFLAGS|MARCH-NATIVE)$/.test(f.ruleId) && m.flags) {
+    for (const tok0 of f.match.match(/-(?:f?PIC|fpic|fPIE|pie|no-pie|static-pie|fsanitize=[\w]*|Wl,[^\s"']*|m(?:arch|tune|cpu)=native)/g) ?? []) {
+      const tok = tok0.replace(/^["']/, '');
+      const keys = Object.keys(m.flags).filter((k) => k === tok || k.startsWith(tok));
+      if (!keys.length) { uncovered.add('flag ' + tok); continue; }
+      const ok = keys.filter((k) => m.flags![k].verdict === 'present'), bad = keys.filter((k) => m.flags![k].verdict !== 'present');
+      items.push({ what: tok, kind: 'flag', result: bad.length ? (ok.length ? 'mixed' : 'absent') : 'present', evidence: `${tok}: qcc ${bad.length ? 'rejects ' + bad.join(' ') : ''}${bad.length && ok.length ? ', ' : ''}${ok.length ? 'links with ' + ok.join(' ') : ''}` });
+      if (bad.length && ok.length) { present++; absent++; } else if (bad.length) absent++; else present++;
+    }
+    if (!items.length) return null;
+    return { verdict: present && absent ? 'partial' : present ? 'present' : 'absent', items, build };
   }
   const libs = [...f.match.matchAll(/-l([\w+]+)/g)].map((x) => x[1]);
   if (!libs.length && LIB_FOR_RULE[f.ruleId]) libs.push(...LIB_FOR_RULE[f.ruleId]);

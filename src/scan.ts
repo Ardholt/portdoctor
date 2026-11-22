@@ -448,7 +448,7 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
       const rule = byId.get(f.ruleId);
       const ev = f.match === '(project-level)' ? null : sdpClassify(f, m);
       if (!ev || !rule) {
-        if (f.match !== '(project-level)' && /^QNX-(API|HDR|BLD-L|ADV-FUSE)/.test(f.ruleId)) st.notCovered++;
+        if (f.match !== '(project-level)' && /^QNX-(API|HDR|BLD-L(RT|PTHREAD|DL|NSL)|BLD-(PIE|FPIC|SANITIZE|MARCH-NATIVE)|ADV-FUSE)/.test(f.ruleId)) st.notCovered++;
         kept.push(f);
         continue;
       }

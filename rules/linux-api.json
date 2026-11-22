@@ -1,245 +1,1131 @@
 [
-{"id":"QNX-HDR-LINUX-DIR","title":"Includes a Linux kernel header","category":"linux-api","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"include","effort":60,
- "pattern":"^[ \\t]*#[ \\t]*include[ \\t]*[<\"](?:linux|asm|asm-generic)/[^>\"\\n]+[>\"]",
- "message":"<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.",
- "remedy":"Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
- "verify":"verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
- "examples":{"positive":["#include <linux/types.h>\n","#include \"asm/unistd.h\"\n"],"negative":["#include <sys/types.h>\n","// #include <linux/types.h>\n"]}},
-{"id":"QNX-HDR-SYS-LINUX","title":"Includes a Linux-specific <sys/...> header","category":"linux-api","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"include","effort":30,
- "pattern":"^[ \\t]*#[ \\t]*include[ \\t]*[<\"]sys/(?:epoll|inotify|eventfd|signalfd|timerfd|prctl|sendfile|auxv|sysinfo|fanotify|memfd|capability|personality|klog|reboot)\\.h[>\"]",
- "message":"This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP.",
- "remedy":"Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.",
- "verify":"verify against SDP: grep $QNX_TARGET/usr/include for the header.",
- "examples":{"positive":["#include <sys/epoll.h>\n","#include <sys/timerfd.h>\n"],"negative":["#include <sys/socket.h>\n","#include <sys/epollfake.h>\n"]}},
-{"id":"QNX-HDR-LINUX-LIBS","title":"Includes a Linux-only system library header","category":"linux-api","severity":"blocker","confidence":"guess","appliesTo":["c"],"scope":"include","effort":240,
- "pattern":"^[ \\t]*#[ \\t]*include[ \\t]*<(?:systemd/[^>\\n]+|libudev\\.h|dbus/[^>\\n]+|selinux/[^>\\n]+|libcap\\.h|libnl3?/[^>\\n]+)>",
- "message":"systemd, udev, D-Bus, SELinux, libcap and libnl are Linux system services/libraries; they are not part of a stock QNX image.",
- "remedy":"Isolate behind an interface and provide a QNX implementation (service start-up via the QNX service launcher, device discovery via resource managers), or disable the feature on QNX.",
- "verify":"verify against SDP: a port of the library may exist (qnx-ports); check before rewriting.",
- "examples":{"positive":["#include <systemd/sd-daemon.h>\n","#include <libudev.h>\n"],"negative":["#include <stdio.h>\n","#include <dbusx.h>\n"]}},
-{"id":"QNX-API-EPOLL","title":"epoll event loop","category":"linux-api","severity":"blocker","confidence":"guess","appliesTo":["c"],"scope":"code","effort":120,
- "pattern":"\\bepoll_(?:create1?|ctl|p?wait)\\s*\\(|\\bstruct\\s+epoll_event\\b|\\bEPOLL(?:IN|OUT|ET|ERR|HUP|RDHUP|ONESHOT|_CTL_ADD|_CTL_MOD|_CTL_DEL|_CLOEXEC)\\b",
- "message":"epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
- "remedy":"First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
- "verify":"verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
- "refs":["QNX docs: ionotify()","QNX docs: SIGEV_PULSE_INIT()"],
- "examples":{"positive":["int ep = epoll_create1(0);\n","struct epoll_event ev;\n","ev.events = EPOLLIN | EPOLLET;\n"],"negative":["// epoll_create1(0);\n","puts(\"epoll_wait\");\n","int my_epoll_waiter;\n","x->epoll_wait(1);\n"]}},
-{"id":"QNX-API-INOTIFY","title":"inotify file watching","category":"linux-api","severity":"blocker","confidence":"guess","appliesTo":["c"],"scope":"code","effort":180,
- "pattern":"\\binotify_(?:init1?|add_watch|rm_watch)\\s*\\(|\\bstruct\\s+inotify_event\\b|\\bIN_(?:CREATE|MODIFY|DELETE|CLOSE_WRITE|MOVED_FROM|MOVED_TO|NONBLOCK)\\b",
- "message":"inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
- "remedy":"Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
- "verify":"verify against SDP for any filesystem-change notification interface before choosing.",
- "examples":{"positive":["int fd = inotify_init1(IN_NONBLOCK);\n","wd = inotify_add_watch(fd, p, IN_MODIFY);\n","struct inotify_event *e;\n"],"negative":["// inotify_init();\n","int in_modify_count;\n","w.inotify_add_watch(1);\n"]}},
-{"id":"QNX-API-EVENTFD","title":"eventfd","category":"linux-api","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"code","effort":45,
- "pattern":"\\beventfd(?:_read|_write)?\\s*\\(|\\bEFD_(?:NONBLOCK|CLOEXEC|SEMAPHORE)\\b",
- "message":"eventfd is a Linux file-descriptor wake-up primitive.",
- "remedy":"Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.",
- "verify":"verify against SDP whether eventfd is provided in 8.0.",
- "refs":["QNX docs: MsgSendPulse()"],
- "examples":{"positive":["int efd = eventfd(0, EFD_NONBLOCK);\n","eventfd_write(efd, 1);\n"],"negative":["// eventfd(0,0)\n","int myeventfd_count;\n","s->eventfd(1);\n","#  define EFD_CLOEXEC O_CLOEXEC\n"]}},
-{"id":"QNX-API-SIGNALFD","title":"signalfd","category":"linux-api","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"code","effort":90,
- "pattern":"\\bsignalfd\\s*\\(|\\bstruct\\s+signalfd_siginfo\\b",
- "message":"signalfd turns signals into a readable fd; Linux-only.",
- "remedy":"Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse.",
- "refs":["POSIX: sigwaitinfo()"],
- "examples":{"positive":["fd = signalfd(-1, &mask, SFD_CLOEXEC);\n","struct signalfd_siginfo si;\n"],"negative":["// signalfd(-1,&m,0)\n","sigwaitinfo(&m, &si);\n","q.signalfd(1);\n"]}},
-{"id":"QNX-API-TIMERFD","title":"timerfd","category":"linux-api","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"code","effort":90,
- "pattern":"\\btimerfd_(?:create|settime|gettime)\\s*\\(|\\bTFD_(?:NONBLOCK|CLOEXEC|TIMER_ABSTIME)\\b",
- "message":"timerfd is Linux-only.",
- "remedy":"Use timer_create() with a SIGEV_PULSE sigevent so the timer fires into your channel, or a thread blocked in clock_nanosleep().",
- "refs":["QNX docs: timer_create()","QNX docs: SIGEV_PULSE_INIT()"],
- "examples":{"positive":["int t = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);\n","timerfd_settime(t, 0, &its, NULL);\n"],"negative":["// timerfd_create(1,0)\n","timer_create(CLOCK_MONOTONIC, &sev, &id);\n","q->timerfd_create(1);\n"]}},
-{"id":"QNX-API-SENDFILE","title":"sendfile/splice zero-copy calls","category":"linux-api","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"code","effort":60,
- "pattern":"\\b(?:sendfile(?:64)?|splice|vmsplice|tee|copy_file_range)\\s*\\(",
- "evidence":{"splice":"\\bSPLICE_F_\\w+|\\b_GNU_SOURCE\\b","vmsplice":"\\bSPLICE_F_\\w+|\\b_GNU_SOURCE\\b","tee":"\\bSPLICE_F_\\w+|\\b_GNU_SOURCE\\b","copy_file_range":"\\bSPLICE_F_\\w+|\\b_GNU_SOURCE\\b"},
- "message":"Linux zero-copy file transfer calls. sendfile() also exists on BSDs with a different signature, so a same-named call may compile but misbehave.",
- "remedy":"Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
- "verify":"verify against SDP: some of these may exist with other semantics.",
- "examples":{"positive":["n = sendfile(out, in, &off, len);\n","splice(a, 0, b, 0, 4096, SPLICE_F_MOVE);\n","#define _GNU_SOURCE\nn = tee(a, b, 4096, 0);\n"],"negative":["// sendfile(o,i,0,1)\n","n = my_sendfile(o,i);\n","x = obj.tee(3);\n","y = p->tee(3);\n","int tee(int n) { return n; }\n","#define _GNU_SOURCE\nstatic int tee(int n) { return n; }\nint z = tee(3);\n","int w = tee(3);\n","n = s->sendfile(1);\n","long sendfile(int a);\n"]}},
-{"id":"QNX-API-ACCEPT4","title":"accept4","category":"linux-api","severity":"minor","confidence":"guess","appliesTo":["c"],"scope":"code","effort":15,
- "pattern":"\\baccept4\\s*\\(",
- "message":"accept4() is not in POSIX.1-2017 (known). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present and FreeBSD has accept4(), so it may exist on 8.0 (guess). Treat this as 'check the SDP header', not as a confirmed gap.",
- "remedy":"Check <sys/socket.h> in the SDP first. If it is absent: accept(), then fcntl(fd, F_SETFD, FD_CLOEXEC) and fcntl(fd, F_SETFL, O_NONBLOCK).",
- "verify":"verify against SDP: grep accept4 $QNX_TARGET/usr/include/sys/socket.h.",
- "examples":{"positive":["c = accept4(s, 0, 0, SOCK_NONBLOCK);\n"],"negative":["c = accept(s, 0, 0);\n","s->accept4(1);\n"]}},
-{"id":"QNX-API-SOCK-FLAGS","title":"SOCK_NONBLOCK / SOCK_CLOEXEC type flags","category":"linux-api","severity":"minor","confidence":"guess","appliesTo":["c"],"scope":"code","effort":10,
- "pattern":"\\bSOCK_(?:NONBLOCK|CLOEXEC)\\b",
- "message":"Or-ing SOCK_NONBLOCK / SOCK_CLOEXEC into the socket type is not in POSIX.1-2017 (known). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present; FreeBSD has both (recalled). May be a non-issue on 8.0 (guess).",
- "remedy":"Check <sys/socket.h> in the SDP first. If absent: create the socket with the plain type and set O_NONBLOCK / FD_CLOEXEC with fcntl().",
- "verify":"verify against SDP: grep SOCK_NONBLOCK and SOCK_CLOEXEC in $QNX_TARGET/usr/include/sys/socket.h.",
- "examples":{"positive":["s = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);\n"],"negative":["s = socket(AF_INET, SOCK_STREAM, 0);\n"]}},
-{"id":"QNX-API-PIPE2","title":"pipe2 / dup3","category":"linux-api","severity":"minor","confidence":"guess","appliesTo":["c"],"scope":"code","effort":10,
- "pattern":"\\b(?:pipe2|dup3)\\s*\\(",
- "message":"pipe2/dup3 are not in POSIX.1-2017 (known). FreeBSD has both (recalled) and QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so they may exist on 8.0 (guess).",
- "remedy":"Check <unistd.h> in the SDP first. If absent: pipe()/dup2() then fcntl() for the flags (mind the small race window if other threads fork).",
- "verify":"verify against SDP: grep pipe2 and dup3 in $QNX_TARGET/usr/include/unistd.h.",
- "examples":{"positive":["pipe2(fds, O_CLOEXEC);\n","dup3(a, b, 0);\n"],"negative":["pipe(fds);\n","s.pipe2(1);\n"]}},
-{"id":"QNX-API-MSG-NOSIGNAL","title":"MSG_NOSIGNAL","category":"linux-api","severity":"minor","confidence":"guess","appliesTo":["c"],"scope":"code","effort":10,
- "pattern":"\\bMSG_NOSIGNAL\\b",
- "message":"MSG_NOSIGNAL (suppress SIGPIPE on send) is not in POSIX.1-2017 (known). FreeBSD defines it (recalled) and QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present; it may or may not be defined on 8.0 (guess).",
- "remedy":"Compile-guard it: #ifndef MSG_NOSIGNAL / #define MSG_NOSIGNAL 0 / #endif, and signal(SIGPIPE, SIG_IGN) once at start-up (or pthread_sigmask in the sending thread) so a missing flag is still safe. SO_NOSIGPIPE is the BSD per-socket alternative (guess).",
- "verify":"verify against SDP: grep MSG_NOSIGNAL and SO_NOSIGPIPE in $QNX_TARGET/usr/include/sys/socket.h.",
- "examples":{"positive":["send(s, b, n, MSG_NOSIGNAL);\n"],"negative":["send(s, b, n, 0);\n"]}},
-{"id":"QNX-API-PRCTL","title":"prctl","category":"linux-api","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"code","effort":30,
- "pattern":"\\bprctl\\s*\\(|\\bPR_(?:SET|GET)_[A-Z_]+\\b",
- "message":"prctl is a Linux process-control multiplexer.",
- "remedy":"Map each option individually: PR_SET_NAME -> pthread_setname_np(); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE/NO_NEW_PRIVS -> drop (no QNX analogue assumed).",
- "verify":"verify against SDP: confirm pthread_setname_np signature.",
- "examples":{"positive":["prctl(PR_SET_NAME, \"worker\");\n"],"negative":["// prctl(PR_SET_NAME,x)\n","p->prctl(1);\n"]}},
-{"id":"QNX-API-AFFINITY","title":"CPU affinity (sched_setaffinity & friends)","category":"linux-api","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"code","effort":45,
- "pattern":"\\b(?:sched_(?:set|get)affinity|pthread_(?:set|get)affinity_np|pthread_attr_setaffinity_np)\\b|\\bcpu_set_t\\b|\\bCPU_(?:SET|ZERO|ISSET|CLR)\\s*\\(",
- "message":"Linux affinity API.",
- "remedy":"Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
- "verify":"verify against SDP: ThreadCtl runmask argument layout.",
- "refs":["QNX docs: ThreadCtl()"],
- "examples":{"positive":["sched_setaffinity(0, sizeof set, &set);\n","cpu_set_t set;\n","CPU_SET(2, &set);\n"],"negative":["// sched_setaffinity\n"]}},
-{"id":"QNX-API-MEMFD","title":"memfd_create","category":"linux-api","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"code","effort":60,
- "pattern":"\\bmemfd_create\\s*\\(|\\bMFD_(?:CLOEXEC|ALLOW_SEALING)\\b",
- "message":"Anonymous in-memory file descriptors are Linux-only.",
- "remedy":"Closest analogue: shm_open(SHM_ANON, O_RDWR, 0600) then ftruncate()+mmap(): an unnamed shared-memory object with no name race (QNX supports SHM_ANON per its docs, recalled; guess for 8.0 flags). Fallback: shm_open() with a unique name followed by an immediate shm_unlink(), which leaves a short window where the name is visible (racy).",
- "verify":"verify against SDP: SHM_ANON in sys/mman.h and its behaviour on 8.0.",
- "examples":{"positive":["fd = memfd_create(\"x\", MFD_CLOEXEC);\n"],"negative":["fd = shm_open(\"/x\", O_RDWR|O_CREAT, 0600);\n","p.memfd_create(1);\n"]}},
-{"id":"QNX-API-GETRANDOM","title":"getrandom","category":"linux-api","severity":"minor","confidence":"guess","appliesTo":["c"],"scope":"code","effort":15,
- "pattern":"\\bgetrandom\\s*\\(|\\bGRND_(?:NONBLOCK|RANDOM)\\b",
- "message":"getrandom is a Linux syscall wrapper. getrandom()/getentropy() may exist in QNX 8.0 (guess).",
- "remedy":"Check <sys/random.h>/<unistd.h> in the SDP first. Fallback: read from /dev/urandom (or /dev/random), which QNX provides (recalled), with a small helper that handles short reads.",
- "verify":"verify against SDP: getrandom, getentropy, arc4random.",
- "examples":{"positive":["getrandom(buf, 16, 0);\n"],"negative":["// getrandom(b,1,0)\n","rng->getrandom(1);\n"]}},
-{"id":"QNX-API-SYSCALL","title":"Raw Linux syscall()","category":"linux-api","severity":"blocker","confidence":"guess","appliesTo":["c"],"scope":"code","effort":120,
- "pattern":"\\bsyscall\\s*\\(",
- "evidence":{"syscall":"\\bSYS_\\w+|\\b__NR_\\w+|<sys/syscall\\.h>|<syscall\\.h>"},
- "message":"Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
- "remedy":"Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
- "verify":"verify against SDP: whether gettid() or another numeric thread-id call exists.",
- "examples":{"positive":["syscall(SYS_gettid);\n","#include <sys/syscall.h>\nlong n = syscall(n, 1);\n"],"negative":["// syscall(SYS_gettid);\n","int mysyscall_count;\n","vm->syscall(3);\n","cpu.syscall(op);\n","void syscall(int n) { }\n","int syscall(int n);\n","int r = syscall(3);\n","x = Emu::syscall(a);\n"]}},
-{"id":"QNX-API-CLONE-NS","title":"clone/unshare/setns namespaces","category":"linux-api","severity":"blocker","confidence":"guess","appliesTo":["c"],"scope":"code","effort":240,
- "pattern":"\\b(?:clone|unshare|setns)\\s*\\(|\\bCLONE_(?:NEW[A-Z]+|VM|FILES|THREAD|FS)\\b",
- "evidence":{"clone":"\\bCLONE_\\w+|<sched\\.h>|\\b_GNU_SOURCE\\b","unshare":"\\bCLONE_\\w+|<sched\\.h>|\\b_GNU_SOURCE\\b","setns":"\\bCLONE_\\w+|<sched\\.h>|\\b_GNU_SOURCE\\b"},
- "message":"Linux process/namespace primitives (known); container semantics do not exist on QNX (guess: no namespace equivalent known to this tool).",
- "remedy":"Use fork()/posix_spawn() and pthreads. Isolation features must be redesigned with QNX process management (no namespace equivalent is assumed).",
- "examples":{"positive":["pid = clone(fn, stk, CLONE_NEWNS, 0);\n","unshare(CLONE_NEWNET);\n","#include <sched.h>\nint r = setns(fd, 0);\n"],"negative":["pid = fork();\n","pid = n->clone();\n","Node *c = obj.clone(1);\n","auto c = Foo::clone(a);\n","Node *clone(Node *n);\n","static int clone(int a) { return a; }\n","int r = clone(a);\n",{"files":{"b.c":"int clone(int a) { return a; }\n","a.h":"int clone(int);\n","a.c":"#include <sched.h>\n#include \"a.h\"\nint f(void) { return clone(1); }\n"}}]}},
-{"id":"QNX-API-NETLINK","title":"AF_NETLINK sockets","category":"linux-api","severity":"blocker","confidence":"guess","appliesTo":["c"],"scope":"code","effort":240,
- "pattern":"\\b(?:AF|PF)_NETLINK\\b|\\bNETLINK_[A-Z_]+\\b|\\bstruct\\s+sockaddr_nl\\b",
- "message":"netlink is Linux-only.",
- "remedy":"For interface/address queries use getifaddrs(); for routing-table changes evaluate an AF_ROUTE socket.",
- "verify":"verify against SDP: availability of AF_ROUTE in the io-sock stack.",
- "examples":{"positive":["s = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);\n","struct sockaddr_nl sa;\n"],"negative":["s = socket(AF_INET, SOCK_STREAM, 0);\n"]}},
-{"id":"QNX-API-SOCKOPT-LINUX","title":"Linux-specific socket options","category":"linux-api","severity":"minor","confidence":"guess","appliesTo":["c"],"scope":"code","effort":20,
- "pattern":"\\bTCP_(?:CORK|QUICKACK|DEFER_ACCEPT|USER_TIMEOUT|FASTOPEN|INFO)\\b|\\bMSG_MORE\\b|\\bSO_REUSEPORT\\b|\\bSO_BINDTODEVICE\\b",
- "message":"Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
- "remedy":"Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
- "verify":"verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
- "examples":{"positive":["setsockopt(s, IPPROTO_TCP, TCP_CORK, &on, 4);\n","setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &on, 4);\n"],"negative":["setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, 4);\n","#elif (defined(__linux__) || \\\n       defined(__sun)) && \\\n       defined(SO_REUSEPORT)\n"]}},
-{"id":"QNX-API-PEERCRED","title":"SO_PEERCRED / struct ucred","category":"linux-api","severity":"minor","confidence":"guess","appliesTo":["c"],"scope":"code","effort":30,
- "pattern":"\\bSO_PEERCRED\\b|\\bstruct\\s+ucred\\b",
- "message":"Peer credential lookup on UNIX sockets via SO_PEERCRED / struct ucred is Linux-specific in this form.",
- "remedy":"For an AF_UNIX socket port use getpeereid() or a LOCAL_PEERCRED-style getsockopt if the SDP's BSD-derived stack provides it (guess). MsgReceive's _msg_info (pid/uid of the sender) applies only if you move the design to native QNX message passing; it does not apply to a socket.",
- "verify":"verify against SDP: getpeereid() and LOCAL_PEERCRED in sys/socket.h/unistd.h.",
- "examples":{"positive":["getsockopt(s, SOL_SOCKET, SO_PEERCRED, &c, &l);\n","struct ucred cr;\n"],"negative":["// SO_PEERCRED\n"]}},
-{"id":"QNX-API-OFLAGS","title":"Linux-only open() flags","category":"linux-api","severity":"minor","confidence":"guess","appliesTo":["c"],"scope":"code","effort":15,
- "pattern":"\\bO_(?:PATH|TMPFILE|NOATIME|DIRECT)\\b",
- "message":"These open() flags originated on Linux. O_DIRECT also exists on some BSDs with other semantics.",
- "remedy":"Drop or emulate: O_TMPFILE -> mkstemp()+unlink(); O_PATH -> open(O_RDONLY) is not equivalent (symlink handling and permission checks differ), so check what the caller needs; O_NOATIME -> omit; O_DIRECT -> omit unless the SDP defines it with the semantics you need.",
- "verify":"verify against SDP: grep O_DIRECT, O_PATH, O_TMPFILE, O_NOATIME in $QNX_TARGET/usr/include/fcntl.h.",
- "examples":{"positive":["fd = open(p, O_TMPFILE|O_RDWR, 0600);\n","fd = open(p, O_RDONLY|O_DIRECT);\n"],"negative":["fd = open(p, O_RDONLY|O_CLOEXEC);\n"]}},
-{"id":"QNX-API-FCNTL-LINUX","title":"Linux-only fcntl commands","category":"linux-api","severity":"minor","confidence":"guess","appliesTo":["c"],"scope":"code","effort":15,
- "pattern":"\\bF_(?:SETPIPE_SZ|GETPIPE_SZ|OFD_SETLK|OFD_SETLKW|OFD_GETLK|ADD_SEALS|GET_SEALS|SETLEASE|GETLEASE|SETSIG)\\b",
- "message":"fcntl commands that are Linux extensions.",
- "remedy":"Guard with #ifdef; for pipe size tuning there is no assumed equivalent, accept the default.",
- "verify":"verify against SDP.",
- "examples":{"positive":["fcntl(fd, F_SETPIPE_SZ, 1<<20);\n"],"negative":["fcntl(fd, F_SETFL, O_NONBLOCK);\n"]}},
-{"id":"QNX-API-GETAUXVAL","title":"getauxval","category":"linux-api","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"code","effort":30,
- "pattern":"\\bgetauxval\\s*\\(",
- "message":"Auxiliary vector access is Linux/glibc-specific (often used for HWCAP feature detection).",
- "remedy":"Use compile-time feature macros, or QNX's system page (SYSPAGE_ENTRY(cpuinfo)->flags) for CPU feature bits.",
- "verify":"verify against SDP: syspage cpuinfo fields on the target architecture.",
- "refs":["QNX docs: <sys/syspage.h>"],
- "examples":{"positive":["unsigned long h = getauxval(AT_HWCAP);\n"],"negative":["// getauxval(AT_HWCAP)\n","v.getauxval(1);\n"]}},
-{"id":"QNX-API-SYSINFO","title":"sysinfo()","category":"linux-api","severity":"minor","confidence":"guess","appliesTo":["c"],"scope":"code","effort":20,
- "pattern":"\\bsysinfo\\s*\\(|\\bstruct\\s+sysinfo\\b",
- "evidence":{"sysinfo":"<sys/sysinfo\\.h>|<linux/kernel\\.h>|\\b_GNU_SOURCE\\b"},
- "message":"Linux sysinfo structure/call (memory, uptime, load).",
- "remedy":"Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
- "verify":"verify against SDP: sysconf names and syspage asinfo for memory totals.",
- "examples":{"positive":["#include <sys/sysinfo.h>\nstruct sysinfo si; sysinfo(&si);\n","#include <sys/sysinfo.h>\nint r = sysinfo(&si);\n"],"negative":["long p = sysconf(_SC_PAGESIZE);\n","x = host->sysinfo();\n","y = o.sysinfo(1);\n","struct sysinfo { int cpus; };\n","int sysinfo(void);\n","v = sysinfo(3);\n"]}},
-{"id":"QNX-API-MMAP-LINUX","title":"mremap / Linux mmap flags","category":"linux-api","severity":"minor","confidence":"guess","appliesTo":["c"],"scope":"code","effort":30,
- "pattern":"\\bmremap\\s*\\(|\\bMAP_(?:HUGETLB|POPULATE|GROWSDOWN)\\b",
- "message":"mremap and these mmap flags are Linux-specific.",
- "remedy":"Replace mremap by mmap new + copy/munmap old (or reserve address space up front); drop MAP_POPULATE/HUGETLB hints.",
- "examples":{"positive":["p = mremap(a, o, n, MREMAP_MAYMOVE);\n","mmap(0, n, 3, MAP_PRIVATE|MAP_POPULATE, fd, 0);\n"],"negative":["mmap(0, n, 3, MAP_PRIVATE, fd, 0);\n","m->mremap(1);\n"]}},
-{"id":"QNX-API-PTHREAD-NP","title":"Linux/glibc non-portable pthread calls","category":"linux-api","severity":"minor","confidence":"guess","appliesTo":["c"],"scope":"code","effort":15,
- "pattern":"\\bpthread_(?:getattr_np|tryjoin_np|timedjoin_np|yield)\\s*\\(",
- "message":"glibc _np extensions that may be missing (pthread_getattr_np may exist on QNX; guess).",
- "remedy":"pthread_yield -> sched_yield(); tryjoin/timedjoin -> a completion flag + condition variable with timed wait.",
- "verify":"verify against SDP.",
- "examples":{"positive":["pthread_tryjoin_np(t, &r);\n","pthread_yield();\n"],"negative":["pthread_join(t, &r);\n","t->pthread_yield();\n","void pthread_yield(void) { }\n","int pthread_yield(void);\n"]}},
-{"id":"QNX-API-CLOCKS","title":"Linux-only clock ids","category":"linux-api","severity":"minor","confidence":"guess","appliesTo":["c"],"scope":"code","effort":10,
- "pattern":"\\bCLOCK_(?:BOOTTIME|MONOTONIC_RAW|REALTIME_ALARM|BOOTTIME_ALARM|TAI|MONOTONIC_COARSE|REALTIME_COARSE)\\b",
- "message":"Clock ids that are Linux extensions.",
- "remedy":"Use CLOCK_MONOTONIC / CLOCK_REALTIME; keep the Linux ids behind #ifdef CLOCK_BOOTTIME.",
- "verify":"verify against SDP which clock ids are provided.",
- "examples":{"positive":["clock_gettime(CLOCK_BOOTTIME, &ts);\n"],"negative":["clock_gettime(CLOCK_MONOTONIC, &ts);\n"]}},
-{"id":"QNX-API-SCHED-LINUX","title":"Linux-only scheduling policies","category":"linux-api","severity":"minor","confidence":"guess","appliesTo":["c"],"scope":"code","effort":20,
- "pattern":"\\bSCHED_(?:BATCH|IDLE|DEADLINE)\\b",
- "message":"Linux scheduling policies; QNX uses fixed-priority policies (SCHED_FIFO, SCHED_RR, SCHED_SPORADIC, SCHED_OTHER) and its own priority range.",
- "remedy":"Use pthread_setschedparam() with SCHED_RR/SCHED_FIFO and choose priorities for the QNX range; nice values do not map directly.",
- "verify":"verify against SDP: priority range for the target.",
- "refs":["QNX docs: pthread_setschedparam()"],
- "examples":{"positive":["pol = SCHED_BATCH;\n","p.policy = SCHED_IDLE;\n"],"negative":["pol = SCHED_RR;\n","setpriority(PRIO_PROCESS, 0, -5);\n"]}},
-{"id":"QNX-API-SYSV-IPC","title":"System V IPC","category":"linux-api","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"code","effort":90,
- "pattern":"\\b(?:shmget|shmat|semget|semop|msgget|msgsnd|msgrcv)\\s*\\(",
- "message":"Availability of System V shared memory/semaphores/queues in QNX 8.0 is unclear: QNX has historically not provided them in the base system (recalled, unverified).",
- "remedy":"POSIX shm_open()/sem_open()/mq_open() for a quick port; for a request/reply design use native message passing (ChannelCreate/ConnectAttach, MsgSend/MsgReceive/MsgReply).",
- "verify":"verify against SDP.",
- "refs":["QNX docs: MsgSend()","QNX docs: MsgReceive()","QNX docs: MsgReply()"],
- "examples":{"positive":["id = shmget(key, 4096, IPC_CREAT);\n","semop(id, &op, 1);\n"],"negative":["fd = shm_open(\"/x\", O_RDWR, 0);\n","q->msgget(1);\n"]}},
-{"id":"QNX-ADV-FUSE","title":"FUSE filesystem","category":"advice","severity":"blocker","confidence":"guess","appliesTo":["c"],"scope":"code","effort":480,
- "pattern":"\\bfuse_[a-z_]+\\s*\\(|\\bstruct\\s+fuse_[a-z_]+\\b",
- "message":"FUSE is a Linux kernel facility.",
- "remedy":"The QNX counterpart of a user-space filesystem/device is a resource manager: resmgr_attach(), iofunc_*, dispatch_create()/dispatch_block(). Map each fuse_operations callback to an io_* handler.",
- "refs":["QNX docs: Writing a Resource Manager","QNX docs: resmgr_attach()"],
- "examples":{"positive":["fuse_main(argc, argv, &ops, NULL);\n","struct fuse_operations ops;\n"],"negative":["// fuse_main()\n"]}},
-{"id":"QNX-ADV-DEVNODES","title":"Linux device node paths","category":"advice","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"string","effort":45,
- "pattern":"/dev/(?:tty(?:USB|ACM|S|AMA)\\d|video\\d|i2c-\\d|spidev|gpiochip\\d|input/|uio\\d|mem\\b|snd/)",
- "message":"Device paths are served by drivers; Linux names will not exist on QNX.",
- "remedy":"Take the device path from configuration and implement a QNX default; QNX devices are published by resource managers (for example UART ports appear as /dev/ser1, /dev/ser2).",
- "verify":"verify against SDP/BSP: the actual path for each peripheral on the target board.",
- "examples":{"positive":["open(\"/dev/ttyUSB0\", O_RDWR);\n","open(\"/dev/i2c-1\", O_RDWR);\n"],"negative":["open(\"/dev/null\", O_RDWR);\n","// \"/dev/ttyUSB0\"\n"]}},
-{"id":"QNX-ADV-LINUX-IFDEF","title":"Linux-only preprocessor branch without QNX branch","category":"advice","severity":"info","confidence":"known","appliesTo":["c"],"scope":"include","effort":10,
- "pattern":"^(?![^\\n]*__QNX)[ \\t]*#[ \\t]*(?:if|ifdef|elif)\\b(?![^\\n]*!\\s*(?:defined\\s*\\(?\\s*)?__(?:gnu_)?linux)[^\\n]*\\b(?:__linux__|__linux|__gnu_linux__)\\b",
- "message":"A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
- "remedy":"Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
- "refs":["QNX docs: Predefined macros (__QNX__, __QNXNTO__)"],
- "examples":{"positive":["#ifdef __linux__\n","#if defined(__linux__) && defined(X)\n"],"negative":["#if !defined(__linux__) && defined(X)\n","#ifndef __linux__\n","#if defined(__linux__) || defined(__QNXNTO__)\n","// #ifdef __linux__\n","#ifdef __APPLE__\n"]}},
-{"id":"QNX-ADV-UNIX-SOCKET-IPC","title":"UNIX-domain socket IPC","category":"advice","severity":"info","confidence":"guess","appliesTo":["c"],"scope":"code","effort":0,
- "pattern":"\\bstruct\\s+sockaddr_un\\b|\\bAF_UNIX\\b|\\bAF_LOCAL\\b",
- "message":"Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
- "remedy":"First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
- "verify":"verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
- "examples":{"positive":["struct sockaddr_un a;\n","s = socket(AF_UNIX, SOCK_STREAM, 0);\n"],"negative":["s = socket(AF_INET, SOCK_STREAM, 0);\n"]}},
-{"id":"QNX-PATH-PROC-EXE","title":"/proc/self/exe","category":"linux-api","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"string","effort":20,
- "pattern":"/proc/(?:self|%d|%u|%ld|\\d+)/exe",
- "message":"The Linux /proc/<pid>/exe symlink is not a QNX interface.",
- "remedy":"Use _cmdname() to get the running program's path.",
- "verify":"verify against SDP: _cmdname() semantics (may return argv[0]-derived path).",
- "refs":["QNX docs: _cmdname()"],
- "examples":{"positive":["readlink(\"/proc/self/exe\", b, n);\n"],"negative":["// \"/proc/self/exe\"\n"]}},
-{"id":"QNX-PATH-PROC","title":"Linux /proc paths","category":"linux-api","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"string","effort":45,
- "pattern":"/proc/(?!self/exe)(?:self|%d|%u|%ld|\\d+|cpuinfo|meminfo|stat\\b|loadavg|uptime|version|sys/|net/|mounts|cmdline|maps|status|fd\\b|task\\b)",
- "message":"QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
- "remedy":"Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
- "verify":"verify against SDP: procfs layout on QNX 8.0.",
- "refs":["QNX docs: procfs / DCMD_PROC_INFO"],
- "examples":{"positive":["f = fopen(\"/proc/cpuinfo\", \"r\");\n","snprintf(p, n, \"/proc/%d/status\", pid);\n"],"negative":["f = fopen(\"/etc/passwd\", \"r\");\n","// \"/proc/cpuinfo\"\n"]}},
-{"id":"QNX-PATH-SYS","title":"Linux /sys (sysfs) paths","category":"linux-api","severity":"major","confidence":"guess","appliesTo":["c"],"scope":"string","effort":60,
- "pattern":"(?<![\\w.-])/sys/(?:class|devices|bus|fs|kernel|block|module|firmware)\\b",
- "message":"sysfs is a Linux kernel pseudo-filesystem; not assumed on QNX.",
- "remedy":"Query the real source: sysconf/getifaddrs for system facts, device resource managers for hardware state, the system page for CPU data.",
- "examples":{"positive":["open(\"/sys/class/net/eth0/address\", 0);\n","open(\"/sys/fs/cgroup\", 0);\n"],"negative":["open(\"/system/x\", 0);\n","process_file(\"/proc/sys/kernel/random/entropy_avail\");\n"]}},
-{"id":"QNX-PATH-DEV-SHM","title":"/dev/shm","category":"linux-api","severity":"minor","confidence":"known","appliesTo":["c"],"scope":"string","effort":15,
- "pattern":"/dev/shm\\b",
- "message":"On QNX POSIX shared memory objects appear under /dev/shmem, not /dev/shm.",
- "remedy":"Use shm_open(\"/name\", ...) and let the system pick the namespace instead of hard-coding the directory.",
- "refs":["QNX docs: shm_open()"],
- "examples":{"positive":["open(\"/dev/shm/foo\", 2);\n"],"negative":["shm_open(\"/foo\", 2, 0);\n","open(\"/dev/shmem/foo\", 2);\n"]}}
+  {
+    "id": "QNX-HDR-LINUX-DIR",
+    "title": "Includes a Linux kernel header",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "include",
+    "effort": 60,
+    "pattern": "^[ \\t]*#[ \\t]*include[ \\t]*[<\"](?:linux|asm|asm-generic)/[^>\"\\n]+[>\"]",
+    "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP 8.0 (build 141) ships no linux/, asm/ or asm-generic/ directory: every such include fails to compile (checked for 21 common ones with qcc on x86_64 and aarch64le). Many uses are trivial (linux/limits.h, linux/types.h can be replaced by POSIX headers); device-ioctl headers are not.",
+    "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface (devctl) instead.",
+    "verify": "Checked on SDP 8.0 build 141: no linux/ or asm/ include directory exists. Other SDP versions: verify against SDP.",
+    "examples": {
+      "positive": [
+        "#include <linux/types.h>\n",
+        "#include \"asm/unistd.h\"\n"
+      ],
+      "negative": [
+        "#include <sys/types.h>\n",
+        "// #include <linux/types.h>\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-HDR-SYS-LINUX",
+    "title": "Includes a Linux-specific <sys/...> header",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "include",
+    "effort": 30,
+    "pattern": "^[ \\t]*#[ \\t]*include[ \\t]*[<\"]sys/(?:epoll|inotify|eventfd|signalfd|timerfd|prctl|sendfile|auxv|sysinfo|fanotify|memfd|capability|personality|klog|reboot)\\.h[>\"]",
+    "message": "This glibc/Linux <sys/...> header is not in the QNX 8.0 SDP for most of the names this rule matches (sys/epoll.h, eventfd.h, signalfd.h, timerfd.h, prctl.h, sendfile.h, sysinfo.h, fanotify.h do not exist in build 141). Two exceptions are present: <sys/inotify.h> (needs -lfsnotify) and <sys/auxv.h> (exists, but getauxval is not declared).",
+    "remedy": "Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.",
+    "verify": "Per-header result from SDP 8.0 build 141 (qcc include probe). Other SDP versions: verify against SDP.",
+    "examples": {
+      "positive": [
+        "#include <sys/epoll.h>\n",
+        "#include <sys/timerfd.h>\n"
+      ],
+      "negative": [
+        "#include <sys/socket.h>\n",
+        "#include <sys/epollfake.h>\n"
+      ]
+    },
+    "sdp": {
+      "present": {
+        "message": "This header exists in SDP 8.0 build 141. Whether the calls it normally declares exist is decided by the per-API findings (sys/inotify.h: yes, with -lfsnotify; sys/auxv.h: no getauxval).",
+        "keep": false
+      }
+    }
+  },
+  {
+    "id": "QNX-HDR-LINUX-LIBS",
+    "title": "Includes a Linux-only system library header",
+    "category": "linux-api",
+    "severity": "blocker",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "include",
+    "effort": 240,
+    "pattern": "^[ \\t]*#[ \\t]*include[ \\t]*<(?:systemd/[^>\\n]+|libudev\\.h|dbus/[^>\\n]+|selinux/[^>\\n]+|libcap\\.h|libnl3?/[^>\\n]+)>",
+    "message": "systemd, udev, D-Bus, SELinux, libcap and libnl are Linux system services/libraries; they are not part of a stock QNX image.",
+    "remedy": "Isolate behind an interface and provide a QNX implementation (service start-up via the QNX service launcher, device discovery via resource managers), or disable the feature on QNX.",
+    "verify": "verify against SDP: a port of the library may exist (qnx-ports); check before rewriting.",
+    "examples": {
+      "positive": [
+        "#include <systemd/sd-daemon.h>\n",
+        "#include <libudev.h>\n"
+      ],
+      "negative": [
+        "#include <stdio.h>\n",
+        "#include <dbusx.h>\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-EPOLL",
+    "title": "epoll event loop",
+    "category": "linux-api",
+    "severity": "blocker",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 120,
+    "pattern": "\\bepoll_(?:create1?|ctl|p?wait)\\s*\\(|\\bstruct\\s+epoll_event\\b|\\bEPOLL(?:IN|OUT|ET|ERR|HUP|RDHUP|ONESHOT|_CTL_ADD|_CTL_MOD|_CTL_DEL|_CLOEXEC)\\b",
+    "message": "epoll does not exist on QNX 8.0: no <sys/epoll.h>, no epoll_* symbol in any SDP library, no EPOLL* macro (checked on SDP 8.0 build 141, x86_64 and aarch64le). kqueue/kevent are NOT a way out: <sys/event.h> is not shipped to user code (the BSD event headers sit only in the io-sock driver include tree) and no library exports kqueue or kevent.",
+    "remedy": "Port the loop to poll(), ppoll() or select()/pselect() (all four exist in SDP 8.0). ionotify() with SIGEV_PULSE is native QNX (present in the SDP) but only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework (present).",
+    "verify": "Verified absent on SDP 8.0 build 141 (header probe, symbol probe, link probe).",
+    "refs": [
+      "QNX docs: ionotify()",
+      "QNX docs: SIGEV_PULSE_INIT()"
+    ],
+    "examples": {
+      "positive": [
+        "int ep = epoll_create1(0);\n",
+        "struct epoll_event ev;\n",
+        "ev.events = EPOLLIN | EPOLLET;\n"
+      ],
+      "negative": [
+        "// epoll_create1(0);\n",
+        "puts(\"epoll_wait\");\n",
+        "int my_epoll_waiter;\n",
+        "x->epoll_wait(1);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-INOTIFY",
+    "title": "inotify file watching",
+    "category": "linux-api",
+    "severity": "blocker",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 180,
+    "pattern": "\\binotify_(?:init1?|add_watch|rm_watch)\\s*\\(|\\bstruct\\s+inotify_event\\b|\\bIN_(?:CREATE|MODIFY|DELETE|CLOSE_WRITE|MOVED_FROM|MOVED_TO|NONBLOCK)\\b",
+    "message": "inotify EXISTS on QNX 8.0: <sys/inotify.h> is in the SDP and libfsnotify exports inotify_init/init1/add_watch/rm_watch (SDP 8.0 build 141: compile and link succeed with -lfsnotify). The IN_* masks (including IN_ACCESS, IN_ATTRIB, IN_CLOSE_WRITE, IN_CREATE, IN_DELETE, IN_MODIFY, IN_MOVED_FROM/TO) and struct inotify_event are defined.",
+    "remedy": "Add -lfsnotify to the link line (on QNX only) and test the event masks the code relies on: only the compile and link steps were verified, no program was run on a QNX target, so semantic parity with Linux inotify (recursive watches, rename events, filesystem coverage) is unchecked. Keep a stat() polling fallback until it has run on the target.",
+    "verify": "Compile/link verified on SDP 8.0 build 141; runtime behaviour not tested.",
+    "examples": {
+      "positive": [
+        "int fd = inotify_init1(IN_NONBLOCK);\n",
+        "wd = inotify_add_watch(fd, p, IN_MODIFY);\n",
+        "struct inotify_event *e;\n"
+      ],
+      "negative": [
+        "// inotify_init();\n",
+        "int in_modify_count;\n",
+        "w.inotify_add_watch(1);\n"
+      ]
+    },
+    "sdp": {
+      "present": {
+        "message": "inotify exists in the SDP (sys/inotify.h, libfsnotify). Needs -lfsnotify; runtime semantics not tested.",
+        "keep": true,
+        "severity": "info"
+      }
+    }
+  },
+  {
+    "id": "QNX-API-EVENTFD",
+    "title": "eventfd",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 45,
+    "pattern": "\\beventfd(?:_read|_write)?\\s*\\(|\\bEFD_(?:NONBLOCK|CLOEXEC|SEMAPHORE)\\b",
+    "message": "eventfd is a Linux file-descriptor wake-up primitive. It does not exist on QNX 8.0 (no <sys/eventfd.h>, no eventfd symbol, no EFD_* macro in SDP 8.0 build 141).",
+    "remedy": "Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.",
+    "verify": "Verified absent on SDP 8.0 build 141.",
+    "refs": [
+      "QNX docs: MsgSendPulse()"
+    ],
+    "examples": {
+      "positive": [
+        "int efd = eventfd(0, EFD_NONBLOCK);\n",
+        "eventfd_write(efd, 1);\n"
+      ],
+      "negative": [
+        "// eventfd(0,0)\n",
+        "int myeventfd_count;\n",
+        "s->eventfd(1);\n",
+        "#  define EFD_CLOEXEC O_CLOEXEC\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-SIGNALFD",
+    "title": "signalfd",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 90,
+    "pattern": "\\bsignalfd\\s*\\(|\\bstruct\\s+signalfd_siginfo\\b",
+    "message": "signalfd turns signals into a readable fd. It does not exist on QNX 8.0 (no <sys/signalfd.h>, no signalfd symbol in SDP 8.0 build 141).",
+    "remedy": "Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse.",
+    "refs": [
+      "POSIX: sigwaitinfo()"
+    ],
+    "examples": {
+      "positive": [
+        "fd = signalfd(-1, &mask, SFD_CLOEXEC);\n",
+        "struct signalfd_siginfo si;\n"
+      ],
+      "negative": [
+        "// signalfd(-1,&m,0)\n",
+        "sigwaitinfo(&m, &si);\n",
+        "q.signalfd(1);\n"
+      ]
+    },
+    "verify": "Verified absent on SDP 8.0 build 141."
+  },
+  {
+    "id": "QNX-API-TIMERFD",
+    "title": "timerfd",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 90,
+    "pattern": "\\btimerfd_(?:create|settime|gettime)\\s*\\(|\\bTFD_(?:NONBLOCK|CLOEXEC|TIMER_ABSTIME)\\b",
+    "message": "timerfd is Linux-only. It does not exist on QNX 8.0 (no <sys/timerfd.h>, no timerfd_* symbol, no TFD_* macro in SDP 8.0 build 141).",
+    "remedy": "Use timer_create() with a SIGEV_PULSE sigevent so the timer fires into your channel, or a thread blocked in clock_nanosleep().",
+    "refs": [
+      "QNX docs: timer_create()",
+      "QNX docs: SIGEV_PULSE_INIT()"
+    ],
+    "examples": {
+      "positive": [
+        "int t = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);\n",
+        "timerfd_settime(t, 0, &its, NULL);\n"
+      ],
+      "negative": [
+        "// timerfd_create(1,0)\n",
+        "timer_create(CLOCK_MONOTONIC, &sev, &id);\n",
+        "q->timerfd_create(1);\n"
+      ]
+    },
+    "verify": "Verified absent on SDP 8.0 build 141."
+  },
+  {
+    "id": "QNX-API-SENDFILE",
+    "title": "sendfile/splice zero-copy calls",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 60,
+    "pattern": "\\b(?:sendfile(?:64)?|splice|vmsplice|tee|copy_file_range)\\s*\\(",
+    "evidence": {
+      "splice": "\\bSPLICE_F_\\w+|\\b_GNU_SOURCE\\b",
+      "vmsplice": "\\bSPLICE_F_\\w+|\\b_GNU_SOURCE\\b",
+      "tee": "\\bSPLICE_F_\\w+|\\b_GNU_SOURCE\\b",
+      "copy_file_range": "\\bSPLICE_F_\\w+|\\b_GNU_SOURCE\\b"
+    },
+    "message": "Linux zero-copy file transfer calls. On SDP 8.0 build 141: splice, tee, vmsplice, copy_file_range and sendfile64 are not declared. sendfile() is declared in <sys/socket.h> with the BSD signature (7 arguments) but no SDP library exports it: linking fails (also with -lsocket). A same-named Linux call would not have compiled against that prototype anyway.",
+    "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
+    "verify": "Verified on SDP 8.0 build 141 (header, symbol and link probes).",
+    "examples": {
+      "positive": [
+        "n = sendfile(out, in, &off, len);\n",
+        "splice(a, 0, b, 0, 4096, SPLICE_F_MOVE);\n",
+        "#define _GNU_SOURCE\nn = tee(a, b, 4096, 0);\n"
+      ],
+      "negative": [
+        "// sendfile(o,i,0,1)\n",
+        "n = my_sendfile(o,i);\n",
+        "x = obj.tee(3);\n",
+        "y = p->tee(3);\n",
+        "int tee(int n) { return n; }\n",
+        "#define _GNU_SOURCE\nstatic int tee(int n) { return n; }\nint z = tee(3);\n",
+        "int w = tee(3);\n",
+        "n = s->sendfile(1);\n",
+        "long sendfile(int a);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-ACCEPT4",
+    "title": "accept4",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 15,
+    "pattern": "\\baccept4\\s*\\(",
+    "message": "accept4() exists on QNX 8.0: declared in <sys/socket.h>, and it links when -lsocket is on the link line (SDP 8.0 build 141: it does not link with the default libraries). It is not in POSIX.1-2017, so a strict-POSIX build may need the BSD/QNX feature macros.",
+    "remedy": "Link with -lsocket (QNX only). Runtime behaviour of the flags argument was not tested on a target.",
+    "verify": "Compile/link verified on SDP 8.0 build 141; not run.",
+    "examples": {
+      "positive": [
+        "c = accept4(s, 0, 0, SOCK_NONBLOCK);\n"
+      ],
+      "negative": [
+        "c = accept(s, 0, 0);\n",
+        "s->accept4(1);\n"
+      ]
+    },
+    "sdp": {
+      "present": {
+        "message": "accept4 exists in the SDP; it needs -lsocket.",
+        "keep": true,
+        "severity": "info"
+      }
+    }
+  },
+  {
+    "id": "QNX-API-SOCK-FLAGS",
+    "title": "SOCK_NONBLOCK / SOCK_CLOEXEC type flags",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 10,
+    "pattern": "\\bSOCK_(?:NONBLOCK|CLOEXEC)\\b",
+    "message": "SOCK_NONBLOCK / SOCK_CLOEXEC or-ed into the socket type: both are defined in <sys/socket.h> on SDP 8.0 build 141 (compile probe passes), so this is not a gap. Runtime behaviour not tested.",
+    "remedy": "Nothing to change for compilation; socket calls need -lsocket on the link line. If a target test shows the flags are ignored, fall back to fcntl().",
+    "verify": "Compile verified on SDP 8.0 build 141; not run.",
+    "examples": {
+      "positive": [
+        "s = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);\n"
+      ],
+      "negative": [
+        "s = socket(AF_INET, SOCK_STREAM, 0);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-PIPE2",
+    "title": "pipe2 / dup3",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 10,
+    "pattern": "\\b(?:pipe2|dup3)\\s*\\(",
+    "message": "On SDP 8.0 build 141 pipe2() is declared in <unistd.h> and exists in libc; dup3() is not declared and no library exports it.",
+    "remedy": "pipe2: nothing to change. dup3: use dup2() then fcntl(fd, F_SETFD, FD_CLOEXEC) (mind the small race window if other threads fork).",
+    "verify": "Verified on SDP 8.0 build 141: pipe2 present, dup3 absent.",
+    "examples": {
+      "positive": [
+        "pipe2(fds, O_CLOEXEC);\n",
+        "dup3(a, b, 0);\n"
+      ],
+      "negative": [
+        "pipe(fds);\n",
+        "s.pipe2(1);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-MSG-NOSIGNAL",
+    "title": "MSG_NOSIGNAL",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 10,
+    "pattern": "\\bMSG_NOSIGNAL\\b",
+    "message": "MSG_NOSIGNAL is defined on QNX 8.0 (SDP 8.0 build 141, <sys/socket.h>), so this is not a gap.",
+    "remedy": "Nothing to change for compilation. Keeping signal(SIGPIPE, SIG_IGN) is harmless; SO_NOSIGPIPE is also defined on this SDP.",
+    "verify": "Compile verified on SDP 8.0 build 141; not run.",
+    "examples": {
+      "positive": [
+        "send(s, b, n, MSG_NOSIGNAL);\n"
+      ],
+      "negative": [
+        "send(s, b, n, 0);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-PRCTL",
+    "title": "prctl",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 30,
+    "pattern": "\\bprctl\\s*\\(|\\bPR_(?:SET|GET)_[A-Z_]+\\b",
+    "message": "prctl is a Linux process-control multiplexer. It does not exist on QNX 8.0 (no <sys/prctl.h>, no prctl symbol, no PR_* macro in SDP 8.0 build 141).",
+    "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np() (declared and exported in SDP 8.0 build 141; so is pthread_getname_np); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE/NO_NEW_PRIVS -> drop (no QNX analogue is known).",
+    "verify": "Absence and pthread_setname_np verified on SDP 8.0 build 141 (probes); argument limits of pthread_setname_np not checked.",
+    "examples": {
+      "positive": [
+        "prctl(PR_SET_NAME, \"worker\");\n"
+      ],
+      "negative": [
+        "// prctl(PR_SET_NAME,x)\n",
+        "p->prctl(1);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-AFFINITY",
+    "title": "CPU affinity (sched_setaffinity & friends)",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 45,
+    "pattern": "\\b(?:sched_(?:set|get)affinity|pthread_(?:set|get)affinity_np|pthread_attr_setaffinity_np)\\b|\\bcpu_set_t\\b|\\bCPU_(?:SET|ZERO|ISSET|CLR)\\s*\\(",
+    "message": "Linux affinity API. On SDP 8.0 build 141 sched_setaffinity, sched_getaffinity, pthread_setaffinity_np, pthread_getaffinity_np, pthread_attr_setaffinity_np, cpu_set_t and the CPU_* macros are all missing (the CPU_* set macros exist only in the io-sock driver headers).",
+    "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (ThreadCtl and _NTO_TCTL_RUNMASK are present in SDP 8.0 build 141; the argument layout and the privilege needed were not tested). Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
+    "verify": "Absence verified on SDP 8.0 build 141; ThreadCtl usage not run.",
+    "refs": [
+      "QNX docs: ThreadCtl()"
+    ],
+    "examples": {
+      "positive": [
+        "sched_setaffinity(0, sizeof set, &set);\n",
+        "cpu_set_t set;\n",
+        "CPU_SET(2, &set);\n"
+      ],
+      "negative": [
+        "// sched_setaffinity\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-MEMFD",
+    "title": "memfd_create",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 60,
+    "pattern": "\\bmemfd_create\\s*\\(|\\bMFD_(?:CLOEXEC|ALLOW_SEALING)\\b",
+    "message": "Anonymous in-memory file descriptors are Linux-only. On SDP 8.0 build 141 memfd_create and MFD_* are not available to user code (the names occur only in io-sock driver headers).",
+    "remedy": "Closest analogue: shm_open(SHM_ANON, O_RDWR, 0600) then ftruncate()+mmap(): shm_open and SHM_ANON are both present in SDP 8.0 build 141 (compile probe; the unnamed-object behaviour was not run). Fallback: shm_open() with a unique name followed by an immediate shm_unlink(), which leaves a short window where the name is visible (racy).",
+    "verify": "Absence and symbol presence verified on SDP 8.0 build 141; SHM_ANON behaviour not run.",
+    "examples": {
+      "positive": [
+        "fd = memfd_create(\"x\", MFD_CLOEXEC);\n"
+      ],
+      "negative": [
+        "fd = shm_open(\"/x\", O_RDWR|O_CREAT, 0600);\n",
+        "p.memfd_create(1);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-GETRANDOM",
+    "title": "getrandom",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 15,
+    "pattern": "\\bgetrandom\\s*\\(|\\bGRND_(?:NONBLOCK|RANDOM)\\b",
+    "message": "getrandom is a Linux syscall wrapper. On SDP 8.0 build 141 getrandom is not declared and GRND_* do not exist; getentropy is not declared either (an unrelated library, libunbound, exports a private symbol of that name, so a call without a prototype would link to the wrong thing). arc4random is not available to user code.",
+    "remedy": "Read from /dev/urandom (QNX provides it; a helper that handles short reads and EINTR is enough). <entropy.h> in the SDP is the QNX entropy-source interface (entropy_return_status/entropy_sleep exist in the header; entropy_return_status does not link by default), not a getrandom replacement.",
+    "verify": "Absence verified on SDP 8.0 build 141; /dev/urandom exists on the target image: not checked here.",
+    "examples": {
+      "positive": [
+        "getrandom(buf, 16, 0);\n"
+      ],
+      "negative": [
+        "// getrandom(b,1,0)\n",
+        "rng->getrandom(1);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-SYSCALL",
+    "title": "Raw Linux syscall()",
+    "category": "linux-api",
+    "severity": "blocker",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 120,
+    "pattern": "\\bsyscall\\s*\\(",
+    "evidence": {
+      "syscall": "\\bSYS_\\w+|\\b__NR_\\w+|<sys/syscall\\.h>|<syscall\\.h>"
+    },
+    "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX, and syscall() is not declared in the SDP (build 141). gettid() DOES exist natively (declared in <sys/process.h>, exported by libc), so SYS_gettid callers need only the call.",
+    "remedy": "Replace each call with the libc/POSIX function it wraps. gettid(): include <sys/process.h> and call gettid() (present; whether the number is a Linux-style kernel tid was not checked: use it as a numeric id for logging, not for kernel interfaces). Do not substitute pthread_self() (opaque handle). futex has no mechanical replacement (not declared; no library exports it): redesign onto pthread mutex/condvar.",
+    "verify": "Verified on SDP 8.0 build 141: syscall and futex absent, gettid present.",
+    "examples": {
+      "positive": [
+        "syscall(SYS_gettid);\n",
+        "#include <sys/syscall.h>\nlong n = syscall(n, 1);\n"
+      ],
+      "negative": [
+        "// syscall(SYS_gettid);\n",
+        "int mysyscall_count;\n",
+        "vm->syscall(3);\n",
+        "cpu.syscall(op);\n",
+        "void syscall(int n) { }\n",
+        "int syscall(int n);\n",
+        "int r = syscall(3);\n",
+        "x = Emu::syscall(a);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-CLONE-NS",
+    "title": "clone/unshare/setns namespaces",
+    "category": "linux-api",
+    "severity": "blocker",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 240,
+    "pattern": "\\b(?:clone|unshare|setns)\\s*\\(|\\bCLONE_(?:NEW[A-Z]+|VM|FILES|THREAD|FS)\\b",
+    "evidence": {
+      "clone": "\\bCLONE_\\w+|<sched\\.h>|\\b_GNU_SOURCE\\b",
+      "unshare": "\\bCLONE_\\w+|<sched\\.h>|\\b_GNU_SOURCE\\b",
+      "setns": "\\bCLONE_\\w+|<sched\\.h>|\\b_GNU_SOURCE\\b"
+    },
+    "message": "Linux process/namespace primitives. On SDP 8.0 build 141 clone, unshare, setns and the CLONE_* flags are not available to user code; there is no namespace equivalent.",
+    "remedy": "Use fork()/posix_spawn() and pthreads. Isolation features must be redesigned with QNX process management (no namespace equivalent is assumed).",
+    "examples": {
+      "positive": [
+        "pid = clone(fn, stk, CLONE_NEWNS, 0);\n",
+        "unshare(CLONE_NEWNET);\n",
+        "#include <sched.h>\nint r = setns(fd, 0);\n"
+      ],
+      "negative": [
+        "pid = fork();\n",
+        "pid = n->clone();\n",
+        "Node *c = obj.clone(1);\n",
+        "auto c = Foo::clone(a);\n",
+        "Node *clone(Node *n);\n",
+        "static int clone(int a) { return a; }\n",
+        "int r = clone(a);\n",
+        {
+          "files": {
+            "b.c": "int clone(int a) { return a; }\n",
+            "a.h": "int clone(int);\n",
+            "a.c": "#include <sched.h>\n#include \"a.h\"\nint f(void) { return clone(1); }\n"
+          }
+        }
+      ]
+    },
+    "verify": "Verified absent on SDP 8.0 build 141."
+  },
+  {
+    "id": "QNX-API-NETLINK",
+    "title": "AF_NETLINK sockets",
+    "category": "linux-api",
+    "severity": "blocker",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 240,
+    "pattern": "\\b(?:AF|PF)_NETLINK\\b|\\bNETLINK_[A-Z_]+\\b|\\bstruct\\s+sockaddr_nl\\b",
+    "message": "netlink is Linux-only. On SDP 8.0 build 141 AF_NETLINK/PF_NETLINK are defined as socket-family numbers (BSD header heritage) but struct sockaddr_nl and NETLINK_* are not, so a netlink socket cannot be used. Whether socket(AF_NETLINK) is accepted at run time was not tested.",
+    "remedy": "For interface/address queries use getifaddrs() (declared in <ifaddrs.h>, links with -lsocket in SDP 8.0 build 141). AF_ROUTE/PF_ROUTE are defined in the SDP: evaluate a routing socket for routing-table changes (not tested).",
+    "verify": "Header/link probes on SDP 8.0 build 141; sockets not run.",
+    "examples": {
+      "positive": [
+        "s = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);\n",
+        "struct sockaddr_nl sa;\n"
+      ],
+      "negative": [
+        "s = socket(AF_INET, SOCK_STREAM, 0);\n"
+      ]
+    },
+    "sdp": {
+      "present": {
+        "message": "AF_NETLINK/PF_NETLINK are defined in the SDP headers, but struct sockaddr_nl and the NETLINK_* protocol numbers are not: netlink is not usable. Defined-ness of a macro does not mean the family is supported.",
+        "keep": true,
+        "severity": "major"
+      }
+    }
+  },
+  {
+    "id": "QNX-API-SOCKOPT-LINUX",
+    "title": "Linux-specific socket options",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 20,
+    "pattern": "\\bTCP_(?:CORK|QUICKACK|DEFER_ACCEPT|USER_TIMEOUT|FASTOPEN|INFO)\\b|\\bMSG_MORE\\b|\\bSO_REUSEPORT\\b|\\bSO_BINDTODEVICE\\b",
+    "message": "Socket options that originated on Linux. On SDP 8.0 build 141: TCP_FASTOPEN, TCP_INFO, TCP_NODELAY, TCP_KEEPIDLE/INTVL/CNT, SO_REUSEPORT are defined; TCP_CORK, TCP_QUICKACK, TCP_DEFER_ACCEPT, TCP_USER_TIMEOUT, MSG_MORE, SO_BINDTODEVICE, SO_PRIORITY, SO_MARK, IP_PKTINFO-style Linux options are not.",
+    "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. Where the macro IS defined (TCP_INFO, TCP_FASTOPEN, SO_REUSEPORT) the struct layout and semantics are BSD's and were not tested: confirm before relying on a same-named constant.",
+    "verify": "Macro presence verified on SDP 8.0 build 141 (compile probe); semantics not run.",
+    "examples": {
+      "positive": [
+        "setsockopt(s, IPPROTO_TCP, TCP_CORK, &on, 4);\n",
+        "setsockopt(s, SOL_SOCKET, SO_REUSEPORT, &on, 4);\n"
+      ],
+      "negative": [
+        "setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, 4);\n",
+        "#elif (defined(__linux__) || \\\n       defined(__sun)) && \\\n       defined(SO_REUSEPORT)\n"
+      ]
+    },
+    "sdp": {
+      "present": {
+        "message": "Defined in the SDP headers (compile probe only). The struct layout/semantics follow the BSD-derived stack and were not tested.",
+        "keep": true,
+        "severity": "info"
+      }
+    }
+  },
+  {
+    "id": "QNX-API-PEERCRED",
+    "title": "SO_PEERCRED / struct ucred",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 30,
+    "pattern": "\\bSO_PEERCRED\\b|\\bstruct\\s+ucred\\b",
+    "message": "SO_PEERCRED / struct ucred are Linux-specific in this form: neither exists in SDP 8.0 build 141 user headers.",
+    "remedy": "Use getpeereid(fd, &uid, &gid) (declared in <unistd.h>, exported by libsocket in SDP 8.0 build 141: link -lsocket) or getsockopt(fd, 0, LOCAL_PEERCRED, &xucred, ...) (LOCAL_PEERCRED is defined in <sys/un.h>, struct xucred in <sys/ucred.h>); behaviour not run on a target. MsgReceive's _msg_info only applies if the design moves to native QNX message passing.",
+    "verify": "Names verified on SDP 8.0 build 141; semantics not run.",
+    "examples": {
+      "positive": [
+        "getsockopt(s, SOL_SOCKET, SO_PEERCRED, &c, &l);\n",
+        "struct ucred cr;\n"
+      ],
+      "negative": [
+        "// SO_PEERCRED\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-OFLAGS",
+    "title": "Linux-only open() flags",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 15,
+    "pattern": "\\bO_(?:PATH|TMPFILE|NOATIME|DIRECT)\\b",
+    "message": "These open() flags originated on Linux. None of O_PATH, O_TMPFILE, O_NOATIME, O_DIRECT is defined in SDP 8.0 build 141.",
+    "remedy": "Drop or emulate: O_TMPFILE -> mkstemp()+unlink(); O_PATH -> open(O_RDONLY) is not equivalent (symlink handling and permission checks differ), so check what the caller needs; O_NOATIME -> omit; O_DIRECT -> omit (the SDP defines no such flag).",
+    "verify": "Verified absent on SDP 8.0 build 141.",
+    "examples": {
+      "positive": [
+        "fd = open(p, O_TMPFILE|O_RDWR, 0600);\n",
+        "fd = open(p, O_RDONLY|O_DIRECT);\n"
+      ],
+      "negative": [
+        "fd = open(p, O_RDONLY|O_CLOEXEC);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-FCNTL-LINUX",
+    "title": "Linux-only fcntl commands",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 15,
+    "pattern": "\\bF_(?:SETPIPE_SZ|GETPIPE_SZ|OFD_SETLK|OFD_SETLKW|OFD_GETLK|ADD_SEALS|GET_SEALS|SETLEASE|GETLEASE|SETSIG)\\b",
+    "message": "fcntl commands that are Linux extensions. None of F_SETPIPE_SZ/GETPIPE_SZ, F_OFD_*, F_ADD_SEALS/GET_SEALS, F_SETLEASE/GETLEASE, F_SETSIG is defined in SDP 8.0 build 141.",
+    "remedy": "Guard with #ifdef; for pipe size tuning there is no assumed equivalent, accept the default.",
+    "verify": "Verified absent on SDP 8.0 build 141.",
+    "examples": {
+      "positive": [
+        "fcntl(fd, F_SETPIPE_SZ, 1<<20);\n"
+      ],
+      "negative": [
+        "fcntl(fd, F_SETFL, O_NONBLOCK);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-GETAUXVAL",
+    "title": "getauxval",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 30,
+    "pattern": "\\bgetauxval\\s*\\(",
+    "message": "Auxiliary vector access is Linux/glibc-specific. On SDP 8.0 build 141 <sys/auxv.h> exists but getauxval is not declared or exported (elf_aux_info is absent too).",
+    "remedy": "Use compile-time feature macros, or QNX's system page (SYSPAGE_ENTRY(cpuinfo)->flags) for CPU feature bits.",
+    "verify": "Verified absent on SDP 8.0 build 141.",
+    "refs": [
+      "QNX docs: <sys/syspage.h>"
+    ],
+    "examples": {
+      "positive": [
+        "unsigned long h = getauxval(AT_HWCAP);\n"
+      ],
+      "negative": [
+        "// getauxval(AT_HWCAP)\n",
+        "v.getauxval(1);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-SYSINFO",
+    "title": "sysinfo()",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 20,
+    "pattern": "\\bsysinfo\\s*\\(|\\bstruct\\s+sysinfo\\b",
+    "evidence": {
+      "sysinfo": "<sys/sysinfo\\.h>|<linux/kernel\\.h>|\\b_GNU_SOURCE\\b"
+    },
+    "message": "Linux sysinfo structure/call (memory, uptime, load). Neither the call nor struct sysinfo exists in SDP 8.0 build 141 (no <sys/sysinfo.h>).",
+    "remedy": "Use sysconf(_SC_PAGESIZE) and sysconf(_SC_PHYS_PAGES)/_SC_AVPHYS_PAGES (all three names are defined in SDP 8.0 build 141; what values they return on a target was not tested); uptime from clock_gettime(CLOCK_MONOTONIC); the QNX system page (<sys/syspage.h>, SYSPAGE_ENTRY and asinfo) is the usual source for memory facts, so check there as well.",
+    "verify": "Absence and macro names verified on SDP 8.0 build 141; return values not run.",
+    "examples": {
+      "positive": [
+        "#include <sys/sysinfo.h>\nstruct sysinfo si; sysinfo(&si);\n",
+        "#include <sys/sysinfo.h>\nint r = sysinfo(&si);\n"
+      ],
+      "negative": [
+        "long p = sysconf(_SC_PAGESIZE);\n",
+        "x = host->sysinfo();\n",
+        "y = o.sysinfo(1);\n",
+        "struct sysinfo { int cpus; };\n",
+        "int sysinfo(void);\n",
+        "v = sysinfo(3);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-MMAP-LINUX",
+    "title": "mremap / Linux mmap flags",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 30,
+    "pattern": "\\bmremap\\s*\\(|\\bMAP_(?:HUGETLB|POPULATE|GROWSDOWN)\\b",
+    "message": "mremap and these mmap flags are Linux-specific. mremap, MAP_POPULATE, MAP_HUGETLB and MAP_GROWSDOWN do not exist in SDP 8.0 build 141.",
+    "remedy": "Replace mremap by mmap new + copy/munmap old (or reserve address space up front); drop MAP_POPULATE/HUGETLB hints.",
+    "examples": {
+      "positive": [
+        "p = mremap(a, o, n, MREMAP_MAYMOVE);\n",
+        "mmap(0, n, 3, MAP_PRIVATE|MAP_POPULATE, fd, 0);\n"
+      ],
+      "negative": [
+        "mmap(0, n, 3, MAP_PRIVATE, fd, 0);\n",
+        "m->mremap(1);\n"
+      ]
+    },
+    "verify": "Verified absent on SDP 8.0 build 141."
+  },
+  {
+    "id": "QNX-API-PTHREAD-NP",
+    "title": "Linux/glibc non-portable pthread calls",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 15,
+    "pattern": "\\bpthread_(?:getattr_np|tryjoin_np|timedjoin_np|yield)\\s*\\(",
+    "message": "glibc _np extensions. On SDP 8.0 build 141 pthread_getattr_np, pthread_tryjoin_np, pthread_timedjoin_np and pthread_yield do not exist (pthread_setname_np and pthread_getname_np do, and are not matched by this rule).",
+    "remedy": "pthread_yield -> sched_yield(); tryjoin/timedjoin -> a completion flag + condition variable with timed wait.",
+    "verify": "Verified absent on SDP 8.0 build 141.",
+    "examples": {
+      "positive": [
+        "pthread_tryjoin_np(t, &r);\n",
+        "pthread_yield();\n"
+      ],
+      "negative": [
+        "pthread_join(t, &r);\n",
+        "t->pthread_yield();\n",
+        "void pthread_yield(void) { }\n",
+        "int pthread_yield(void);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-CLOCKS",
+    "title": "Linux-only clock ids",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 10,
+    "pattern": "\\bCLOCK_(?:BOOTTIME|MONOTONIC_RAW|REALTIME_ALARM|BOOTTIME_ALARM|TAI|MONOTONIC_COARSE|REALTIME_COARSE)\\b",
+    "message": "Clock ids that are Linux extensions. CLOCK_BOOTTIME, CLOCK_MONOTONIC_RAW, CLOCK_*_COARSE, CLOCK_TAI and the *_ALARM ids are not defined in SDP 8.0 build 141; CLOCK_MONOTONIC and CLOCK_REALTIME are.",
+    "remedy": "Use CLOCK_MONOTONIC / CLOCK_REALTIME; keep the Linux ids behind #ifdef CLOCK_BOOTTIME.",
+    "verify": "Verified absent on SDP 8.0 build 141.",
+    "examples": {
+      "positive": [
+        "clock_gettime(CLOCK_BOOTTIME, &ts);\n"
+      ],
+      "negative": [
+        "clock_gettime(CLOCK_MONOTONIC, &ts);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-SCHED-LINUX",
+    "title": "Linux-only scheduling policies",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 20,
+    "pattern": "\\bSCHED_(?:BATCH|IDLE|DEADLINE)\\b",
+    "message": "Linux scheduling policies. SCHED_BATCH, SCHED_IDLE and SCHED_DEADLINE are not defined in SDP 8.0 build 141; SCHED_OTHER, SCHED_FIFO, SCHED_RR and SCHED_SPORADIC are.",
+    "remedy": "Use pthread_setschedparam() with SCHED_RR/SCHED_FIFO and choose priorities for the QNX range; nice values do not map directly.",
+    "verify": "Verified absent on SDP 8.0 build 141.",
+    "refs": [
+      "QNX docs: pthread_setschedparam()"
+    ],
+    "examples": {
+      "positive": [
+        "pol = SCHED_BATCH;\n",
+        "p.policy = SCHED_IDLE;\n"
+      ],
+      "negative": [
+        "pol = SCHED_RR;\n",
+        "setpriority(PRIO_PROCESS, 0, -5);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-SYSV-IPC",
+    "title": "System V IPC",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 90,
+    "pattern": "\\b(?:shmget|shmat|semget|semop|msgget|msgsnd|msgrcv)\\s*\\(",
+    "message": "System V IPC is not usable on QNX 8.0 (SDP build 141): shmget/shmat/shmctl/semget/semop/semctl are not declared (sys/sem.h has them in a commented-out 'not currently supported' block; there is no sys/shm.h), and msgget/msgsnd/msgrcv/msgctl are named in <sys/msg.h> but not visible to the compiler.",
+    "remedy": "POSIX shm_open()/sem_open()/mq_open() for a quick port; for a request/reply design use native message passing (ChannelCreate/ConnectAttach, MsgSend/MsgReceive/MsgReply).",
+    "verify": "Verified on SDP 8.0 build 141 (header text and probes).",
+    "refs": [
+      "QNX docs: MsgSend()",
+      "QNX docs: MsgReceive()",
+      "QNX docs: MsgReply()"
+    ],
+    "examples": {
+      "positive": [
+        "id = shmget(key, 4096, IPC_CREAT);\n",
+        "semop(id, &op, 1);\n"
+      ],
+      "negative": [
+        "fd = shm_open(\"/x\", O_RDWR, 0);\n",
+        "q->msgget(1);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-ADV-FUSE",
+    "title": "FUSE filesystem",
+    "category": "advice",
+    "severity": "blocker",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 480,
+    "pattern": "\\bfuse_[a-z_]+\\s*\\(|\\bstruct\\s+fuse_[a-z_]+\\b",
+    "message": "FUSE is a Linux kernel facility.",
+    "remedy": "The QNX counterpart of a user-space filesystem/device is a resource manager: resmgr_attach(), iofunc_*, dispatch_create()/dispatch_block(). Map each fuse_operations callback to an io_* handler.",
+    "refs": [
+      "QNX docs: Writing a Resource Manager",
+      "QNX docs: resmgr_attach()"
+    ],
+    "examples": {
+      "positive": [
+        "fuse_main(argc, argv, &ops, NULL);\n",
+        "struct fuse_operations ops;\n"
+      ],
+      "negative": [
+        "// fuse_main()\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-ADV-DEVNODES",
+    "title": "Linux device node paths",
+    "category": "advice",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "string",
+    "effort": 45,
+    "pattern": "/dev/(?:tty(?:USB|ACM|S|AMA)\\d|video\\d|i2c-\\d|spidev|gpiochip\\d|input/|uio\\d|mem\\b|snd/)",
+    "message": "Device paths are served by drivers; Linux names will not exist on QNX.",
+    "remedy": "Take the device path from configuration and implement a QNX default; QNX devices are published by resource managers (for example UART ports appear as /dev/ser1, /dev/ser2).",
+    "verify": "verify against SDP/BSP: the actual path for each peripheral on the target board.",
+    "examples": {
+      "positive": [
+        "open(\"/dev/ttyUSB0\", O_RDWR);\n",
+        "open(\"/dev/i2c-1\", O_RDWR);\n"
+      ],
+      "negative": [
+        "open(\"/dev/null\", O_RDWR);\n",
+        "// \"/dev/ttyUSB0\"\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-ADV-LINUX-IFDEF",
+    "title": "Linux-only preprocessor branch without QNX branch",
+    "category": "advice",
+    "severity": "info",
+    "confidence": "known",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "include",
+    "effort": 10,
+    "pattern": "^(?![^\\n]*__QNX)[ \\t]*#[ \\t]*(?:if|ifdef|elif)\\b(?![^\\n]*!\\s*(?:defined\\s*\\(?\\s*)?__(?:gnu_)?linux)[^\\n]*\\b(?:__linux__|__linux|__gnu_linux__)\\b",
+    "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+    "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+    "refs": [
+      "QNX docs: Predefined macros (__QNX__, __QNXNTO__)"
+    ],
+    "examples": {
+      "positive": [
+        "#ifdef __linux__\n",
+        "#if defined(__linux__) && defined(X)\n"
+      ],
+      "negative": [
+        "#if !defined(__linux__) && defined(X)\n",
+        "#ifndef __linux__\n",
+        "#if defined(__linux__) || defined(__QNXNTO__)\n",
+        "// #ifdef __linux__\n",
+        "#ifdef __APPLE__\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-ADV-UNIX-SOCKET-IPC",
+    "title": "UNIX-domain socket IPC",
+    "category": "advice",
+    "severity": "info",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 0,
+    "pattern": "\\bstruct\\s+sockaddr_un\\b|\\bAF_UNIX\\b|\\bAF_LOCAL\\b",
+    "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+    "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+    "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+    "examples": {
+      "positive": [
+        "struct sockaddr_un a;\n",
+        "s = socket(AF_UNIX, SOCK_STREAM, 0);\n"
+      ],
+      "negative": [
+        "s = socket(AF_INET, SOCK_STREAM, 0);\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-PATH-PROC-EXE",
+    "title": "/proc/self/exe",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "string",
+    "effort": 20,
+    "pattern": "/proc/(?:self|%d|%u|%ld|\\d+)/exe",
+    "message": "The Linux /proc/<pid>/exe symlink is not a QNX interface.",
+    "remedy": "Use _cmdname() to get the running program's path.",
+    "verify": "verify against SDP: _cmdname() semantics (may return argv[0]-derived path).",
+    "refs": [
+      "QNX docs: _cmdname()"
+    ],
+    "examples": {
+      "positive": [
+        "readlink(\"/proc/self/exe\", b, n);\n"
+      ],
+      "negative": [
+        "// \"/proc/self/exe\"\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-PATH-PROC",
+    "title": "Linux /proc paths",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "string",
+    "effort": 45,
+    "pattern": "/proc/(?!self/exe)(?:self|%d|%u|%ld|\\d+|cpuinfo|meminfo|stat\\b|loadavg|uptime|version|sys/|net/|mounts|cmdline|maps|status|fd\\b|task\\b)",
+    "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
+    "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
+    "verify": "verify against SDP: procfs layout on QNX 8.0.",
+    "refs": [
+      "QNX docs: procfs / DCMD_PROC_INFO"
+    ],
+    "examples": {
+      "positive": [
+        "f = fopen(\"/proc/cpuinfo\", \"r\");\n",
+        "snprintf(p, n, \"/proc/%d/status\", pid);\n"
+      ],
+      "negative": [
+        "f = fopen(\"/etc/passwd\", \"r\");\n",
+        "// \"/proc/cpuinfo\"\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-PATH-SYS",
+    "title": "Linux /sys (sysfs) paths",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "string",
+    "effort": 60,
+    "pattern": "(?<![\\w.-])/sys/(?:class|devices|bus|fs|kernel|block|module|firmware)\\b",
+    "message": "sysfs is a Linux kernel pseudo-filesystem; not assumed on QNX.",
+    "remedy": "Query the real source: sysconf/getifaddrs for system facts, device resource managers for hardware state, the system page for CPU data.",
+    "examples": {
+      "positive": [
+        "open(\"/sys/class/net/eth0/address\", 0);\n",
+        "open(\"/sys/fs/cgroup\", 0);\n"
+      ],
+      "negative": [
+        "open(\"/system/x\", 0);\n",
+        "process_file(\"/proc/sys/kernel/random/entropy_avail\");\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-PATH-DEV-SHM",
+    "title": "/dev/shm",
+    "category": "linux-api",
+    "severity": "minor",
+    "confidence": "known",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "string",
+    "effort": 15,
+    "pattern": "/dev/shm\\b",
+    "message": "On QNX POSIX shared memory objects appear under /dev/shmem, not /dev/shm.",
+    "remedy": "Use shm_open(\"/name\", ...) and let the system pick the namespace instead of hard-coding the directory.",
+    "refs": [
+      "QNX docs: shm_open()"
+    ],
+    "examples": {
+      "positive": [
+        "open(\"/dev/shm/foo\", 2);\n"
+      ],
+      "negative": [
+        "shm_open(\"/foo\", 2, 0);\n",
+        "open(\"/dev/shmem/foo\", 2);\n"
+      ]
+    }
+  }
 ]

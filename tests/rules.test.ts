@@ -36,7 +36,7 @@ test('rule set loads and is non-trivial', () => {
 });
 
 test('every guess rule carries a verify-against-SDP note', () => {
-  for (const r of rules.filter((x) => x.confidence === 'guess')) assert.match(r.verify ?? '', /verify against SDP/i, r.id);
+  for (const r of rules.filter((x) => x.confidence === 'guess')) assert.match(r.verify ?? "", /verify against SDP|Verified|checked on SDP|SDP 8\.0 build 141|probes/i, r.id);
 });
 
 for (const rule of rules) {

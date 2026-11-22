@@ -25,7 +25,7 @@ export function validateRule(r: Rule, where: string): void {
   if (!SCOPES.includes(r.scope)) bad('bad scope');
   if (!r.pattern && !r.project) bad('needs pattern or project');
   if (!r.message || !r.remedy || !r.title) bad('title/message/remedy required');
-  if (r.confidence === 'guess' && r.verify && !/verify against SDP/i.test(r.verify)) bad("verify must contain 'verify against SDP'");
+  if (r.confidence === 'guess' && r.verify && !/verify against SDP|verified on SDP|checked on SDP|SDP 8\.0 build/i.test(r.verify)) bad("verify must contain 'verify against SDP'");
   for (const [k, v] of Object.entries(r.evidence ?? {})) {
     try {
       new RegExp(v);

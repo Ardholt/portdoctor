@@ -1,6 +1,6 @@
 import { cpSync, existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve, extname, dirname } from 'node:path';
+import { join, resolve, extname, dirname, basename } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { scanDir } from './scan.ts';
 import { groupFindings, startHere } from './group.ts';
@@ -207,7 +207,7 @@ section.step{background:var(--s);border:1px solid var(--b);border-radius:10px;pa
 .add{color:var(--ok)}.del{color:var(--bad)}code{font-family:ui-monospace,Menlo,monospace;font-size:.88em}
 </style></head><body><main>
 <h1>PortDoctor fix report</h1>
-<p class="note">${esc(r.root)} &middot; patches were applied to a copy, the original tree is untouched.</p>
+<p class="note">${esc(basename(r.root))} &middot; patches were applied to a copy, the original tree is untouched.</p>
 <p class="banner"><strong>Not a QNX build.</strong> ${esc(r.checkLabel)} Proposed patches are from a model or provider you chose; PortDoctor calls none itself.</p>
 <h2>Before and after</h2>
 <div class="ba"><div class="card"><div class="n">${r.before.findings}</div>findings before<br><span class="note">${sev(r.before)}</span></div>

@@ -1,0 +1,18 @@
+PortDoctor 0.2.0 - demo
+2 files scanned, 4 findings in 4 rule groups (blocker 0, major 0, minor 4, info 0)
+rough effort: about 0.5-1 h (rough, uncalibrated)
+0 matches suppressed inside QNX-specific #if branches; 0 skipped as non-calls or user-defined functions
+build awareness (heuristic): 1 source paths named in CMake/Makefile lists (variables and generated sources are not followed); 0 findings are in files it does not mention
+
+Start here: pipe2 / dup3 (1 sites); SOCK_NONBLOCK / SOCK_CLOEXEC type flags (1 sites); Links -lrt (1 sites)
+
+/dev/shm: 1 site in 1 file  [minor/known] QNX-PATH-DEV-SHM
+  main.c:15
+pipe2 / dup3: 1 site in 1 file  [minor/guess] QNX-API-PIPE2
+  main.c:7
+SOCK_NONBLOCK / SOCK_CLOEXEC type flags: 1 site in 1 file  [minor/guess] QNX-API-SOCK-FLAGS
+  main.c:11
+Links -lrt: 1 site in 1 file  [minor/guess] QNX-BLD-LRT
+  Makefile:1
+
+PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked 'guess' are unverified claims about QNX 8.0 and must be checked against the SDP.

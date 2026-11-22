@@ -1,0 +1,13 @@
+PortDoctor fix: examples/demo
+patched copy: examples/demo-after (copy)
+
+1. QNX-API-PIPE2 main.c:7  APPLIED  check=pass  findings 4 -> 3
+2. QNX-API-SOCK-FLAGS main.c:11  APPLIED  check=pass  findings 3 -> 2
+3. QNX-BLD-LRT Makefile:1  APPLIED  check=skipped  findings 2 -> 1
+4. QNX-PATH-DEV-SHM main.c:15  APPLIED  check=pass  findings 1 -> 0
+
+before: 4 findings (blocker 0, major 0, minor 4, info 0)
+after:  0 findings (blocker 0, major 0, minor 0, info 0)
+
+Compile check here is host gcc syntax-only (-fsyntax-only -D__QNXNTO__), NOT a QNX build: it cannot know whether a QNX header or function exists. A qcc check will replace it; --check is pluggable.
+report: demo-fix-report.html

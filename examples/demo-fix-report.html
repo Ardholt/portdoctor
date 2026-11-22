@@ -1,0 +1,97 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PortDoctor fix report</title><meta name="color-scheme" content="light dark">
+<style>
+:root{--bg:#f4f6f9;--s:#fff;--t:#14181f;--m:#566071;--b:#d5dae3;--ok:#0b6b2f;--bad:#a8200f;--acc:#0a58c9}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1218;--s:#161b23;--t:#e7eaf0;--m:#9aa4b5;--b:#2b3342;--ok:#7ddc9b;--bad:#ff9a8f;--acc:#79afff}}
+body{margin:0;background:var(--bg);color:var(--t);font:15px/1.5 system-ui,sans-serif}main{max-width:1000px;margin:0 auto;padding:1.5rem 1rem 4rem}
+.banner{border-left:4px solid #9a3f00;background:color-mix(in srgb,#ff9a3d 18%,var(--s));padding:.6rem 1rem;border-radius:6px}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}.card{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:.8rem 1rem}.card .n{font-size:2rem;font-weight:700}
+section.step{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:.2rem 1rem .8rem;margin:.8rem 0}
+.pill{font-size:.75rem;border:1px solid var(--b);border-radius:999px;padding:0 .5rem}.st-applied .pill{color:var(--ok);border-color:var(--ok)}.st-applied h3::before{content:"\2713 ";color:var(--ok)}
+.bad{color:var(--bad)}.note{color:var(--m);font-size:.88rem}pre{overflow:auto;background:color-mix(in srgb,var(--t) 5%,var(--s));border:1px solid var(--b);border-radius:8px;padding:.5rem .8rem;font:.82rem/1.45 ui-monospace,Menlo,monospace}
+.add{color:var(--ok)}.del{color:var(--bad)}code{font-family:ui-monospace,Menlo,monospace;font-size:.88em}
+</style></head><body><main>
+<h1>PortDoctor fix report</h1>
+<p class="note">demo &middot; patches were applied to a copy, the original tree is untouched.</p>
+<p class="banner"><strong>Not a QNX build.</strong> Compile check here is host gcc syntax-only (-fsyntax-only -D__QNXNTO__), NOT a QNX build: it cannot know whether a QNX header or function exists. A qcc check will replace it; --check is pluggable. Proposed patches are from a model or provider you chose; PortDoctor calls none itself.</p>
+<h2>Before and after</h2>
+<div class="ba"><div class="card"><div class="n">4</div>findings before<br><span class="note">0 blocker &middot; 0 major &middot; 4 minor &middot; 0 info</span></div>
+<div class="card"><div class="n">0</div>findings after (re-scan of the patched copy)<br><span class="note">0 blocker &middot; 0 major &middot; 0 minor &middot; 0 info</span></div></div>
+<p>4 of 4 chosen findings patched and passing the check.</p>
+<h2>Steps</h2>
+<section class="step st-applied"><h3>1. pipe2 / dup3 <code>main.c:7</code> <span class="pill">applied</span></h3>
+<p class="note">QNX-API-PIPE2 &middot; findings 4 &rarr; 3 &middot; model confidence: low</p>
+<p>Deterministic stub fix for QNX-API-PIPE2.</p>
+<pre class="diff"><span class="">--- a/main.c</span>
+<span class="">+++ b/main.c</span>
+<span class="">@@ -4,7 +4,12 @@</span>
+<span class=""> #include &lt;sys/socket.h&gt;</span>
+<span class=""> </span>
+<span class=""> int make_pipe(int fds[2]) {</span>
+<span class="del">-    return pipe2(fds, O_CLOEXEC);</span>
+<span class="add">+    int r = pipe(fds);</span>
+<span class="add">+    if (r == 0) {</span>
+<span class="add">+        fcntl(fds[0], F_SETFD, FD_CLOEXEC);</span>
+<span class="add">+        fcntl(fds[1], F_SETFD, FD_CLOEXEC);</span>
+<span class="add">+    }</span>
+<span class="add">+    return r;</span>
+<span class=""> }</span>
+<span class=""> </span>
+<span class=""> int make_socket(void) {</span>
+<span class=""></span></pre>
+<p class="note">git apply --check: git apply --check passed</p>
+<p class="note">Check <strong>pass</strong> (errors before 0, after 0): <code>gcc -fsyntax-only -x c -D__QNXNTO__=1 -D__QNX__=1 -I'/tmp/x-after' -I'/tmp/x-after' '/tmp/x-after/main.c'</code></p>
+<p class="note">Assumptions not verified: stub: no QNX fact was checked</p></section>
+<section class="step st-applied"><h3>2. SOCK_NONBLOCK / SOCK_CLOEXEC type flags <code>main.c:11</code> <span class="pill">applied</span></h3>
+<p class="note">QNX-API-SOCK-FLAGS &middot; findings 3 &rarr; 2 &middot; model confidence: low</p>
+<p>Deterministic stub fix for QNX-API-SOCK-FLAGS.</p>
+<pre class="diff"><span class="">--- a/main.c</span>
+<span class="">+++ b/main.c</span>
+<span class="">@@ -13,7 +13,9 @@</span>
+<span class=""> }</span>
+<span class=""> </span>
+<span class=""> int make_socket(void) {</span>
+<span class="del">-    return socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);</span>
+<span class="add">+    int s = socket(AF_INET, SOCK_STREAM, 0);</span>
+<span class="add">+    if (s &gt;= 0) fcntl(s, F_SETFL, O_NONBLOCK);</span>
+<span class="add">+    return s;</span>
+<span class=""> }</span>
+<span class=""> </span>
+<span class=""> int open_shared(void) {</span>
+<span class=""></span></pre>
+<p class="note">git apply --check: git apply --check passed</p>
+<p class="note">Check <strong>pass</strong> (errors before 0, after 0): <code>gcc -fsyntax-only -x c -D__QNXNTO__=1 -D__QNX__=1 -I'/tmp/x-after' -I'/tmp/x-after' '/tmp/x-after/main.c'</code></p>
+<p class="note">Assumptions not verified: stub: no QNX fact was checked</p></section>
+<section class="step st-applied"><h3>3. Links -lrt <code>Makefile:1</code> <span class="pill">applied</span></h3>
+<p class="note">QNX-BLD-LRT &middot; findings 2 &rarr; 1 &middot; model confidence: low</p>
+<p>Deterministic stub fix for QNX-BLD-LRT.</p>
+<pre class="diff"><span class="">--- a/Makefile</span>
+<span class="">+++ b/Makefile</span>
+<span class="">@@ -1,4 +1,4 @@</span>
+<span class="del">-LDLIBS = -lrt</span>
+<span class="add">+LDLIBS =</span>
+<span class=""> </span>
+<span class=""> all: demo</span>
+<span class=""> </span>
+<span class=""></span></pre>
+<p class="note">git apply --check: git apply --check passed</p>
+<p class="note">Check <strong>skipped</strong> (errors before 0, after 0): <code>(no C/C++ file touched)</code></p>
+<p class="note">Assumptions not verified: stub: no QNX fact was checked</p></section>
+<section class="step st-applied"><h3>4. /dev/shm <code>main.c:15</code> <span class="pill">applied</span></h3>
+<p class="note">QNX-PATH-DEV-SHM &middot; findings 1 &rarr; 0 &middot; model confidence: low</p>
+<p>Deterministic stub fix for QNX-PATH-DEV-SHM.</p>
+<pre class="diff"><span class="">--- a/main.c</span>
+<span class="">+++ b/main.c</span>
+<span class="">@@ -19,7 +19,7 @@</span>
+<span class=""> }</span>
+<span class=""> </span>
+<span class=""> int open_shared(void) {</span>
+<span class="del">-    return open(&quot;/dev/shm/demo&quot;, O_RDWR | O_CREAT, 0600);</span>
+<span class="add">+    return shm_open(&quot;/demo&quot;, O_RDWR | O_CREAT, 0600);</span>
+<span class=""> }</span>
+<span class=""> </span>
+<span class=""> int main(void) {</span>
+<span class=""></span></pre>
+<p class="note">git apply --check: git apply --check passed</p>
+<p class="note">Check <strong>pass</strong> (errors before 0, after 0): <code>gcc -fsyntax-only -x c -D__QNXNTO__=1 -D__QNX__=1 -I'/tmp/x-after' -I'/tmp/x-after' '/tmp/x-after/main.c'</code></p>
+<p class="note">Assumptions not verified: stub: no QNX fact was checked</p></section>
+</main></body></html>

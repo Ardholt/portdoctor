@@ -1,29 +1,54 @@
 # PortDoctor
 
-A static scanner that finds the places a Linux/POSIX C/C++ project will likely need work to build and run on
-**QNX 8.0**, tells you where (file:line), how bad it is, and what to do about it, groups the findings by cause, and
-produces a single-file HTML report you can hand to a team. It can also drive a **propose, apply, check, re-scan loop**
-with a model or script of your choice, and emit SARIF, a CMake toolchain file and a `portability.h` skeleton.
+Static scanner for **QNX 8.0 porting blockers** in C/C++ trees. It decides API, header and library findings against a real QNX SDP 8.0 (not from memory), tells you where (file:line),
+how bad, and what to do, groups them by cause, writes a one-file HTML report or SARIF, and can run a **propose, apply, check, re-scan loop** with a model of your choice.
+Zero dependencies; Node.js 22.18+ (runs TypeScript directly, nothing to install or build).
+
+**Devpost category: Developer Tooling & Host Tools** (QNX Global Hackathon). **What a judge should click first:** run the quick start below and open `report.html`: the *Where* strip and the
+verified/known/guess bar are on the first screen, *Start here: top 3* is under them, every finding carries a chip saying whether the SDP proved it. Then read
+[`examples/live-fixes/README.md`](examples/live-fixes/README.md) (three live-model fixes on three real projects, with the failures) and [`examples/build-check-output.txt`](examples/build-check-output.txt).
+
+## Honest limits (read before the rest)
+
+- **Nothing was run on QNX.** No finding, patch or demo was executed on a QNX target. What was done in a real SDP 8.0 (Stable Build 141, qcc 12.2.0, x86_64 and aarch64le):
+  header search, `nm` of the SDP libraries, and `qcc` compile and link probes. A QNX 8.0 x86_64 QEMU image containing the patched demo was **built** (`mkqnximage`) but **not booted**: QEMU is not installed in the
+  sandbox (see [`examples/qnx-run/README.md`](examples/qnx-run/README.md), exact error and what is needed).
+- **Compile-only.** Every patch check is `qcc -c` (no link of C files), or for Makefile/CMake changes `make -n` / `cmake` configure with the generated toolchain plus a `qcc` link probe for each `-l` library. "Passes" means "compiles", not "behaves like the Linux code". Real projects (cJSON, kilo, Lua) were built with qcc and produced QNX ELF files that were not run.
+- **The live-model demonstration was made by the author's own model session** (Claude Sonnet 5.5), not by `providers/claude-cli.sh`: the `claude` CLI was logged out on every host available. Three corpus fixes: one clean qcc pass (a patch that changed nothing the compiler sees), two blocked by errors that were already in the file (a QNX incompatibility the scan had not predicted). Transcripts are in `examples/live-fixes/`.
+- **Precision is modest and self-judged:** on a held-out 40-finding sample 87.5% of findings did what their rule says, 0 were rule bugs, but only 1 in 40 was a plain "fix this now" finding; most real concerns sit behind a guard or in a Linux-only file ([`corpus/PRECISION.md`](corpus/PRECISION.md), one reader, the author).
+- One SDP build (141). The findings the SDP cannot decide (`/proc`, `#ifdef` advice, device nodes, most build-system advice) stay `known` or `guess`. Effort figures are uncalibrated. A clean scan is not proof of portability. Details: [Honest limits](#honest-limits-1) below and `PD4.md`.
+
+## 60-second quick start
+
+```
+node --version                                   # v22.18 or newer
+git clone https://github.com/Ardholt/portdoctor && cd portdoctor
+node bin/portdoctor.mjs scan examples/demo-epoll --html -o report.html     # the bundled SDP 8.0 manifest is used by default
+xdg-open report.html                              # or open / start; add --no-sdp-manifest to see the unverified scan
+node bin/portdoctor.mjs scan examples/demo-epoll --sarif -o portdoctor.sarif   # for CI and IDEs
+node bin/portdoctor.mjs fix examples/demo-epoll --provider "node providers/replay.mjs examples/patches/demo-epoll.jsonl" --count 3 -o fix.html
+node --test tests/                                # the test suite (no model is called)
+```
+
+The fix command above replays recorded patches. With a logged-in model CLI: `--provider providers/claude-cli.sh`. In an SDP shell add `--check qcc` for a real QNX compile check.
 
 ```
 portdoctor scan ./my-project --html -o report.html
 portdoctor scan ./my-project --sarif -o portdoctor.sarif
 portdoctor scan ./my-project            # text summary, grouped by rule
-portdoctor fix  ./my-project --provider providers/claude-cli.sh --count 3
+portdoctor fix  ./my-project --provider providers/claude-cli.sh --count 3 [--check qcc]
 portdoctor init-toolchain ./my-project --arch aarch64le --out ./qnx
 ```
 
-**Verified against a real SDP (PD3).** With `--sdp-manifest data/sdp-8.0-manifest.json`, API, header and library findings are decided
-against the QNX SDP 8.0 (Stable Build 141, qcc 12.2.0, x86_64 and aarch64le): header search, exported-symbol check and a real `qcc`
-compile/link probe. Such findings are labelled **verified-absent** / **verified-present** / **verified-partial**; an API the SDP has is
-dropped (not reported as missing). Everything else keeps `known` (recalled) or `guess` (unverified): `/proc` and `/sys` paths, `#ifdef`
-advice, device nodes, FUSE, most build-system advice. **Nothing was run on a QNX target** (no QEMU/KVM was available): verified
-means compile/link/symbol evidence, not runtime behaviour. See `PD3.md` and `corpus/SDP-DELTA.md`.
+**Verified against a real SDP (PD3, defaults since PD4).** API, header and library findings are decided against the bundled manifest (`data/sdp-8.0-manifest.json`: SDP 8.0 Stable Build 141, qcc 12.2.0, x86_64 and aarch64le):
+header search, exported-symbol check and a real `qcc` compile/link probe. Such findings are labelled **verified-absent** / **verified-present** / **verified-partial**; an API the SDP has is dropped
+(not reported as missing). Everything else keeps `known` (recalled) or `guess` (unverified). `--no-sdp-manifest` switches this off. Findings in other-OS, vendored and test paths are hidden by default with a visible count (`--show-all`).
+See `PD3.md`, `PD4.md` and `corpus/SDP-DELTA.md`.
 
 ## What it does
 
 - Walks a tree of C/C++ sources, `CMakeLists.txt`/`*.cmake`, Makefiles, and `configure.ac`.
-- Applies **55 rules** that live as data in `rules/*.json`. Each has severity, `known|guess`, a remedy, a "verify against SDP" note
+- Applies **61 rules** that live as data in `rules/*.json`. Each has severity, `known|guess`, a remedy, a "verify against SDP" note
   for guesses, and positive and negative examples that the tests run.
 - Understands enough C to avoid false hits: comments and string literals are masked; `#if` nesting is tracked (matches inside
   `#ifdef __QNXNTO__` are suppressed and counted, Linux-only blocks are flagged, other guards are shown not judged);
@@ -53,7 +78,7 @@ node --test tests/
 
 `scan` options: `--json`, `--html`, `--sarif`, `-o <file>`, `--fail-on <blocker|major|minor|info>` (exit 1, for CI),
 `--ignore <regex>` (repeatable), `--ignore-preset other-os`, `--no-build-awareness`, `--rules <dir>`,
-`--sdp-manifest <file>` (verify against the SDP manifest), `--sdp-keep-present` (keep what the SDP disproves, as info).
+`--sdp-manifest <file>` (default: the bundled manifest), `--no-sdp-manifest`, `--sdp-keep-present` (keep what the SDP disproves, as info), `--show-all` (include the other-OS/vendored/test findings that are hidden by default).
 
 The manifest is made by `tools/sdp-manifest.mjs` run inside the SDP environment (it needs `QNX_TARGET`, `qcc`, the SDP `nm`); it stores
 derived facts only (names, booleans, header paths, library names, versions), no vendor headers or binaries. `tools/jail.sh`,
@@ -86,6 +111,7 @@ fails on `sys/epoll.h`, after them the project builds with `make CC=qcc` for bot
 A patch that passes is compile-verified, not run.
 
 ## Honest limits
+<a id="honest-limits-1"></a>
 
 - **Nothing was run on a QNX target.** Verified = header/symbol/`qcc` compile-and-link evidence from SDP 8.0 build 141 (x86_64, aarch64le); no
   QEMU or KVM was available. Without `--sdp-manifest`, findings are text matches and the labels are `known`/`guess` as before. Another SDP

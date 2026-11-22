@@ -94,15 +94,14 @@ portdoctor fix <dir> --provider "<cmd>" [--check "<cmd>|qcc[:variant]"] [--sdp-m
 2. Send each to the provider: request JSON on stdin (prompt, schema, finding, code window); the provider prints one patch JSON object.
    `PD_ROOT` in its environment is the project copy.
 3. Validate against the schema, `git apply --check` (paths outside the root are refused), apply **on a copy** (the original is never touched).
-4. Run the check command. Default: host `gcc -fsyntax-only -D__QNXNTO__` on the touched C file (`g++` for C++); other file types are `skipped`.
-   `--check qcc` (or `qcc:gcc_ntoaarch64le`) compiles each touched file with the QNX SDP's `qcc`/`q++ -c` instead (SDP environment must be sourced);
+4. Run the check command. Default: host `gcc -fsyntax-only -D__QNXNTO__` on the touched C file (`g++` for C++); other file types are `skipped` unless `--check qcc` is used.
+   `--check qcc` (or `qcc:gcc_ntoaarch64le`) compiles each touched file with the QNX SDP's `qcc`/`q++ -c` instead (SDP environment must be sourced); Makefile/`*.mk`/CMake changes are checked with `make -n` / `cmake` configure (generated `qnx-toolchain.cmake`) plus a `qcc` link probe for every `-l` library; `--qcc-flags "<flags>"` adds include paths or defines (for example a configured project's generated headers);
    any other `--check` command is pluggable; `{file}`, `{root}`, `{dir}` are substituted. A failing check reverts the patch.
 5. Re-scan the copy; print before/after counts; write the report. Exit 0 only if every step applied.
 
 `providers/claude-cli.sh` calls `claude -p` (or `PD_LLM_CMD`) with the prompt on stdin and exits 3 with a message if the CLI is missing.
 That uses your account; PortDoctor itself never calls a model, the tests never run a real one (`examples/stub-provider.mjs` is a
-deterministic stub), and the scanner makes no network calls. `examples/` has two before/after demos (`demo`: 5 findings, `demo-epoll`: 12 findings,
-both to 0). `providers/record.sh` records a provider's responses and `providers/replay.mjs` replays them (for places a model cannot run, such as a
+deterministic stub), and the scanner makes no network calls. `examples/` has two before/after demos (`demo`: 5 findings, 3 with the manifest; `demo-epoll`: 12 findings; both to 0), `live-fixes/` (three live-model fixes on corpus files), `qnx-run/` (the QNX image attempt) and `build-check-output.txt`. `providers/record.sh` records a provider's responses and `providers/replay.mjs` replays them (for places a model cannot run, such as a
 network-less SDP sandbox). In PD3 the epoll demo's patches were written by the author's own model session, **not** by `claude-cli.sh` (no logged-in
 model CLI was available on the build box), recorded in `examples/patches/demo-epoll.jsonl` and replayed with `--check qcc`: before the patches `qcc`
 fails on `sys/epoll.h`, after them the project builds with `make CC=qcc` for both targets. Compile and link only; not run.

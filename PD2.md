@@ -25,7 +25,7 @@ Version bumped to 0.2.0. No QNX SDP exists yet: every QNX claim below is `known`
    Chrome over the DevTools protocol (`tests/chrome.test.ts`) and a screenshot read by eye (libev, 1440 wide).
 4. **AI loop** (9caeb83). `portdoctor fix <dir> --provider <cmd> --check "<cmd>" --count N`: propose -> schema -> `git apply --check` -> apply on a copy ->
    check (default host `gcc -fsyntax-only -D__QNXNTO__`) -> revert on failure -> re-scan -> before/after -> `fix-report.html`.
-   `providers/claude-cli.sh` (`claude -p`, exits 3 with a message if absent). Tested end to end with a deterministic stub: demo 4 -> 0 findings.
+   `providers/cli-provider.sh` (runs the command in `PD_LLM_CMD`, exits 3 with a message if absent). Tested end to end with a deterministic stub: demo 4 -> 0 findings.
 5. **SARIF and toolchain** (54ad567). `scan --sarif` (2.1.0), `init-toolchain` writes `qnx-toolchain.cmake` (CMAKE_SYSTEM_NAME QNX, qcc/q++, -V variant)
    and a `portability.h` skeleton listing flagged APIs with TODO; it defines nothing it cannot know.
 6. **Build awareness** (bd56ae9). compile_commands.json, else CMake/Makefile source lists: files not mentioned get "not in build list?" (heuristic, a
@@ -46,7 +46,7 @@ Version bumped to 0.2.0. No QNX SDP exists yet: every QNX claim below is `known`
 - **Anything on QNX.** No SDP, no `qcc`, no target. All `known` claims are recalled; all `guess` claims are unchecked. `-Vgcc_ntoaarch64le` /
   `gcc_ntox86_64`, CMake's `CMAKE_<LANG>_COMPILER_TARGET` behaviour with qcc, `SHM_ANON`, kqueue/`getpeereid` availability in io-sock: not checked.
   The generated `qnx-toolchain.cmake` and `portability.h` were never used with an SDP.
-- **The fix loop with a real model.** `providers/claude-cli.sh` was tested only with a fake LLM command and the missing-CLI path; no real `claude -p` call
+- **The fix loop with a real model.** `providers/cli-provider.sh` was tested only with a fake LLM command and the missing-CLI path; no real model CLI call
   was made, so prompt quality and schema compliance with a real model are untested. The demo's patches come from a stub written for those four lines.
 - **The compile check is host gcc syntax only.** It passes patches that use APIs QNX may not have, and it skips Makefile edits.
 - **Precision numbers**: one reader (an AI agent), 60 findings, many rules with n of 1 to 3; the three bugs it found were fixed afterwards and the fixed rules were

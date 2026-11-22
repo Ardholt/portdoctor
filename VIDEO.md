@@ -1,6 +1,6 @@
 # Screen-capture shot list (2:30)
 
-Real commands only, one terminal plus one browser window, repo root as the working directory. Everything below was run for this slice; the expected lines are what the tool printed. Do **not** claim anything ran on QNX.
+Real commands only, one terminal plus one browser window, repo root as the working directory. Everything below was run for this slice; the expected lines are what the tool printed. Say plainly what ran on QNX: only the final loopback echo demo, booted in QEMU emulation; the scan and fix checks are compile-only.
 Record the terminal at about 110 columns, the browser at 1440x900. Pre-open an SDP shell (`source <sdp>/qnxsdp-env.sh`) in a second terminal tab for shot 4.
 
 | Time | Screen | Say / show | Command |
@@ -11,8 +11,8 @@ Record the terminal at about 110 columns, the browser at 1440x900. Pre-open an S
 | 1:15-1:50 | SDP terminal | The fix loop with a model's patches (replayed recordings: say so), checked by the QNX compiler. Show `QNX-API-EPOLL server.c APPLIED check=pass` and the Makefile step: `check=pass`, with the `make -n` / link-probe line. The original fails on `sys/epoll.h`. | `node bin/portdoctor.mjs fix examples/demo-epoll --provider "node providers/replay.mjs examples/patches/demo-epoll.jsonl" --check qcc --count 3 -o fix.html` (expect 12 -> 0, errors 1->0 on `server.c`; steps 1-2 applied) |
 | 1:50-2:05 | terminal | The live-model run, honestly: three corpus fixes, one clean qcc pass, two blocked by errors already in the files. | `sed -n 1,25p examples/live-fixes/README.md` |
 | 2:05-2:15 | terminal | SARIF for CI and IDEs. | `node bin/portdoctor.mjs scan examples/demo-epoll --sarif -o portdoctor.sarif && head -12 portdoctor.sarif` |
-| 2:15-2:30 | terminal | What did not work, so the viewer knows: the QNX image with the patched demo was built (`mkqnximage`), the boot did not happen because QEMU is not installed in the sandbox; exact error is in the repo. Close: `node --test tests/` result. | `cat examples/qnx-run/README.md \| head -12` then `node --test tests/ 2>&1 \| tail -8` |
+| 2:15-2:40 | terminal | The patched demo on QNX itself: the image was booted in QEMU (emulated, headless) and the client prints the echo from the patched server. Say what it is: a loopback echo on an emulated x86_64 QNX 8.0, not a real port. Close: `node --test tests/` result. | `cat examples/qnx-run/*.txt \| sed -n 1,200p` (the console capture, 36 lines; the other .txt is the image build log) then `node --test tests/ 2>&1 \| tail -8` |
 
-**If the QEMU boot is later made to work** (see `examples/qnx-run/README.md`), replace the 2:15 beat with the captured console log: `PD-CLIENT echo ok: hello from portdoctor`. Until then it is not shown and not claimed.
+The QEMU beat is real: the console capture (the `.txt` file under `examples/qnx-run/`) shows `PD-CLIENT echo ok: hello from portdoctor`. Do not say it ran on hardware or aarch64.
 
 Capture notes: use a fresh clone (`git clone https://github.com/Ardholt/portdoctor`), Node 22.18+, no network needed after the clone. The replayed patches are recordings of a model's replies; say "recorded" on screen at 1:15.

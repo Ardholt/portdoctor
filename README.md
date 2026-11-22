@@ -10,11 +10,11 @@ verified/known/guess bar are on the first screen, *Start here: top 3* is under t
 
 ## Honest limits (read before the rest)
 
-- **Nothing was run on QNX.** No finding, patch or demo was executed on a QNX target. What was done in a real SDP 8.0 (Stable Build 141, qcc 12.2.0, x86_64 and aarch64le):
-  header search, `nm` of the SDP libraries, and `qcc` compile and link probes. A QNX 8.0 x86_64 QEMU image containing the patched demo was **built** (`mkqnximage`) but **not booted**: QEMU is not installed in the
-  sandbox (see [`examples/qnx-run/README.md`](examples/qnx-run/README.md), exact error and what is needed).
+- **Almost nothing was run on QNX.** Only the final demo ran (below); no other finding, patch or check was executed on a QNX target. What was done in a real SDP 8.0 (Stable Build 141, qcc 12.2.0, x86_64 and aarch64le):
+  header search, `nm` of the SDP libraries, and `qcc` compile and link probes. The patched epoll demo (server and client) was also booted on a QNX 8.0 x86_64 image in QEMU (emulated, headless) and echoed one line over loopback;
+  console log in the `.txt` file under `examples/qnx-run/`, details and caveats in [`examples/qnx-run/README.md`](examples/qnx-run/README.md).
 - **Compile-only.** Every patch check is `qcc -c` (no link of C files), or for Makefile/CMake changes `make -n` / `cmake` configure with the generated toolchain plus a `qcc` link probe for each `-l` library. "Passes" means "compiles", not "behaves like the Linux code". Real projects (cJSON, kilo, Lua) were built with qcc and produced QNX ELF files that were not run.
-- **The live-model demonstration was made by the author's own model session** (Claude Sonnet 5.5), not by `providers/claude-cli.sh`: the `claude` CLI was logged out on every host available. Three corpus fixes: one clean qcc pass (a patch that changed nothing the compiler sees), two blocked by errors that were already in the file (a QNX incompatibility the scan had not predicted). Transcripts are in `examples/live-fixes/`.
+- **The live-model demonstration was made by the author's own model session** (a model), not by `providers/cli-provider.sh`: no model CLI was logged in on any host available. Three corpus fixes: one clean qcc pass (a patch that changed nothing the compiler sees), two blocked by errors that were already in the file (a QNX incompatibility the scan had not predicted). Transcripts are in `examples/live-fixes/`.
 - **Precision is modest and self-judged:** on a held-out 40-finding sample 87.5% of findings did what their rule says, 0 were rule bugs, but only 1 in 40 was a plain "fix this now" finding; most real concerns sit behind a guard or in a Linux-only file ([`corpus/PRECISION.md`](corpus/PRECISION.md), one reader, the author).
 - One SDP build (141). The findings the SDP cannot decide (`/proc`, `#ifdef` advice, device nodes, most build-system advice) stay `known` or `guess`. Effort figures are uncalibrated. A clean scan is not proof of portability. Details: [Honest limits](#honest-limits-1) below and `PD4.md`.
 
@@ -30,13 +30,13 @@ node bin/portdoctor.mjs fix examples/demo-epoll --provider "node providers/repla
 node --test tests/                                # the test suite (no model is called)
 ```
 
-The fix command above replays recorded patches. With a logged-in model CLI: `--provider providers/claude-cli.sh`. In an SDP shell add `--check qcc` for a real QNX compile check.
+The fix command above replays recorded patches. With any model CLI that reads stdin and writes stdout (set `PD_LLM_CMD`): `--provider providers/cli-provider.sh`. In an SDP shell add `--check qcc` for a real QNX compile check.
 
 ```
 portdoctor scan ./my-project --html -o report.html
 portdoctor scan ./my-project --sarif -o portdoctor.sarif
 portdoctor scan ./my-project            # text summary, grouped by rule
-portdoctor fix  ./my-project --provider providers/claude-cli.sh --count 3 [--check qcc]
+portdoctor fix  ./my-project --provider providers/cli-provider.sh --count 3 [--check qcc]
 portdoctor init-toolchain ./my-project --arch aarch64le --out ./qnx
 ```
 
@@ -99,10 +99,10 @@ portdoctor fix <dir> --provider "<cmd>" [--check "<cmd>|qcc[:variant]"] [--sdp-m
    any other `--check` command is pluggable; `{file}`, `{root}`, `{dir}` are substituted. A failing check reverts the patch.
 5. Re-scan the copy; print before/after counts; write the report. Exit 0 only if every step applied.
 
-`providers/claude-cli.sh` calls `claude -p` (or `PD_LLM_CMD`) with the prompt on stdin and exits 3 with a message if the CLI is missing.
+`providers/cli-provider.sh` runs the command in `PD_LLM_CMD` with the prompt on stdin and exits 3 with a message if the CLI is missing.
 That uses your account; PortDoctor itself never calls a model, the tests never run a real one (`examples/stub-provider.mjs` is a
 deterministic stub), and the scanner makes no network calls. `examples/` has two before/after demos (`demo`: 5 findings, 3 with the manifest; `demo-epoll`: 12 findings; both to 0), `live-fixes/` (three live-model fixes on corpus files), `qnx-run/` (the QNX image attempt) and `build-check-output.txt`. `providers/record.sh` records a provider's responses and `providers/replay.mjs` replays them (for places a model cannot run, such as a
-network-less SDP sandbox). In PD3 the epoll demo's patches were written by the author's own model session, **not** by `claude-cli.sh` (no logged-in
+network-less SDP sandbox). In PD3 the epoll demo's patches were written by the author's own model session, **not** by `cli-provider.sh` (no logged-in
 model CLI was available on the build box), recorded in `examples/patches/demo-epoll.jsonl` and replayed with `--check qcc`: before the patches `qcc`
 fails on `sys/epoll.h`, after them the project builds with `make CC=qcc` for both targets. Compile and link only; not run.
 
@@ -112,8 +112,8 @@ A patch that passes is compile-verified, not run.
 ## Honest limits
 <a id="honest-limits-1"></a>
 
-- **Nothing was run on a QNX target.** Verified = header/symbol/`qcc` compile-and-link evidence from SDP 8.0 build 141 (x86_64, aarch64le); no
-  QEMU or KVM was available. Without `--sdp-manifest`, findings are text matches and the labels are `known`/`guess` as before. Another SDP
+- **Only one thing ran on QNX:** the patched epoll demo's loopback echo, in an emulated (QEMU, no KVM) x86_64 image. Everything else is header/symbol/`qcc` compile-and-link evidence from SDP 8.0 build 141 (x86_64, aarch64le); nothing ran on hardware or aarch64.
+  Without `--sdp-manifest`, findings are text matches and the labels are `known`/`guess` as before. Another SDP
   version needs its own manifest (`tools/sdp-manifest.mjs`).
 - `known` still means "documented and recalled", not verified. Doc `refs` are page names, not fetched URLs. Measured on the SDP: inotify, accept4,
   pipe2, SOCK_NONBLOCK/CLOEXEC, MSG_NOSIGNAL, TCP_FASTOPEN/TCP_INFO and gettid exist; epoll, eventfd, timerfd, signalfd, kqueue, memfd_create, prctl,
@@ -137,7 +137,7 @@ bin/portdoctor.mjs   entry point
 src/                 scan.ts (walker, masking, #if tracking, call context), group.ts (rule groups, effort range), build.ts,
                      report-html.ts, propose.ts, fix.ts, sarif.ts, init.ts, rules.ts, cli.ts
 rules/*.json         the rules (data) with positive and negative examples
-providers/           claude-cli.sh (provider script for a local LLM CLI)
+providers/           cli-provider.sh (provider script for a local LLM CLI)
 examples/            demo project, stub provider, before/after outputs
 tests/               node --test (includes a headless-Chrome test with real mouse clicks; skipped if Chrome is absent)
 corpus/              pinned scans of seven OSS projects, reports, hand reviews (CORPUS.md, PRECISION.md)

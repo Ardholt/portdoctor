@@ -105,8 +105,8 @@ test('a patch touching paths outside the project is refused', () => {
   }
 });
 
-test('providers/claude-cli.sh: exits 3 with a clear message when the LLM CLI is missing; passes the prompt on stdin when present', () => {
-  const sh = join(ROOT, 'providers', 'claude-cli.sh');
+test('providers/cli-provider.sh: exits 3 with a clear message when the LLM CLI is missing; passes the prompt on stdin when present', () => {
+  const sh = join(ROOT, 'providers', 'cli-provider.sh');
   const req = JSON.stringify({ prompt: 'PROMPT-X', schema: { type: 'object' }, finding: {}, window: {} });
   const missing = spawnSync(sh, [], { input: req, encoding: 'utf8', env: { ...process.env, PD_LLM_CMD: 'definitely-not-a-real-llm-cli -p' } });
   assert.equal(missing.status, 3);

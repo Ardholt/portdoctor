@@ -2,11 +2,11 @@
 
 Each block is the exact request PortDoctor's fix loop built (prompt text; the full request incl. JSON schema is `<name>.req.json`) and the model's raw reply (`<name>.reply.json`).
 
-**Provider: the author's own model session, not `providers/claude-cli.sh`.** The `claude -p` CLI was refused on every host available (`Not logged in · Please run /login`; the OAuth session had expired), so the model call was made by the assistant that built this slice: **Claude Sonnet 5.5 (`claude-sonnet-5-5`)**, answering from the request text alone (prompt + 31-line code window, nothing else of the file), then the replies were replayed through `providers/replay.mjs` in the SDP sandbox. The unified diffs were typed by the model, then checked with `git apply --check` before the loop ran. Token usage is not recorded: there is no API frame for a session reply.
+**Provider: the author's own model session, not `providers/cli-provider.sh`.** The model CLI was refused on every host available (`Not logged in · Please run /login`; the OAuth session had expired), so the model call was made by the assistant that built this slice: **a model**, answering from the request text alone (prompt + 31-line code window, nothing else of the file), then the replies were replayed through `providers/replay.mjs` in the SDP sandbox. The unified diffs were typed by the model, then checked with `git apply --check` before the loop ran. Token usage is not recorded: there is no API frame for a session reply.
 
 ## libev: QNX-API-EVENTFD at ev.c:2390
 
-Model: claude-sonnet-5-5 (Claude Sonnet 5.5), via the author's session.
+Model: a model, via the author's session.
 
 ### Prompt
 
@@ -84,7 +84,7 @@ Rules for your answer:
 
 ## dropbear: QNX-API-PRCTL at src/svr-main.c:79
 
-Model: claude-sonnet-5-5 (Claude Sonnet 5.5), via the author's session.
+Model: a model, via the author's session.
 
 ### Prompt
 
@@ -164,7 +164,7 @@ Rules for your answer:
 
 ## iperf: QNX-API-SENDFILE at src/net.c:788
 
-Model: claude-sonnet-5-5 (Claude Sonnet 5.5), via the author's session.
+Model: a model, via the author's session.
 
 ### Prompt
 

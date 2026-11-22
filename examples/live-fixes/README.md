@@ -1,7 +1,7 @@
 # Live model fixes on three corpus projects (PD4)
 
-Three findings on three different files, each fixed by a real model reply and checked by the SDP compiler. **Who was the model:** the CLI provider (`providers/claude-cli.sh`)
-is refused on every host available (`Not logged in`), so the model was the assistant that built this slice, Claude Sonnet 5.5 (`claude-sonnet-5-5`), answering from the exact request
+Three findings on three different files, each fixed by a real model reply and checked by the SDP compiler. **Who was the model:** the CLI provider (`providers/cli-provider.sh`)
+is refused on every host available (`Not logged in`), so the model was the assistant that built this slice, a model, answering from the exact request
 the loop built. Full prompts, model name and raw replies: [TRANSCRIPTS.md](TRANSCRIPTS.md). The replies were replayed with `providers/replay.mjs` inside the sandbox (no network there).
 Reproduce the check: `bash tools/live-fix-check.sh` in an SDP environment; its output is [qcc-check-output.txt](qcc-check-output.txt).
 
@@ -17,4 +17,4 @@ Verdict, plainly: the loop ran live-model-shaped input end to end on three real 
 and the clean pass is for a patch that changed nothing the compiler sees. The check is only as informative as the baseline file is compilable, which is why the report now shows before/after error counts.
 
 The provider failure used to print an empty `provider exit 1:`; it now prints the CLI's own message (this CLI reports login errors on stdout) and a hint:
-`claude-cli.sh: 'claude -p' exited with status 1: Not logged in · Please run /login` / `hint: the model CLI is not logged in; ...`.
+`cli-provider.sh: '<model CLI>' exited with status 1: Not logged in · Please run /login` / `hint: the model CLI is not logged in; ...`.

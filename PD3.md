@@ -48,9 +48,9 @@ It missed one thing entirely (below).
 ## 4. qcc verification of the AI loop
 
 - `portdoctor fix --check qcc[:variant]` runs `qcc -V<variant> -c` (`q++` for C++) on every touched C/C++ file, baseline before and after, and reverts on failure; `--sdp-manifest` makes the counts SDP-aware.
-- **The model part, said plainly:** `providers/claude-cli.sh` could not run (jail has no network; the `claude` CLI on the uk box and on the VPS is not logged in; I tried `claude -p`: "Not logged in" / "OAuth session expired").
-  The two patches in `examples/patches/demo-epoll.jsonl` were therefore written by the author's own model session (Claude, in this build), outside the jail, for the exact request `portdoctor` built, recorded in the
-  `providers/record.sh` format, and replayed in the jail with `providers/replay.mjs`. They are real patches by a real model, not the stub, but not produced by `claude-cli.sh`.
+- **The model part, said plainly:** `providers/cli-provider.sh` could not run (jail has no network; no model CLI was logged in on the build hosts ("Not logged in")).
+  The two patches in `examples/patches/demo-epoll.jsonl` were therefore written by the author's own model session (a model, in this build), outside the jail, for the exact request `portdoctor` built, recorded in the
+  `providers/record.sh` format, and replayed in the jail with `providers/replay.mjs`. They are real patches by a real model, not the stub, but not produced by `cli-provider.sh`.
 - Demo `examples/demo-epoll` (epoll echo server + `-lrt`): scan 12 findings (9 blockers). On `qcc` the original **fails** (`fatal error: sys/epoll.h: No such file or directory`, both targets) and `make CC=qcc` fails.
   Fix loop: EPOLL patch applied (qcc check pass, baseline 1 error -> 0), LSOCKET patch applied (drops -lrt, adds -lsocket), HDR finding already resolved; **12 -> 0 findings**; the patched project builds with
   `make CC="qcc -Vgcc_ntox86_64"` and `-Vgcc_ntoaarch64le` (ELF for QNX). Compile and link only, not run. Output: `examples/demo-qcc-output.txt`, `examples/demo-epoll-fix-qcc-report.html`.
@@ -81,7 +81,7 @@ The generated `qnx-toolchain.cmake` worked unedited for both variants; `portabil
 - One SDP build (141), two targets. Another SDP version needs a new manifest; the manifest does not say what a QNX target image (not the SDP) contains: `/proc`, `/dev/shmem`, `/dev/urandom`, `-lfsnotify` at runtime are unchecked.
 - The probe uses a fixed common-header set plus the defining header; a name needing an odd header or a feature macro outside the three variants tried could be called absent (the compiler error is kept in the manifest per name). Header text search ignores `#if`; the compile probe decides.
 - 229 corpus findings (46%) are not decidable from the SDP and keep known/guess. `#ifdef`/guard logic, other-OS files and build-selected files are unchanged from PD2 (precision numbers in `corpus/PRECISION.md` were **not** re-sampled).
-- The AI loop was not exercised with `claude-cli.sh` (no logged-in model CLI); the patches come from the author's model session and were replayed. The loop is demonstrated on two tiny demos, not on a real project port. Only compile and link were checked after patching, no tests ran.
+- The AI loop was not exercised with `cli-provider.sh` (no logged-in model CLI); the patches come from the author's model session and were replayed. The loop is demonstrated on two tiny demos, not on a real project port. Only compile and link were checked after patching, no tests ran.
 - Flag probes link a trivial program only; sanitizers/`-Wl` options were not tried on a real shared library. `-fsanitize=address` rejection was seen on this SDP's qcc, not investigated.
 - The recall measure above is 5 small builds; effort figures remain uncalibrated constants; accessibility and cross-platform items from PD1/PD2 are unchanged.
 - Work copies remain in the jail under `$WORK` (repo copy, corpus sources, build outputs); ops may reap them. No JANITOR lease was taken.

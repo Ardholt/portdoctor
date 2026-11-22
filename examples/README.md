@@ -20,4 +20,4 @@ was written to fit these four lines, so it demonstrates the pipeline, not the qu
 `-fsyntax-only`**, not a QNX build; with the default check a `Makefile` change is not checked at all (`skipped`); `--check qcc` checks it with `make -n` and a link probe per `-l` library. Whether `shm_open` / `fcntl`
 behave as hoped on QNX 8.0 is not verified.
 
-With a real model: `portdoctor fix <dir> --provider providers/claude-cli.sh --count 3` (uses the `claude` CLI if installed; see the script header).
+With a real model: `portdoctor fix <dir> --provider providers/cli-provider.sh --count 3` (set `PD_LLM_CMD` to any CLI that reads the prompt on stdin and writes the reply to stdout; see the script header).

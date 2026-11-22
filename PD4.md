@@ -5,7 +5,7 @@ Everything SDP-related ran only in the sandbox (no network); no vendor header, l
 
 ## What was done, and what it showed
 
-1. **Live model fixes** (`examples/live-fixes/`). The `claude` CLI is logged out on the UK box and the VPS ("Not logged in"), so `providers/claude-cli.sh` could not run; **the model was the assistant that built this slice, Claude Sonnet 5.5 (`claude-sonnet-5-5`)**, answering from the request text the loop built (prompt + 31-line code window), then replayed in the jail.
+1. **Live model fixes** (`examples/live-fixes/`). No model CLI was logged in on the build hosts ("Not logged in"), so `providers/cli-provider.sh` could not run; **the model was the assistant that built this slice, a model**, answering from the request text the loop built (prompt + 31-line code window), then replayed in the jail.
    Three findings on three files: libev `ev.c` (EVENTFD), dropbear `src/svr-main.c` (PRCTL), iperf `src/net.c` (SENDFILE). Each project was configured with the SDP's qcc first (otherwise every compile stops at `config.h`). Result, honestly: **libev: qcc pass 0 -> 0, but the patch changes nothing the compiler sees** (libev's configure had already switched eventfd off);
    **dropbear: no-worse 4 -> 4**, **iperf: no-worse 1 -> 1**: both files already fail on qcc before the patch (dropbear `compat.h` redeclares `htole64` & co. which QNX defines as macros; iperf `portable_endian.h` includes the absent `<endian.h>`), so the check cannot judge the patch beyond "added no error".
    The model marked the iperf reply `needsHuman: true`. No token usage recorded (a session reply has no usage frame).
@@ -29,7 +29,7 @@ Everything SDP-related ran only in the sandbox (no network); no vendor header, l
 ## What was NOT verified
 
 - **Nothing ran on QNX** (no QEMU in the sandbox, no KVM). Every "pass" is compile/link-probe evidence.
-- **The AI loop with a live CLI provider**: `claude -p` is logged out everywhere; the three replies came from a session, not the CLI; no token/usage figures. The one clean live pass is for a patch that is a no-op to qcc; two are blocked by pre-existing errors.
+- **The AI loop with a live CLI provider**: no model CLI was logged in anywhere; the three replies came from a session, not the CLI; no token/usage figures. The one clean live pass is for a patch that is a no-op to qcc; two are blocked by pre-existing errors.
 - The model's three patches are not tested beyond compile: the dropbear `pthread_setname_np` call and the iperf `HAVE_SENDFILE` exclusion rely on code the model did not see (marked in the replies' assumptions).
 - Precision numbers: n=40, one reader who is also the author, hidden findings not re-read; recall still unmeasured (the live check found two real QNX breaks the scan had not predicted before this slice: `htole64` redeclaration, `<endian.h>`; the second is a rule now, the first is not).
 - `QNX-API-RTSIG`/`POLLRDHUP`/endian remedies: names verified present/absent by probe; behaviour (RT signal count, POLLHUP on half-close, procmgr ability choice) not run. The dropbear `compat.h` / `htole64` redeclaration conflict is only mentioned in `QNX-API-BSWAP`'s remedy, there is no rule that detects it.

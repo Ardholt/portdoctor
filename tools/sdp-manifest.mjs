@@ -71,8 +71,14 @@ const NAMES = [
   ...TD(`pthread_barrier_t pthread_spinlock_t sem_t cpu_set_t pid_t off64_t ino64_t socklen_t`),
 ];
 const extra = opt('--names', null);
-if (extra && existsSync(extra)) for (const l of readFileSync(extra, 'utf8').split('\n')) { const [n, k] = l.trim().split(/\s+/); if (n && !n.startsWith('#') && !NAMES.find((x) => x[0] === n)) NAMES.push([n, k || 'func']); }
-const HEADERS = `sys/epoll.h sys/inotify.h sys/eventfd.h sys/signalfd.h sys/timerfd.h sys/prctl.h sys/sendfile.h sys/auxv.h sys/sysinfo.h sys/fanotify.h sys/mman.h
+const XHEADERS = [], XLIBS = [], FLAGS = [];
+if (extra && existsSync(extra)) for (const l of readFileSync(extra, 'utf8').split('\n')) {
+  const [n, k] = l.trim().split(/\s+/);
+  if (!n || n.startsWith('#')) continue;
+  if (k === 'header') XHEADERS.push(n); else if (k === 'lib') XLIBS.push(n); else if (k === 'flag') FLAGS.push(n);
+  else if (!NAMES.find((x) => x[0] === n)) NAMES.push([n, k || 'func']);
+}
+const HEADERS0 = `sys/epoll.h sys/inotify.h sys/eventfd.h sys/signalfd.h sys/timerfd.h sys/prctl.h sys/sendfile.h sys/auxv.h sys/sysinfo.h sys/fanotify.h sys/mman.h
   sys/syscall.h sys/random.h sys/event.h sys/ucred.h sys/vfs.h sys/statfs.h sys/mount.h sys/uio.h sys/un.h sys/socket.h sys/ioctl.h sys/select.h sys/poll.h poll.h
   sys/sysctl.h sys/resource.h sys/param.h sys/endian.h endian.h byteswap.h malloc.h alloca.h execinfo.h elf.h link.h ucontext.h features.h error.h err.h libgen.h
   linux/types.h linux/limits.h linux/version.h linux/tcp.h linux/netlink.h linux/if.h linux/if_ether.h linux/input.h linux/fs.h linux/futex.h linux/errqueue.h linux/in6.h
@@ -84,7 +90,9 @@ const HEADERS = `sys/epoll.h sys/inotify.h sys/eventfd.h sys/signalfd.h sys/time
   sys/neutrino.h sys/dispatch.h sys/iofunc.h sys/procfs.h sys/syspage.h sys/netmgr.h sys/slog2.h sys/siginfo.h sys/sched.h sys/mman.h sys/iomsg.h hw/inout.h
   fuse.h systemd/sd-daemon.h libudev.h dbus/dbus.h selinux/selinux.h libcap.h openssl/ssl.h zlib.h curl/curl.h bsd/string.h stdio.h stdlib.h unistd.h string.h strings.h fcntl.h signal.h time.h
   dirent.h termios.h pwd.h grp.h syslog.h ftw.h glob.h regex.h wordexp.h iconv.h locale.h langinfo.h inttypes.h stdint.h stdbool.h math.h complex.h fenv.h`.trim().split(/\s+/);
-const LIBS = 'c m rt pthread dl nsl socket util resolv crypt anl c++ stdc++ regex gcc_s atomic z ssl crypto curl pcap ncurses curses readline sqlite3 xml2 uuid fuse ev uv intl iconv'.split(' ');
+const HEADERS = [...new Set([...HEADERS0, ...XHEADERS])];
+const LIBS0 = 'c m rt pthread dl nsl socket util resolv crypt anl c++ stdc++ regex gcc_s atomic z ssl crypto curl pcap ncurses curses readline sqlite3 xml2 uuid fuse ev uv intl iconv'.split(' ');
+const LIBS = [...new Set([...LIBS0, ...XLIBS])];
 const COMMON = ['stdio.h', 'stdlib.h', 'string.h', 'unistd.h', 'fcntl.h', 'signal.h', 'time.h', 'errno.h', 'limits.h', 'sys/types.h', 'sys/stat.h', 'sys/socket.h', 'sys/mman.h', 'sys/time.h', 'sys/uio.h',
   'netinet/in.h', 'netinet/tcp.h', 'arpa/inet.h', 'net/if.h', 'ifaddrs.h', 'sys/un.h', 'poll.h', 'pthread.h', 'sched.h', 'semaphore.h', 'dlfcn.h', 'sys/resource.h', 'sys/wait.h', 'netdb.h', 'sys/ioctl.h', 'sys/select.h', 'sys/statvfs.h', 'sys/utsname.h', 'dirent.h', 'termios.h', 'spawn.h', 'mqueue.h', 'math.h', 'malloc.h', 'sys/neutrino.h', 'sys/netmgr.h'];
 
@@ -135,7 +143,7 @@ function indexHeaders(root, skipDirs) {
         else if (/^\s*\(/.test(after) && !/^\s*#/.test(before)) how = /^[^()]*\b[\w*]+\s+\**\s*$/.test(before) || /\b(extern|int|void|char|long|size_t|ssize_t|unsigned|const)\b/.test(before) ? 'decl' : 'call';
         else if (/^\s*[,=}]/.test(after) || /^\s*$/.test(after)) how = /^\s*[A-Z_0-9]+\s*(=|,)?\s*$/.test(l) ? 'enum' : 'mention';
         let arr = idx.get(id); if (!arr) idx.set(id, (arr = []));
-        if (arr.length < 12) arr.push({ h: rel, l: i + 1, how });
+        if (arr.length < 400) arr.push({ h: rel, l: i + 1, how });
       }
     }
   }
@@ -178,7 +186,7 @@ const reportBase = (h) => h.replace(/^\/+/, '');
 async function main() {
   const base = await qcc(ARCHES[0].V, COMMON.map((h) => `#include <${h}>`).join('\n') + '\nint main(void){return 0;}\n', [], true);
   if (!base.ok) { console.error('baseline COMMON include set does not compile+link: ' + base.err); process.exit(3); }
-  const result = { tool: 'portdoctor sdp-manifest', manifestVersion: 1, sdp: { product: 'QNX SDP 8.0', build: BUILD || null, qccTargets: [], gcc: null }, arches: {}, names: {}, headers: {}, libs: {}, notes: [] };
+  const result = { tool: 'portdoctor sdp-manifest', manifestVersion: 1, sdp: { product: 'QNX SDP 8.0', build: BUILD || null, qccTargets: [], gcc: null }, arches: {}, names: {}, headers: {}, libs: {}, flags: {}, notes: [] };
   try { const { stdout } = await run('x86_64-pc-nto-qnx8.0.0-gcc', ['--version']); result.sdp.gcc = stdout.split('\n')[0].replace(/\(QNX[^)]*\)/, '(QNX build id elided)'); } catch { /* */ }
   try { const r = await run('qcc', ['-V']).catch((e) => e); result.sdp.qccTargets = String(r.stderr || r.stdout).split('\n').map((l) => l.trim()).filter((l) => /^[\d.]+,gcc_/.test(l)).map((l) => l.replace(/\s.*$/, '')); } catch { /* */ }
   const incRoot = join(TARGET, 'usr', 'include');
@@ -208,6 +216,12 @@ async function main() {
       return { l, files: [...new Set(files)], links: c.ok, err: c.ok ? undefined : c.err };
     });
     for (const r of lres) { const e = (result.libs[r.l] ||= {}); e[arch.name] = { fileInSdp: r.files.length > 0, files: r.files, linksWithQcc: r.links, ...(r.err ? { firstError: r.err } : {}) }; }
+    console.error(`[${arch.name}] flag probes (${FLAGS.length})`);
+    const fres = await pool(FLAGS, 8, async (fl) => {
+      const c = await qcc(arch.V, '#include <stdio.h>\nint main(void){puts("x");return 0;}\n', [fl], true);
+      return { fl, ok: c.ok, err: c.ok ? undefined : c.err };
+    });
+    for (const r of fres) { const e = (result.flags[r.fl] ||= {}); e[arch.name] = { linksWithQcc: r.ok, ...(r.err ? { firstError: r.err } : {}) }; }
     console.error(`[${arch.name}] name probes (${NAMES.length})`);
     const nres = await pool(NAMES, 8, async ([name, kind]) => {
       const found = arch.hdr.idx.get(name) || [];
@@ -238,7 +252,7 @@ async function main() {
       if (r.usable) verdict = 'present';
       else if (r.usableWithGnuSource || r.usableWithQnxExtensions) verdict = 'present-gated';
       else if (declared && r.kind === 'func' && r.exportedBy.length) verdict = 'declared-and-exported-but-probe-failed';
-      else if (declared) verdict = 'declared-not-linkable';
+      else if (declared) verdict = /undeclared|incomplete type|unknown type|not defined/.test(r.err || '') ? 'declared-but-not-visible' : 'declared-not-linkable';
       else if (r.onlyInKernelPrivateHeaders) verdict = 'absent-from-user-headers';
       else if (r.exportedBy.length) verdict = 'symbol-only';
       else verdict = 'absent';
@@ -249,6 +263,7 @@ async function main() {
     const vs = ARCHES.map((a) => e[a.name]?.verdict);
     e.verdict = vs.every((v) => v === vs[0]) ? vs[0] : 'mixed';
   }
+  for (const [n, e] of Object.entries(result.flags)) { const vs = ARCHES.map((a) => e[a.name]?.linksWithQcc); e.verdict = vs.every(Boolean) ? 'present' : vs.every((v) => !v) ? 'absent' : 'mixed'; }
   for (const [n, e] of Object.entries(result.libs)) { const vs = ARCHES.map((a) => e[a.name]?.linksWithQcc); e.verdict = vs.every(Boolean) ? 'present' : vs.every((v) => !v) ? 'absent' : 'mixed'; }
   for (const [n, e] of Object.entries(result.headers)) { const vs = ARCHES.map((a) => e[a.name]?.compiles); e.verdict = vs.every(Boolean) ? 'present' : vs.every((v) => !v) ? 'absent' : 'mixed'; }
   result.notes.push('Probe = compile/link with qcc using the common POSIX headers plus up to three headers where the name is defined/declared; verdict absent means: not declared in the shared/arch include tree, not usable by that probe, not exported by any SDP .so/libc.a (dynamic symbols).',

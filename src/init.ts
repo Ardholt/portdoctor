@@ -61,7 +61,7 @@ export function portabilityHeader(res: ScanResult | null): string {
     for (const g of groupFindings(res)) {
       if (g.category === 'build' || g.severity === 'info') continue;
       const r = g.rule;
-      L.push(`/* ${g.ruleId}: ${clean(g.title)} [${g.severity}, ${g.confidence}${g.confidence === 'guess' ? ': verify against SDP' : ''}], ${g.sites.length} site(s) in ${g.files.length} file(s)`);
+      L.push(`/* ${g.ruleId}: ${clean(g.title)} [${g.severity}, ${g.confidence}${g.confidence === 'guess' ? ': verify against SDP' : g.confidence.startsWith('verified') ? ': ' + g.confidence + ' on SDP' : ''}], ${g.sites.length} site(s) in ${g.files.length} file(s)`);
       if (r) L.push(` * Remedy: ${clean(r.remedy)}`);
       if (r?.verify) L.push(` * ${clean(r.verify)}`);
       L.push(' * TODO: decide the approach and implement a wrapper here. Sites:');

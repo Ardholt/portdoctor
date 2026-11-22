@@ -1,7 +1,10 @@
 export type Severity = 'blocker' | 'major' | 'minor' | 'info';
-export type Confidence = 'known' | 'guess';
+export type Confidence = 'known' | 'guess' | 'verified-present' | 'verified-absent' | 'verified-partial';
+export type RuleConfidence = 'known' | 'guess';
 export type Kind = 'c' | 'cmake' | 'make' | 'autoconf';
 export type Scope = 'code' | 'string' | 'include' | 'any';
+
+export interface SdpOverride { message?: string; remedy?: string; severity?: Severity; keep?: boolean }
 
 export interface RuleExample {
   kind?: Kind;
@@ -14,7 +17,7 @@ export interface Rule {
   title: string;
   category: 'linux-api' | 'build' | 'advice';
   severity: Severity;
-  confidence: Confidence;
+  confidence: RuleConfidence;
   appliesTo: Kind[];
   scope: Scope;
   effort: number;
@@ -26,6 +29,8 @@ export interface Rule {
   message: string;
   remedy: string;
   verify?: string;
+  /** what to say once the SDP manifest has decided the finding: per verdict, replaces message/remedy (and may keep a 'present' finding as a lower severity) */
+  sdp?: { absent?: SdpOverride; present?: SdpOverride; partial?: SdpOverride };
   refs?: string[];
   examples: { positive: Array<string | RuleExample>; negative: Array<string | RuleExample> };
 }
@@ -58,6 +63,8 @@ export interface Finding {
   guards: string[];
   /** build awareness (heuristic): 'no' = file not found in the build target list; absent = unknown */
   built?: 'no';
+  /** set when --sdp-manifest decided this finding against the installed SDP */
+  sdp?: { verdict: 'present' | 'absent' | 'partial'; items: Array<{ what: string; kind: string; result: string; evidence: string; needsLib?: string }>; build: string };
 }
 
 export interface ScanOptions {
@@ -69,6 +76,10 @@ export interface ScanOptions {
   ignorePresets?: string[];
   /** default true: read compile_commands.json / CMake / Makefile source lists and flag files not in them */
   buildAwareness?: boolean;
+  /** parsed data/sdp-8.0-manifest.json: verify API/header/lib claims against the SDP */
+  sdp?: import('./sdp.ts').SdpManifest;
+  /** keep findings whose API the SDP has (as info) instead of dropping them */
+  sdpKeepPresent?: boolean;
 }
 
 export interface ScanResult {
@@ -88,6 +99,7 @@ export interface ScanResult {
     rules: number;
     bySeverity: Record<Severity, number>;
     effortMinutes: number;
+    sdp?: { build: string | null; classified: number; verifiedAbsent: number; verifiedPartial: number; verifiedPresentKept: number; verifiedPresentDropped: number; notCovered: number; droppedByRule: Record<string, string[]>; uncovered: string[] };
   };
   findings: Finding[];
   /** number of rule groups (findings grouped by rule) */

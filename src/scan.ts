@@ -3,9 +3,10 @@ import { join, sep, basename, resolve } from 'node:path';
 import { loadRules } from './rules.ts';
 import { groupFindings, totalEffort } from './group.ts';
 import { collectBuildInfo, isTranslationUnit } from './build.ts';
+import { classify as sdpClassify, uncovered } from './sdp.ts';
 import type { CompiledRule, Finding, Kind, ScanOptions, ScanResult, Severity, ContextLine } from './types.ts';
 
-export const VERSION = '0.2.0';
+export const VERSION = '0.3.0';
 
 /** Opt-in ignore presets. `other-os` is a path-name heuristic for sources written for other operating systems; it never runs unless asked. */
 export const IGNORE_PRESETS: Record<string, string[]> = {
@@ -436,6 +437,55 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
       }
     }
   }
+  let sdpStats: ScanResult['stats']['sdp'];
+  if (opts.sdp) {
+    const m = opts.sdp;
+    const byId = new Map(rules.map((r) => [r.id, r]));
+    const st = { build: m.sdp.build, classified: 0, verifiedAbsent: 0, verifiedPartial: 0, verifiedPresentKept: 0, verifiedPresentDropped: 0, notCovered: 0, droppedByRule: {} as Record<string, string[]>, uncovered: [] as string[] };
+    uncovered.clear();
+    const kept: Finding[] = [];
+    for (const f of findings) {
+      const rule = byId.get(f.ruleId);
+      const ev = f.match === '(project-level)' ? null : sdpClassify(f, m);
+      if (!ev || !rule) {
+        if (f.match !== '(project-level)' && /^QNX-(API|HDR|BLD-L|ADV-FUSE)/.test(f.ruleId)) st.notCovered++;
+        kept.push(f);
+        continue;
+      }
+      st.classified++;
+      const ov = rule.sdp?.[ev.verdict];
+      const libs = [...new Set(ev.items.map((i) => i.needsLib).filter(Boolean))].join(' ');
+      const evText = ev.items.map((i) => i.evidence).join('; ');
+      f.sdp = ev;
+      f.confidence = ('verified-' + ev.verdict) as Finding['confidence'];
+      f.message = `${ov?.message ?? f.message} [verified on SDP ${m.sdp.build ?? ''} by compile/link probe, not run on target: ${evText}]`;
+      if (ov?.remedy) f.remedy = ov.remedy;
+      f.verify = 'checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.';
+      if (ev.verdict === 'present') {
+        if (!ov?.keep && !libs && !opts.sdpKeepPresent) {
+          st.verifiedPresentDropped++;
+          (st.droppedByRule[f.ruleId] ??= []).push(...ev.items.map((i) => i.what));
+          continue;
+        }
+        f.severity = ov?.severity ?? 'info';
+        f.effort = libs ? 3 : 2;
+        if (libs) f.remedy = `${f.remedy} The SDP has it, but it needs ${libs} on the link line.`;
+        st.verifiedPresentKept++;
+      } else if (ev.verdict === 'absent') {
+        if (ov?.severity) f.severity = ov.severity;
+        st.verifiedAbsent++;
+      } else {
+        if (ov?.severity) f.severity = ov.severity;
+        st.verifiedPartial++;
+      }
+      kept.push(f);
+    }
+    for (const k of Object.keys(st.droppedByRule)) st.droppedByRule[k] = [...new Set(st.droppedByRule[k])].sort();
+    st.uncovered = [...uncovered].sort();
+    findings.length = 0;
+    findings.push(...kept);
+    sdpStats = st;
+  }
   findings.sort(
     (a, b) =>
       SEV_ORDER[a.severity] - SEV_ORDER[b.severity] ||
@@ -468,6 +518,7 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
       rules: rules.length,
       bySeverity,
       effortMinutes: Math.round(totalEffort(groups)),
+      ...(sdpStats ? { sdp: sdpStats } : {}),
     },
     findings,
     groups: groups.length,

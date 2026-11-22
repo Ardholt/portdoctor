@@ -2,6 +2,10 @@ import type { Finding, ScanResult, Severity } from './types.ts';
 import { SEVERITIES } from './types.ts';
 import { groupFindings, startHere, fmtRange, totalEffort } from './group.ts';
 
+const confClass = (c: string): string => (c === 'guess' ? 'b-guess' : c.startsWith('verified') ? 'b-verified' : 'b-known');
+const confLabel = (c: string): string => (c === 'guess' ? 'guess: verify against SDP' : c.startsWith('verified') ? c.replace('verified-', 'verified by SDP: ') : 'known');
+const confTitle = (c: string): string =>
+  c === 'guess' ? 'Unverified claim about QNX 8.0: verify against the SDP' : c.startsWith('verified') ? 'Decided by header, symbol and qcc probes against the installed QNX SDP 8.0 (compile/link, not run on a target)' : 'Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)';
 const esc = (s: unknown): string =>
   String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
@@ -84,6 +88,7 @@ details.file[open]>summary::before{content:"\\25BE"}
 .b-blocker{color:var(--blocker);background:var(--blocker-bg)}.b-major{color:var(--major);background:var(--major-bg)}
 .b-minor{color:var(--minor);background:var(--minor-bg)}.b-info{color:var(--info);background:var(--info-bg)}
 .b-guess{color:var(--major);border:1px dashed var(--major);text-transform:none}
+.b-verified{color:var(--minor);border:1px solid var(--minor);text-transform:none}
 .b-known{color:var(--muted);border:1px solid var(--border);text-transform:none}
 .loc{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;color:var(--muted)}
 pre.code{margin:.5rem 0;padding:.4rem 0;background:var(--code);border:1px solid var(--border);border-radius:8px;overflow:auto;font:.82rem/1.45 ui-monospace,Menlo,Consolas,monospace}
@@ -254,7 +259,7 @@ export function renderHtml(res: ScanResult): string {
   const startHtml = top.length
     ? `<ol class="start">${top
         .map(
-          (g) => `<li><a class="t" href="#rule-${esc(g.ruleId)}">${esc(g.title)}</a> <span class="badge b-${g.severity}"><span aria-hidden="true">${SEV_GLYPH[g.severity]}</span> ${g.severity}</span> <span class="badge ${g.confidence === 'guess' ? 'b-guess' : 'b-known'}">${g.confidence === 'guess' ? 'guess: verify against SDP' : 'known'}</span>
+          (g) => `<li><a class="t" href="#rule-${esc(g.ruleId)}">${esc(g.title)}</a> <span class="badge b-${g.severity}"><span aria-hidden="true">${SEV_GLYPH[g.severity]}</span> ${g.severity}</span> <span class="badge ${confClass(g.confidence)}">${confLabel(g.confidence)}</span>
 <div class="meta">${g.sites.length} site${g.sites.length === 1 ? '' : 's'} in ${g.files.length} file${g.files.length === 1 ? '' : 's'} &middot; ${esc(fmtRange(g.effortMin))}${g.allGuarded ? ' &middot; all inside Linux-only #if' : ''}</div>
 <p class="r">${esc(firstSentence(g.rule?.remedy ?? ''))}</p></li>`,
         )
@@ -271,7 +276,7 @@ export function renderHtml(res: ScanResult): string {
         .join('\n');
       return `<details class="grp" id="rule-${esc(g.ruleId)}"><summary><span class="badge b-${g.severity}" title="${esc(SEV_HELP[g.severity])}"><span aria-hidden="true">${SEV_GLYPH[g.severity]}</span> ${g.severity}</span>
 <strong>${esc(g.title)}</strong>
-<span class="badge ${g.confidence === 'guess' ? 'b-guess' : 'b-known'}" title="${g.confidence === 'guess' ? 'Unverified claim about QNX 8.0: verify against the SDP' : 'Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)'}">${g.confidence === 'guess' ? 'guess: verify against SDP' : 'known'}</span>
+<span class="badge ${confClass(g.confidence)}" title="${confTitle(g.confidence)}">${confLabel(g.confidence)}</span>
 <span class="meta"><span class="vis">${g.sites.length}</span>/${g.sites.length} sites in ${g.files.length} file${g.files.length === 1 ? '' : 's'} &middot; ${esc(fmtRange(g.effortMin))}</span></summary>
 <div class="grp-body"><p><span class="note">${esc(g.ruleId)}</span> ${esc(r?.message ?? '')}</p>
 <div class="remedy"><strong>Remedy</strong>${esc(r?.remedy ?? '')}</div>
@@ -280,7 +285,7 @@ ${sites}</div></details>`;
     })
     .join('\n');
 
-  const confKnown = res.findings.filter((f) => f.confidence === 'known').length;
+  const confKnown = res.findings.filter((f) => f.confidence === 'known' || f.confidence.startsWith('verified')).length;
   const data = JSON.stringify({ tool: res.tool, version: res.version, stats: res.stats }).replace(/</g, '\\u003c');
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -302,7 +307,7 @@ ${sites}</div></details>`;
 ${SEVERITIES.map((v) => `<div class="card sev-${v}" role="listitem"><div class="n">${s.bySeverity[v]}</div><div class="l"><span aria-hidden="true">${SEV_GLYPH[v]}</span> ${v}: ${esc(SEV_HELP[v])}</div></div>`).join('\n')}
 <div class="card" role="listitem"><div class="n">${groups.length}</div><div class="l">rule groups (findings grouped by the rule that found them)</div></div>
 <div class="card" role="listitem"><div class="n" style="font-size:1.25rem">${esc(effortHead(total))}</div><div class="l">rough effort, uncalibrated: scaled by groups, not by lines</div></div>
-<div class="card" role="listitem"><div class="n">${confKnown}/${s.findings}</div><div class="l">findings from rules marked <em>known</em>; the rest are <em>guess</em></div></div>
+<div class="card" role="listitem"><div class="n">${confKnown}/${s.findings}</div><div class="l">findings that are <em>known</em> or verified against the SDP; the rest are <em>guess</em></div></div>
 <div class="card" role="listitem"><div class="n">${s.suppressedQnxBranch}</div><div class="l">matches suppressed inside <code>#if __QNXNTO__</code> branches</div></div>
 </div>
 <h2 id="start">Start here: top ${top.length || 3}</h2>
@@ -313,7 +318,7 @@ ${heat}
 <div class="bar" role="search" aria-label="Filter findings">
 <input id="q" type="search" placeholder="Search file, rule, text ( / )" aria-label="Search findings">
 ${SEVERITIES.map((v, i) => `<button type="button" class="chip" data-sevbtn="${v}" aria-pressed="true" title="Toggle ${v} (${i + 1})"><span aria-hidden="true">${SEV_GLYPH[v]}</span> ${v} <span class="sr">toggle</span>(${s.bySeverity[v]})</button>`).join('\n')}
-<label class="note">Confidence <select id="conf" aria-label="Confidence filter"><option value="all">all</option><option value="known">known</option><option value="guess">guess</option></select></label>
+<label class="note">Confidence <select id="conf" aria-label="Confidence filter"><option value="all">all</option><option value="known">known</option><option value="guess">guess</option><option value="verified-absent">verified-absent</option><option value="verified-present">verified-present</option><option value="verified-partial">verified-partial</option></select></label>
 <label class="note"><input type="checkbox" id="guard" checked> include Linux-guarded</label>
 ${s.build.findingsNotInBuildList ? `<label class="note"><input type="checkbox" id="unbuilt" checked> include files not in build list (${s.build.findingsNotInBuildList})</label>` : ''}
 <button class="btn" id="expand" type="button">Expand all groups</button>

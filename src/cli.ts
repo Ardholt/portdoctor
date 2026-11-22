@@ -1,5 +1,7 @@
 import { writeFileSync, existsSync, statSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { scanDir, VERSION } from './scan.ts';
+import { loadManifest } from './sdp.ts';
 import { SEVERITIES } from './types.ts';
 import { groupFindings, startHere, fmtRange } from './group.ts';
 import type { Severity } from './types.ts';
@@ -7,7 +9,7 @@ import type { Severity } from './types.ts';
 const HELP = `portdoctor ${VERSION} - QNX 8.0 porting blocker scanner (static; nothing is compiled)
 
 Usage:
-  portdoctor scan <dir> [--json|--html|--sarif] [-o <file>] [--fail-on <severity>]
+  portdoctor scan <dir> [--json|--html|--sarif] [-o <file>] [--fail-on <severity>] [--sdp-manifest <file>]
   portdoctor propose <scan.json|dir> --finding <n> [--provider "<cmd>"] [--patch-file <f>] [--no-check]
   portdoctor fix <dir> --provider "<cmd>" [--check "<cmd>"] [--count N] [--rule ID] [--keep <dir>] [-o fix-report.html]
   portdoctor init-toolchain [<dir>] [--arch aarch64le|x86_64] [--out <dir>] [--force]
@@ -23,6 +25,8 @@ scan:
   --ignore-preset other-os   skip paths named for other OSes (os390, mingw, win32, darwin, freebsd, solaris, android ...): a heuristic, opt-in
   --no-build-awareness       do not read compile_commands.json / CMake / Makefile source lists
   --rules <dir>     use a different rules directory
+  --sdp-manifest <file>   verify API/header/library claims against a manifest made from a real SDP (tools/sdp-manifest.mjs): findings become verified-present/verified-absent; APIs the SDP has are dropped
+  --sdp-keep-present      keep findings the SDP disproves, as info, instead of dropping them
 `;
 
 function flag(args: string[], name: string): boolean {
@@ -48,6 +52,7 @@ export function textSummary(r: ReturnType<typeof scanDir>): string {
     `${s.filesScanned} files scanned, ${s.findings} findings in ${groups.length} rule group${groups.length === 1 ? '' : 's'} (blocker ${s.bySeverity.blocker}, major ${s.bySeverity.major}, minor ${s.bySeverity.minor}, info ${s.bySeverity.info})`,
     `rough effort: ${fmtRange(s.effortMinutes)}`,
     `${s.suppressedQnxBranch} matches suppressed inside QNX-specific #if branches; ${s.suppressedNonCall} skipped as non-calls or user-defined functions`,
+    ...(s.sdp ? [`SDP check (${s.sdp.build}): ${s.sdp.classified} findings decided: ${s.sdp.verifiedAbsent} verified-absent, ${s.sdp.verifiedPartial} partial, ${s.sdp.verifiedPresentDropped} dropped because the SDP has the API, ${s.sdp.verifiedPresentKept} kept as info; ${s.sdp.notCovered} API/header/lib findings not covered by the manifest`] : []),
     ...(s.build.source !== 'none' ? [`build awareness (heuristic): ${s.build.note}; ${s.build.findingsNotInBuildList} findings are in files it does not mention`] : []),
     '',
   ];
@@ -87,11 +92,13 @@ export async function main(argv: string[]): Promise<void> {
     const presets: string[] = [];
     for (let v = opt(args, '--ignore-preset'); v !== undefined; v = opt(args, '--ignore-preset')) presets.push(v);
     const noBuild = flag(args, '--no-build-awareness');
+    const sdpFile = opt(args, '--sdp-manifest');
+    const keepPresent = flag(args, '--sdp-keep-present');
     const dir = args.shift();
     if (!dir || args.length) throw new Error('usage: portdoctor scan <dir> [--json|--html] [-o file]');
     if (!existsSync(dir) || !statSync(dir).isDirectory()) throw new Error(`not a directory: ${dir}`);
     if (failOn && !SEVERITIES.includes(failOn)) throw new Error('--fail-on must be blocker|major|minor|info');
-    const res = scanDir(dir, { rulesDir, ignore, ignorePresets: presets, buildAwareness: !noBuild });
+    const res = scanDir(dir, { rulesDir, ignore, ignorePresets: presets, buildAwareness: !noBuild, sdp: sdpFile ? loadManifest(sdpFile) : undefined, sdpKeepPresent: keepPresent });
     const renderHtml = html ? (await import('./report-html.ts')).renderHtml : null;
     const body = sarif ? JSON.stringify((await import('./sarif.ts')).toSarif(res), null, 2) + '\n' : renderHtml ? renderHtml(res) : json ? JSON.stringify(res, null, 2) + '\n' : textSummary(res);
     if (out) writeFileSync(out, body);

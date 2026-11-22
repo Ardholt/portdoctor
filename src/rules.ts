@@ -17,6 +17,10 @@ export function validateRule(r: Rule, where: string): void {
   if (!r.id || !/^QNX-[A-Z0-9-]+$/.test(r.id)) bad('id must match QNX-[A-Z0-9-]+');
   if (!SEV.includes(r.severity)) bad('bad severity');
   if (!CONF.includes(r.confidence)) bad('confidence must be known|guess');
+  for (const [k, v] of Object.entries(r.sdp ?? {})) {
+    if (!['absent', 'present', 'partial'].includes(k)) bad(`sdp.${k} must be absent|present|partial`);
+    if (v.severity && !SEV.includes(v.severity)) bad(`sdp.${k}.severity`);
+  }
   if (!Array.isArray(r.appliesTo) || !r.appliesTo.length || r.appliesTo.some((k) => !KINDS.includes(k))) bad('bad appliesTo');
   if (!SCOPES.includes(r.scope)) bad('bad scope');
   if (!r.pattern && !r.project) bad('needs pattern or project');

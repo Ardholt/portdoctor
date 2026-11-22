@@ -8,7 +8,7 @@ export interface Group {
   title: string;
   category: string;
   severity: Severity;
-  confidence: 'known' | 'guess';
+  confidence: import('./types.ts').Confidence;
   rule?: RuleInfo;
   /** indices into ScanResult.findings */
   sites: number[];
@@ -43,8 +43,8 @@ export function groupFindings(res: Pick<ScanResult, 'findings' | 'rules'>): Grou
       ruleId: id,
       title: fs[0].title,
       category: fs[0].category,
-      severity: fs[0].severity,
-      confidence: fs[0].confidence,
+      severity: fs.reduce((a, f) => (rank(f.severity) < rank(a) ? f.severity : a), fs[0].severity),
+      confidence: (fs.find((f) => f.severity === fs.reduce((a, g) => (rank(g.severity) < rank(a) ? g.severity : a), fs[0].severity)) ?? fs[0]).confidence,
       rule,
       sites: idx,
       files: [...new Set(fs.map((f) => f.file))],

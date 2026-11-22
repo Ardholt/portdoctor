@@ -95,7 +95,8 @@ const opts = { skip: CHROME ? false : 'no Chrome binary found' };
 
 test('chrome: a real click on a heat-map tile filters the findings, a second click clears', opts, async () => {
   assert.equal(await ev(`document.querySelector('#count').textContent`), '5 of 5 findings shown');
-  assert.equal(await ev(`document.querySelectorAll('.tile').length`), 4);
+  assert.equal(await ev(`document.querySelectorAll('.heat .tile').length`), 4);
+  assert.equal(await ev(`document.querySelectorAll('.where .wseg').length`), 4, 'the where-strip above the fold repeats the busiest tiles');
   await click('.tile[data-dir="alpha"]');
   assert.equal(await ev(`document.querySelector('#count').textContent`), '2 of 5 findings shown');
   assert.equal(await ev(`document.querySelector('.tile[data-dir="alpha"]').getAttribute('aria-pressed')`), 'true');

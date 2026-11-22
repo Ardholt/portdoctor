@@ -130,10 +130,12 @@ test('CLI fix exits 0 on full success and writes the report', { skip: !hasGcc &&
     const out = join(dirname(d), 'fix-report.html');
     const r = spawnSync('node', [join(ROOT, 'bin', 'portdoctor.mjs'), 'fix', d, '--provider', STUB, '--count', '5', '-o', out], { encoding: 'utf8' });
     assert.equal(r.status, 0, r.stderr + r.stdout);
-    assert.match(r.stdout, /before: 5 findings/);
+    assert.match(r.stdout, /before: 3 findings/, 'the bundled SDP manifest is the default: pipe2/SOCK_NONBLOCK are not reported');
     assert.match(r.stdout, /after:  0 findings/);
     assert.match(readFileSync(out, 'utf8'), /PortDoctor fix report/);
     assert.equal(scanDir(d).findings.length, 5);
+    const plain = spawnSync('node', [join(ROOT, 'bin', 'portdoctor.mjs'), 'fix', d, '--provider', STUB, '--count', '5', '--no-sdp-manifest', '-o', out], { encoding: 'utf8' });
+    assert.match(plain.stdout, /before: 5 findings/, '--no-sdp-manifest restores the unverified scan');
   } finally {
     rmSync(dirname(d), { recursive: true, force: true });
   }

@@ -1,0 +1,45 @@
+configure libev: exit 0
+configure dropbear: exit 0
+configure iperf: exit 0
+
+=== libev: QNX-API-EVENTFD in ev.c
+-- baseline (original code), qcc -Vgcc_ntox86_64 -c ev.c:
+-- loop result: applied | check: pass | qcc errors before/after: 0/0 | findings 50 -> 50
+   model confidence: medium needsHuman: false
+   qcc: $WORK/out/live/after-libev/ev.c:1825:31: warning: 'ev_default_loop_ptr' initialized and declared 'extern'
+   qcc:  1825 |   EV_API_DECL struct ev_loop *ev_default_loop_ptr = 0; /* needs to be initialised to make it a definition despite extern */
+   qcc:       |                               ^~~~~~~~~~~~~~~~~~~
+-- patched file after the fix:
+    errors: 0
+
+=== dropbear: QNX-API-PRCTL in src/svr-main.c
+-- baseline (original code), qcc -Vgcc_ntox86_64 -c src/svr-main.c:
+    src/compat.h:58:27: error: expected ')' before 'inp'
+    src/compat.h:59:27: error: expected ')' before 'inp'
+    src/compat.h:60:27: error: expected ')' before 'inp'
+    src/compat.h:61:27: error: expected ')' before 'inp'
+-- loop result: applied | check: no-worse | qcc errors before/after: 4/4 | findings 41 -> 41
+   model confidence: medium needsHuman: false
+   qcc: In file included from $QNX_SDP/target/qnx/usr/include/netinet/in.h:46,
+   qcc:                  from $WORK/out/live/after-dropbear/src/includes.h:77,
+   qcc:                  from $WORK/out/live/after-dropbear/src/svr-main.c:25:
+   qcc: $WORK/out/live/after-dropbear/src/compat.h:58:27: error: expected ')' before 'inp'
+-- patched file after the fix:
+    src/compat.h:58:27: error: expected ')' before 'inp'
+    src/compat.h:59:27: error: expected ')' before 'inp'
+    src/compat.h:60:27: error: expected ')' before 'inp'
+    src/compat.h:61:27: error: expected ')' before 'inp'
+    errors: 4
+
+=== iperf: QNX-API-SENDFILE in src/net.c
+-- baseline (original code), qcc -Vgcc_ntox86_64 -c src/net.c:
+    src/portable_endian.h:155:17: fatal error: endian.h: No such file or directory
+-- loop result: applied | check: no-worse | qcc errors before/after: 1/1 | findings 34 -> 31
+   model confidence: medium needsHuman: true
+   qcc: In file included from $WORK/out/live/after-iperf/src/iperf.h:57,
+   qcc:                  from $WORK/out/live/after-iperf/src/net.c:70:
+   qcc: $WORK/out/live/after-iperf/src/portable_endian.h:153:9: warning: #warning platform not supported [-Wcpp]
+   qcc:   153 | #       warning platform not supported
+-- patched file after the fix:
+    src/portable_endian.h:155:17: fatal error: endian.h: No such file or directory
+    errors: 1

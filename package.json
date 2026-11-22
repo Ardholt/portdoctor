@@ -7,5 +7,5 @@
   "bin": { "portdoctor": "bin/portdoctor.mjs" },
   "engines": { "node": ">=22.18" },
   "scripts": { "test": "node --test tests/" },
-  "files": ["bin", "src", "rules", "README.md", "LICENSE"]
+  "files": ["bin", "src", "rules", "data/sdp-8.0-manifest.json", "README.md", "LICENSE"]
 }

@@ -1157,7 +1157,7 @@
   },
   {
     "id": "QNX-API-BSWAP",
-    "title": "glibc byte-order names (bswap_N, __BYTE_ORDER, __LITTLE_ENDIAN)",
+    "title": "glibc bswap_N byte-swap helpers",
     "category": "linux-api",
     "severity": "major",
     "confidence": "guess",
@@ -1166,19 +1166,18 @@
     ],
     "scope": "code",
     "effort": 15,
-    "pattern": "\\bbswap_(?:16|32|64)\\s*\\(|\\b__BYTE_ORDER\\b|\\b__LITTLE_ENDIAN\\b",
-    "message": "bswap_16/32/64, __BYTE_ORDER and __LITTLE_ENDIAN are glibc names. On the QNX 8.0 SDP (build 141) bswap_* and __BYTE_ORDER are undeclared and __LITTLE_ENDIAN is not in any user header.",
-    "remedy": "Use BYTE_ORDER with LITTLE_ENDIAN/BIG_ENDIAN from <sys/param.h> (present in build 141), and the htole*/htobe*/le*toh/be*toh macros from <net/netbyte.h> or ENDIAN_LE32()/ENDIAN_BE32() from <gulliver.h> instead of bswap_N. Do not redeclare htole64 and friends as functions: on QNX they are macros and the redeclaration fails to compile (dropbear's compat.h).",
+    "pattern": "\\bbswap_(?:16|32|64)\\s*\\(",
+    "message": "bswap_16/32/64 are glibc <byteswap.h> helpers. On the QNX 8.0 SDP (build 141) they are undeclared (and <byteswap.h> does not exist).",
+    "remedy": "Use the htole*/htobe*/le*toh/be*toh macros from <net/netbyte.h> (present in build 141) or ENDIAN_LE32()/ENDIAN_BE32() from <gulliver.h> instead of bswap_N. Do not redeclare htole64 and friends as functions: on QNX they are macros and the redeclaration fails to compile (dropbear's compat.h).",
     "verify": "Name absence and the replacement names verified on SDP 8.0 build 141 (probes); not run on a target.",
     "examples": {
       "positive": [
         "x = bswap_32(y);\n",
-        "#if __BYTE_ORDER == __LITTLE_ENDIAN\n"
+        "y = bswap_64 (x);\n"
       ],
       "negative": [
         "x = bswap(y);\n",
-        "p->bswap_32(y);\n",
-        "#if BYTE_ORDER == LITTLE_ENDIAN\n"
+        "p->bswap_32(y);\n"
       ]
     }
   },
@@ -1238,6 +1237,32 @@
         "keep": true,
         "severity": "info"
       }
+    }
+  },
+  {
+    "id": "QNX-API-BYTEORDER",
+    "title": "glibc byte-order macros (__BYTE_ORDER, __LITTLE_ENDIAN)",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "any",
+    "effort": 10,
+    "pattern": "\\b__BYTE_ORDER\\b|\\b__LITTLE_ENDIAN\\b",
+    "message": "__BYTE_ORDER and __LITTLE_ENDIAN are glibc macros: on the QNX 8.0 SDP (build 141) __BYTE_ORDER is undeclared and __LITTLE_ENDIAN is in no user header. In an #if both evaluate to 0, so '#if __BYTE_ORDER == __LITTLE_ENDIAN' is silently TRUE on QNX whatever the CPU's order.",
+    "remedy": "Use BYTE_ORDER with LITTLE_ENDIAN / BIG_ENDIAN from <sys/param.h> (present in build 141), or the ENDIAN_* macros of <gulliver.h>; both x86_64 and aarch64le targets are little-endian, so a wrong branch would corrupt data without a compile error.",
+    "verify": "Macro absence and the replacement names verified on SDP 8.0 build 141 (probes); not run on a target.",
+    "examples": {
+      "positive": [
+        "#if __BYTE_ORDER == __LITTLE_ENDIAN\n",
+        "int le = (__BYTE_ORDER == __LITTLE_ENDIAN);\n"
+      ],
+      "negative": [
+        "#if BYTE_ORDER == LITTLE_ENDIAN\n",
+        "x = __BYTE_ORDERX;\n"
+      ]
     }
   }
 ]

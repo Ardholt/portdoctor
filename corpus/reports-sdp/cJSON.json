@@ -19,7 +19,7 @@
       "findingsNotInBuildList": 0,
       "note": "build files use globs/wildcards: source lists are not knowable, nothing was marked"
     },
-    "rules": 55,
+    "rules": 56,
     "bySeverity": {
       "blocker": 0,
       "major": 0,

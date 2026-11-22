@@ -16,6 +16,10 @@ export const DISCLAIMER =
   'PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. ' +
   "Rules marked 'guess' are unverified claims about QNX 8.0 and must be checked against the SDP.";
 
+export const disclaimerFor = (build: string | null): string =>
+  `PortDoctor is a static, text-level scanner. Findings marked verified-present/verified-absent were decided against the installed QNX SDP 8.0 (build ${build ?? 'unknown'}) by header, symbol and qcc compile/link probes; nothing was run on a QNX target. ` +
+  "All other findings keep their known/guess label: 'guess' is an unverified claim about QNX 8.0.";
+
 const SKIP_DIRS = new Set(['.git', '.hg', '.svn', 'node_modules', 'CMakeFiles', '.idea', '.vscode']);
 const C_EXT = new Set(['.c', '.h', '.cc', '.cpp', '.cxx', '.hpp', '.hh', '.hxx', '.c++', '.h++', '.inl', '.ipp']);
 
@@ -511,7 +515,7 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
     tool: 'portdoctor',
     version: VERSION,
     root: basename(resolve(root)),
-    disclaimer: DISCLAIMER,
+    disclaimer: opts.sdp ? disclaimerFor(opts.sdp.sdp.build) : DISCLAIMER,
     stats: {
       filesScanned: scanned,
       filesByKind: kindCount,

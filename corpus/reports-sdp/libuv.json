@@ -12,7 +12,7 @@
       "c": 379
     },
     "filesSkipped": 0,
-    "findings": 338,
+    "findings": 339,
     "suppressedQnxBranch": 0,
     "suppressedNonCall": 7,
     "build": {
@@ -20,14 +20,14 @@
       "findingsNotInBuildList": 0,
       "note": "307 source paths named in CMake/Makefile lists (variables and generated sources are not followed)"
     },
-    "rules": 55,
+    "rules": 56,
     "bySeverity": {
       "blocker": 76,
-      "major": 61,
+      "major": 62,
       "minor": 33,
       "info": 168
     },
-    "effortMinutes": 2565,
+    "effortMinutes": 2575,
     "sdp": {
       "build": "8.0.0.00141T202311271501L",
       "classified": 172,
@@ -4567,6 +4567,24 @@
         ],
         "build": "8.0.0.00141T202311271501L"
       }
+    },
+    {
+      "ruleId": "QNX-BLD-LSOCKET",
+      "title": "Socket code without -lsocket",
+      "category": "build",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "Makefile.am",
+      "line": 1,
+      "column": 1,
+      "match": "(project-level)",
+      "context": [],
+      "message": "The code calls socket APIs but no build file links -lsocket. On QNX 8.0 the socket functions are not in libc: with the default libraries socket(), bind(), listen(), accept(), connect(), getaddrinfo(), sendmsg(), getifaddrs() and others fail at link time with 'undefined reference' (SDP 8.0 build 141, measured with qcc on x86_64 and aarch64le). libsocket exists and fixes it.",
+      "remedy": "Add -lsocket to the link line on QNX (LDLIBS += -lsocket; in CMake target_link_libraries(<t> socket) under if(CMAKE_SYSTEM_NAME STREQUAL \"QNX\"); in autoconf AC_SEARCH_LIBS([socket], [socket])). It is harmless to link when the symbols are already in libc.",
+      "verify": "Verified on SDP 8.0 build 141: link without -lsocket gives 'undefined reference to socket'; with -lsocket it links. Not run on a target.",
+      "effort": 10,
+      "guard": "none",
+      "guards": []
     },
     {
       "ruleId": "QNX-HDR-SYS-LINUX",
@@ -18065,7 +18083,7 @@
       "guards": []
     }
   ],
-  "groups": 27,
+  "groups": 28,
   "rules": [
     {
       "id": "QNX-BLD-LRT",
@@ -18112,6 +18130,17 @@
       ],
       "message": "A branch or setting assumes Linux. CMake identifies a QNX target as CMAKE_SYSTEM_NAME 'QNX'.",
       "effort": 20
+    },
+    {
+      "id": "QNX-BLD-LSOCKET",
+      "title": "Socket code without -lsocket",
+      "category": "build",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Add -lsocket to the link line on QNX (LDLIBS += -lsocket; in CMake target_link_libraries(<t> socket) under if(CMAKE_SYSTEM_NAME STREQUAL \"QNX\"); in autoconf AC_SEARCH_LIBS([socket], [socket])). It is harmless to link when the symbols are already in libc.",
+      "verify": "Verified on SDP 8.0 build 141: link without -lsocket gives 'undefined reference to socket'; with -lsocket it links. Not run on a target.",
+      "message": "The code calls socket APIs but no build file links -lsocket. On QNX 8.0 the socket functions are not in libc: with the default libraries socket(), bind(), listen(), accept(), connect(), getaddrinfo(), sendmsg(), getifaddrs() and others fail at link time with 'undefined reference' (SDP 8.0 build 141, measured with qcc on x86_64 and aarch64le). libsocket exists and fixes it.",
+      "effort": 10
     },
     {
       "id": "QNX-HDR-LINUX-DIR",

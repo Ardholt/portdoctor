@@ -1,0 +1,60 @@
+=== cJSON, CMake with portdoctor init-toolchain --arch x86_64 (qcc -Vgcc_ntox86_64)
+portability.h qnx-toolchain.cmake 
+-- default options (tests on):
+  configure OK
+  build OK
+  cJSON_test: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, int
+  libcjson.so: symbolic link to libcjson.so.1
+  libcjson.so.1: symbolic link to libcjson.so.1.7.19
+  libcjson.so.1.7.19: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, Buil
+  libcjson.pc: ASCII text
+-- tests off (-DENABLE_CJSON_TEST=OFF -DENABLE_CJSON_UTILS=ON):
+  configure+build OK
+  libcjson.so: symbolic link to libcjson.so.1
+  libcjson.so.1: symbolic link to libcjson.so.1.7.19
+  libcjson.so.1.7.19: ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), dynamically linked, BuildID[md5/uu
+  libcjson.pc: ASCII text
+=== cJSON, CMake with portdoctor init-toolchain --arch aarch64le (qcc -Vgcc_ntoaarch64le)
+portability.h qnx-toolchain.cmake 
+-- default options (tests on):
+  configure OK
+  build OK
+  cJSON_test: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked
+  libcjson.so: symbolic link to libcjson.so.1
+  libcjson.so.1: symbolic link to libcjson.so.1.7.19
+  libcjson.so.1.7.19: ELF 64-bit LSB shared object, ARM aarch64, version 1 (SYSV), dynamically linked,
+  libcjson.pc: ASCII text
+-- tests off (-DENABLE_CJSON_TEST=OFF -DENABLE_CJSON_UTILS=ON):
+  configure+build OK
+  libcjson.so: symbolic link to libcjson.so.1
+  libcjson.so.1: symbolic link to libcjson.so.1.7.19
+  libcjson.so.1.7.19: ELF 64-bit LSB shared object, ARM aarch64, version 1 (SYSV), dynamically linked, BuildID[m
+  libcjson.pc: ASCII text
+
+=== kilo (Makefile: cc -o kilo kilo.c -Wall -W -pedantic -std=c99)
+  x86_64: build OK: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically l
+  aarch64le: build OK: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamica
+
+=== what the scan predicted (with the SDP manifest)
+  cJSON: 110 files scanned, 18 findings in 4 rule groups (blocker 0, major 0, minor 12, info 6)
+  cJSON: rough effort: about 0.5-2 h (rough, uncalibrated)
+  cJSON: 0 matches suppressed inside QNX-specific #if branches; 0 skipped as non-calls or user-defined functions
+  cJSON: SDP check (8.0.0.00141T202311271501L): 8 findings decided: 0 verified-absent, 5 partial, 3 dropped because the SDP has the API, 0 kept as info; 0 API/header/lib findings not covered by the manifest
+  kilo: 2 files scanned, 1 findings in 1 rule group (blocker 0, major 0, minor 0, info 1)
+  kilo: rough effort: under an hour (rough, uncalibrated)
+  kilo: 0 matches suppressed inside QNX-specific #if branches; 0 skipped as non-calls or user-defined functions
+  kilo: SDP check (8.0.0.00141T202311271501L): 0 findings decided: 0 verified-absent, 0 partial, 0 dropped because the SDP has the API, 0 kept as info; 0 API/header/lib findings not covered by the manifest
+
+=== Lua (plain Makefile; scan flags 4 findings; build with -DLUA_USE_POSIX -DLUA_USE_DLOPEN, no -ldl, as the SDP has no libdl)
+  x86_64: build OK: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically l
+  aarch64le: build OK: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamica
+-- same with the project's own default LIBS (-ldl, as on Linux):
+    80:MYLIBS= -ldl
+    95:LIBS = -lm
+    $QNX_SDP/host/linux/x86_64/usr/bin/x86_64-pc-nto-qnx8.0.0-ld: cannot find -ldl: No such file or directory
+  lua scan: 70 files scanned, 3 findings in 2 rule groups (blocker 0, major 0, minor 3, info 0)
+  lua scan: rough effort: under an hour (rough, uncalibrated)
+  lua scan: 0 matches suppressed inside QNX-specific #if branches; 0 skipped as non-calls or user-defined functions
+  lua scan: Start here: Compiler hard-coded to gcc/clang instead of qcc (2 sites); Links -ldl (1 sites)
+  lua scan: Compiler hard-coded to gcc/clang instead of qcc: 2 sites in 2 files  [minor/known] QNX-BLD-HARDCODED-CC
+  lua scan: Links -ldl: 1 site in 1 file  [minor/verified-absent] QNX-BLD-LDL

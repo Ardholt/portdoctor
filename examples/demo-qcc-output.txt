@@ -2,7 +2,7 @@
 
 == 1. examples/demo (pipe2, SOCK_NONBLOCK, /dev/shm path, -lrt): PD2 flagged 4 findings; PD3 adds a fifth (socket code without -lsocket)
 -- scan without the SDP manifest:
-2 files scanned, 5 findings in 5 rule groups (blocker 0, major 1, minor 4, info 0)
+2 files scanned, 3 findings in 3 rule groups (blocker 0, major 1, minor 2, info 0)
 -- scan with the SDP manifest:
 2 files scanned, 3 findings in 3 rule groups (blocker 0, major 1, minor 2, info 0)
 rough effort: about 20-55 min (rough, uncalibrated)
@@ -27,14 +27,14 @@ PortDoctor fix: $WORK/examples/demo-epoll
 patched copy: $WORK/out/after-epoll
 
 1. QNX-API-EPOLL server.c:18  APPLIED  check=pass  findings 12 -> 2
-2. QNX-BLD-LSOCKET Makefile:1  APPLIED  check=skipped  findings 2 -> 0
+2. QNX-BLD-LSOCKET Makefile:1  APPLIED  check=pass  findings 2 -> 0
 3. QNX-HDR-SYS-LINUX server.c:1  ALREADY-RESOLVED  findings 0 -> 0
    no longer reported after earlier patches
 
 before: 12 findings (blocker 9, major 2, minor 1, info 0)
 after:  0 findings (blocker 0, major 0, minor 0, info 0)
 
-Compile check here is the QNX SDP compiler (qcc/q++ -c, compile only): it knows which QNX headers, macros and prototypes exist. It does not link and nothing was run on a QNX target.
+Compile check here is the QNX SDP compiler (qcc/q++ -c, compile only): it knows which QNX headers, macros and prototypes exist. It does not link C/C++ files and nothing was run on a QNX target. Makefile and CMake changes are checked by a dry run (make -n / cmake configure with the generated qnx-toolchain.cmake) plus a qcc link probe for every -l library; nothing is built.
 report: out/fix-qcc.html
 -- PATCHED server.c on QNX:
   qcc -Vgcc_ntox86_64 out/after-epoll/server.c: compile OK; link FAIL: undefined reference to `accept' undefined reference to `bind' undefined reference to `listen' 

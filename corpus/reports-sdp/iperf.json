@@ -11,7 +11,7 @@
       "c": 43
     },
     "filesSkipped": 0,
-    "findings": 35,
+    "findings": 43,
     "suppressedQnxBranch": 0,
     "suppressedNonCall": 0,
     "build": {
@@ -19,18 +19,18 @@
       "findingsNotInBuildList": 0,
       "note": "26 source paths named in CMake/Makefile lists (variables and generated sources are not followed)"
     },
-    "rules": 56,
+    "rules": 61,
     "bySeverity": {
       "blocker": 0,
-      "major": 27,
+      "major": 35,
       "minor": 6,
       "info": 2
     },
-    "effortMinutes": 434,
+    "effortMinutes": 478,
     "sdp": {
       "build": "8.0.0.00141T202311271501L",
-      "classified": 34,
-      "verifiedAbsent": 33,
+      "classified": 42,
+      "verifiedAbsent": 41,
       "verifiedPartial": 0,
       "verifiedPresentKept": 1,
       "verifiedPresentDropped": 0,
@@ -1694,6 +1694,502 @@
       }
     },
     {
+      "ruleId": "QNX-HDR-ENDIAN",
+      "title": "Includes <endian.h>, <sys/endian.h> or <byteswap.h>",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "verified-absent",
+      "file": "src/portable_endian.h",
+      "line": 15,
+      "column": 1,
+      "match": "#\tinclude <endian.h>",
+      "context": [
+        {
+          "n": 12,
+          "text": ""
+        },
+        {
+          "n": 13,
+          "text": "#if defined(__CYGWIN__)"
+        },
+        {
+          "n": 14,
+          "text": ""
+        },
+        {
+          "n": 15,
+          "text": "#\tinclude <endian.h>"
+        },
+        {
+          "n": 16,
+          "text": ""
+        },
+        {
+          "n": 17,
+          "text": "#elif defined(HAVE_ENDIAN_H)"
+        },
+        {
+          "n": 18,
+          "text": "#\tinclude <endian.h>"
+        }
+      ],
+      "message": "<endian.h>, <sys/endian.h> and <byteswap.h> do not exist in the QNX 8.0 SDP (build 141). Code that includes one without a QNX branch stops at the include (iperf's portable_endian.h falls into its 'platform not supported' branch and includes <endian.h>). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: <endian.h> not found / does not compile with qcc on x86_64 and aarch64le]",
+      "remedy": "Byte-order conversion is in <net/netbyte.h> (pulled in by <netinet/in.h>): htole16/32/64, le16/32/64toh, htobe16/32/64 and be16/32/64toh are macros there (present in build 141); <gulliver.h> has ENDIAN_LE16/32 and ENDIAN_BE16/32; BYTE_ORDER and BIG_ENDIAN come from <sys/param.h>. There is no bswap_16/32/64 and no __BYTE_ORDER / __LITTLE_ENDIAN. Add a __QNXNTO__ branch that includes <net/netbyte.h> and <sys/param.h>.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 20,
+      "guard": "other",
+      "guards": [
+        "#ifndef PORTABLE_ENDIAN_H__",
+        "#if defined(__CYGWIN__)"
+      ],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "endian.h",
+            "kind": "header",
+            "result": "absent",
+            "evidence": "<endian.h> not found / does not compile with qcc on x86_64 and aarch64le"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-HDR-ENDIAN",
+      "title": "Includes <endian.h>, <sys/endian.h> or <byteswap.h>",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "verified-absent",
+      "file": "src/portable_endian.h",
+      "line": 18,
+      "column": 1,
+      "match": "#\tinclude <endian.h>",
+      "context": [
+        {
+          "n": 15,
+          "text": "#\tinclude <endian.h>"
+        },
+        {
+          "n": 16,
+          "text": ""
+        },
+        {
+          "n": 17,
+          "text": "#elif defined(HAVE_ENDIAN_H)"
+        },
+        {
+          "n": 18,
+          "text": "#\tinclude <endian.h>"
+        },
+        {
+          "n": 19,
+          "text": ""
+        },
+        {
+          "n": 20,
+          "text": "#elif defined(HAVE_SYS_ENDIAN_H)"
+        },
+        {
+          "n": 21,
+          "text": "#\tinclude <sys/endian.h>"
+        }
+      ],
+      "message": "<endian.h>, <sys/endian.h> and <byteswap.h> do not exist in the QNX 8.0 SDP (build 141). Code that includes one without a QNX branch stops at the include (iperf's portable_endian.h falls into its 'platform not supported' branch and includes <endian.h>). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: <endian.h> not found / does not compile with qcc on x86_64 and aarch64le]",
+      "remedy": "Byte-order conversion is in <net/netbyte.h> (pulled in by <netinet/in.h>): htole16/32/64, le16/32/64toh, htobe16/32/64 and be16/32/64toh are macros there (present in build 141); <gulliver.h> has ENDIAN_LE16/32 and ENDIAN_BE16/32; BYTE_ORDER and BIG_ENDIAN come from <sys/param.h>. There is no bswap_16/32/64 and no __BYTE_ORDER / __LITTLE_ENDIAN. Add a __QNXNTO__ branch that includes <net/netbyte.h> and <sys/param.h>.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 6,
+      "guard": "other",
+      "guards": [
+        "#ifndef PORTABLE_ENDIAN_H__",
+        "#elif defined(HAVE_ENDIAN_H)"
+      ],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "endian.h",
+            "kind": "header",
+            "result": "absent",
+            "evidence": "<endian.h> not found / does not compile with qcc on x86_64 and aarch64le"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-HDR-ENDIAN",
+      "title": "Includes <endian.h>, <sys/endian.h> or <byteswap.h>",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "verified-absent",
+      "file": "src/portable_endian.h",
+      "line": 21,
+      "column": 1,
+      "match": "#\tinclude <sys/endian.h>",
+      "context": [
+        {
+          "n": 18,
+          "text": "#\tinclude <endian.h>"
+        },
+        {
+          "n": 19,
+          "text": ""
+        },
+        {
+          "n": 20,
+          "text": "#elif defined(HAVE_SYS_ENDIAN_H)"
+        },
+        {
+          "n": 21,
+          "text": "#\tinclude <sys/endian.h>"
+        },
+        {
+          "n": 22,
+          "text": ""
+        },
+        {
+          "n": 23,
+          "text": "#\tif defined(__sgi)"
+        },
+        {
+          "n": 24,
+          "text": ""
+        }
+      ],
+      "message": "<endian.h>, <sys/endian.h> and <byteswap.h> do not exist in the QNX 8.0 SDP (build 141). Code that includes one without a QNX branch stops at the include (iperf's portable_endian.h falls into its 'platform not supported' branch and includes <endian.h>). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: <sys/endian.h> not found / does not compile with qcc on x86_64 and aarch64le]",
+      "remedy": "Byte-order conversion is in <net/netbyte.h> (pulled in by <netinet/in.h>): htole16/32/64, le16/32/64toh, htobe16/32/64 and be16/32/64toh are macros there (present in build 141); <gulliver.h> has ENDIAN_LE16/32 and ENDIAN_BE16/32; BYTE_ORDER and BIG_ENDIAN come from <sys/param.h>. There is no bswap_16/32/64 and no __BYTE_ORDER / __LITTLE_ENDIAN. Add a __QNXNTO__ branch that includes <net/netbyte.h> and <sys/param.h>.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 6,
+      "guard": "other",
+      "guards": [
+        "#ifndef PORTABLE_ENDIAN_H__",
+        "#elif defined(HAVE_SYS_ENDIAN_H)"
+      ],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "sys/endian.h",
+            "kind": "header",
+            "result": "absent",
+            "evidence": "<sys/endian.h> not found / does not compile with qcc on x86_64 and aarch64le"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-API-BYTEORDER",
+      "title": "glibc byte-order macros (__BYTE_ORDER, __LITTLE_ENDIAN)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "verified-absent",
+      "file": "src/portable_endian.h",
+      "line": 52,
+      "column": 10,
+      "match": "__BYTE_ORDER",
+      "context": [
+        {
+          "n": 49,
+          "text": "#\tdefine be64toh(x) OSSwapBigToHostInt64(x)"
+        },
+        {
+          "n": 50,
+          "text": "#\tdefine le64toh(x) OSSwapLittleToHostInt64(x)"
+        },
+        {
+          "n": 51,
+          "text": ""
+        },
+        {
+          "n": 52,
+          "text": "#\tdefine __BYTE_ORDER    BYTE_ORDER"
+        },
+        {
+          "n": 53,
+          "text": "#\tdefine __BIG_ENDIAN    BIG_ENDIAN"
+        },
+        {
+          "n": 54,
+          "text": "#\tdefine __LITTLE_ENDIAN LITTLE_ENDIAN"
+        },
+        {
+          "n": 55,
+          "text": "#\tdefine __PDP_ENDIAN    PDP_ENDIAN"
+        }
+      ],
+      "message": "__BYTE_ORDER and __LITTLE_ENDIAN are glibc macros: on the QNX 8.0 SDP (build 141) __BYTE_ORDER is undeclared and __LITTLE_ENDIAN is in no user header. In an #if both evaluate to 0, so '#if __BYTE_ORDER == __LITTLE_ENDIAN' is silently TRUE on QNX whatever the CPU's order. [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: __BYTE_ORDER: not declared in any user header of the SDP and not exported by any SDP library; probe: #error __BYTE_ORDER not defined]",
+      "remedy": "Use BYTE_ORDER with LITTLE_ENDIAN / BIG_ENDIAN from <sys/param.h> (present in build 141), or the ENDIAN_* macros of <gulliver.h>; both x86_64 and aarch64le targets are little-endian, so a wrong branch would corrupt data without a compile error.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 10,
+      "guard": "other",
+      "guards": [
+        "#ifndef PORTABLE_ENDIAN_H__",
+        "#elif defined(__APPLE__)"
+      ],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "__BYTE_ORDER",
+            "kind": "name",
+            "result": "absent",
+            "evidence": "__BYTE_ORDER: not declared in any user header of the SDP and not exported by any SDP library; probe: #error __BYTE_ORDER not defined"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-API-BYTEORDER",
+      "title": "glibc byte-order macros (__BYTE_ORDER, __LITTLE_ENDIAN)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "verified-absent",
+      "file": "src/portable_endian.h",
+      "line": 54,
+      "column": 10,
+      "match": "__LITTLE_ENDIAN",
+      "context": [
+        {
+          "n": 51,
+          "text": ""
+        },
+        {
+          "n": 52,
+          "text": "#\tdefine __BYTE_ORDER    BYTE_ORDER"
+        },
+        {
+          "n": 53,
+          "text": "#\tdefine __BIG_ENDIAN    BIG_ENDIAN"
+        },
+        {
+          "n": 54,
+          "text": "#\tdefine __LITTLE_ENDIAN LITTLE_ENDIAN"
+        },
+        {
+          "n": 55,
+          "text": "#\tdefine __PDP_ENDIAN    PDP_ENDIAN"
+        },
+        {
+          "n": 56,
+          "text": ""
+        },
+        {
+          "n": 57,
+          "text": "#elif defined(__sun) && defined(__SVR4)"
+        }
+      ],
+      "message": "__BYTE_ORDER and __LITTLE_ENDIAN are glibc macros: on the QNX 8.0 SDP (build 141) __BYTE_ORDER is undeclared and __LITTLE_ENDIAN is in no user header. In an #if both evaluate to 0, so '#if __BYTE_ORDER == __LITTLE_ENDIAN' is silently TRUE on QNX whatever the CPU's order. [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: __LITTLE_ENDIAN: found only in io-sock kernel/driver headers (devs/), not in any user-facing header; compile probe fails]",
+      "remedy": "Use BYTE_ORDER with LITTLE_ENDIAN / BIG_ENDIAN from <sys/param.h> (present in build 141), or the ENDIAN_* macros of <gulliver.h>; both x86_64 and aarch64le targets are little-endian, so a wrong branch would corrupt data without a compile error.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 3,
+      "guard": "other",
+      "guards": [
+        "#ifndef PORTABLE_ENDIAN_H__",
+        "#elif defined(__APPLE__)"
+      ],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "__LITTLE_ENDIAN",
+            "kind": "name",
+            "result": "absent-from-user-headers",
+            "evidence": "__LITTLE_ENDIAN: found only in io-sock kernel/driver headers (devs/), not in any user-facing header; compile probe fails"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-API-BYTEORDER",
+      "title": "glibc byte-order macros (__BYTE_ORDER, __LITTLE_ENDIAN)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "verified-absent",
+      "file": "src/portable_endian.h",
+      "line": 140,
+      "column": 10,
+      "match": "__BYTE_ORDER",
+      "context": [
+        {
+          "n": 137,
+          "text": ""
+        },
+        {
+          "n": 138,
+          "text": "#\tendif"
+        },
+        {
+          "n": 139,
+          "text": ""
+        },
+        {
+          "n": 140,
+          "text": "#\tdefine __BYTE_ORDER    BYTE_ORDER"
+        },
+        {
+          "n": 141,
+          "text": "#\tdefine __BIG_ENDIAN    BIG_ENDIAN"
+        },
+        {
+          "n": 142,
+          "text": "#\tdefine __LITTLE_ENDIAN LITTLE_ENDIAN"
+        },
+        {
+          "n": 143,
+          "text": "#\tdefine __PDP_ENDIAN    PDP_ENDIAN"
+        }
+      ],
+      "message": "__BYTE_ORDER and __LITTLE_ENDIAN are glibc macros: on the QNX 8.0 SDP (build 141) __BYTE_ORDER is undeclared and __LITTLE_ENDIAN is in no user header. In an #if both evaluate to 0, so '#if __BYTE_ORDER == __LITTLE_ENDIAN' is silently TRUE on QNX whatever the CPU's order. [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: __BYTE_ORDER: not declared in any user header of the SDP and not exported by any SDP library; probe: #error __BYTE_ORDER not defined]",
+      "remedy": "Use BYTE_ORDER with LITTLE_ENDIAN / BIG_ENDIAN from <sys/param.h> (present in build 141), or the ENDIAN_* macros of <gulliver.h>; both x86_64 and aarch64le targets are little-endian, so a wrong branch would corrupt data without a compile error.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 3,
+      "guard": "other",
+      "guards": [
+        "#ifndef PORTABLE_ENDIAN_H__",
+        "#elif defined(__WINDOWS__)"
+      ],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "__BYTE_ORDER",
+            "kind": "name",
+            "result": "absent",
+            "evidence": "__BYTE_ORDER: not declared in any user header of the SDP and not exported by any SDP library; probe: #error __BYTE_ORDER not defined"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-API-BYTEORDER",
+      "title": "glibc byte-order macros (__BYTE_ORDER, __LITTLE_ENDIAN)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "verified-absent",
+      "file": "src/portable_endian.h",
+      "line": 142,
+      "column": 10,
+      "match": "__LITTLE_ENDIAN",
+      "context": [
+        {
+          "n": 139,
+          "text": ""
+        },
+        {
+          "n": 140,
+          "text": "#\tdefine __BYTE_ORDER    BYTE_ORDER"
+        },
+        {
+          "n": 141,
+          "text": "#\tdefine __BIG_ENDIAN    BIG_ENDIAN"
+        },
+        {
+          "n": 142,
+          "text": "#\tdefine __LITTLE_ENDIAN LITTLE_ENDIAN"
+        },
+        {
+          "n": 143,
+          "text": "#\tdefine __PDP_ENDIAN    PDP_ENDIAN"
+        },
+        {
+          "n": 144,
+          "text": ""
+        },
+        {
+          "n": 145,
+          "text": "#else"
+        }
+      ],
+      "message": "__BYTE_ORDER and __LITTLE_ENDIAN are glibc macros: on the QNX 8.0 SDP (build 141) __BYTE_ORDER is undeclared and __LITTLE_ENDIAN is in no user header. In an #if both evaluate to 0, so '#if __BYTE_ORDER == __LITTLE_ENDIAN' is silently TRUE on QNX whatever the CPU's order. [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: __LITTLE_ENDIAN: found only in io-sock kernel/driver headers (devs/), not in any user-facing header; compile probe fails]",
+      "remedy": "Use BYTE_ORDER with LITTLE_ENDIAN / BIG_ENDIAN from <sys/param.h> (present in build 141), or the ENDIAN_* macros of <gulliver.h>; both x86_64 and aarch64le targets are little-endian, so a wrong branch would corrupt data without a compile error.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 3,
+      "guard": "other",
+      "guards": [
+        "#ifndef PORTABLE_ENDIAN_H__",
+        "#elif defined(__WINDOWS__)"
+      ],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "__LITTLE_ENDIAN",
+            "kind": "name",
+            "result": "absent-from-user-headers",
+            "evidence": "__LITTLE_ENDIAN: found only in io-sock kernel/driver headers (devs/), not in any user-facing header; compile probe fails"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-HDR-ENDIAN",
+      "title": "Includes <endian.h>, <sys/endian.h> or <byteswap.h>",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "verified-absent",
+      "file": "src/portable_endian.h",
+      "line": 155,
+      "column": 1,
+      "match": "#\tinclude <endian.h>",
+      "context": [
+        {
+          "n": 152,
+          "text": "#if (!defined(__vxworks)) && (!defined(__VXWORKS__))"
+        },
+        {
+          "n": 153,
+          "text": "#\twarning platform not supported"
+        },
+        {
+          "n": 154,
+          "text": "#endif"
+        },
+        {
+          "n": 155,
+          "text": "#\tinclude <endian.h>"
+        },
+        {
+          "n": 156,
+          "text": "#if BYTE_ORDER == BIG_ENDIAN"
+        },
+        {
+          "n": 157,
+          "text": "#define HTONLL(n) (n)"
+        },
+        {
+          "n": 158,
+          "text": "#define NTOHLL(n) (n)"
+        }
+      ],
+      "message": "<endian.h>, <sys/endian.h> and <byteswap.h> do not exist in the QNX 8.0 SDP (build 141). Code that includes one without a QNX branch stops at the include (iperf's portable_endian.h falls into its 'platform not supported' branch and includes <endian.h>). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: <endian.h> not found / does not compile with qcc on x86_64 and aarch64le]",
+      "remedy": "Byte-order conversion is in <net/netbyte.h> (pulled in by <netinet/in.h>): htole16/32/64, le16/32/64toh, htobe16/32/64 and be16/32/64toh are macros there (present in build 141); <gulliver.h> has ENDIAN_LE16/32 and ENDIAN_BE16/32; BYTE_ORDER and BIG_ENDIAN come from <sys/param.h>. There is no bswap_16/32/64 and no __BYTE_ORDER / __LITTLE_ENDIAN. Add a __QNXNTO__ branch that includes <net/netbyte.h> and <sys/param.h>.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 6,
+      "guard": "other",
+      "guards": [
+        "#ifndef PORTABLE_ENDIAN_H__",
+        "#elif defined(__WINDOWS__) (#else)"
+      ],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "endian.h",
+            "kind": "header",
+            "result": "absent",
+            "evidence": "<endian.h> not found / does not compile with qcc on x86_64 and aarch64le"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
       "ruleId": "QNX-API-SOCKOPT-LINUX",
       "title": "Linux-specific socket options",
       "category": "linux-api",
@@ -2139,7 +2635,7 @@
       }
     }
   ],
-  "groups": 6,
+  "groups": 8,
   "rules": [
     {
       "id": "QNX-BLD-AUTOCONF-HOST",
@@ -2209,6 +2705,28 @@
       "verify": "Macro presence verified on SDP 8.0 build 141 (compile probe); semantics not run.",
       "message": "Socket options that originated on Linux. On SDP 8.0 build 141: TCP_FASTOPEN, TCP_INFO, TCP_NODELAY, TCP_KEEPIDLE/INTVL/CNT, SO_REUSEPORT are defined; TCP_CORK, TCP_QUICKACK, TCP_DEFER_ACCEPT, TCP_USER_TIMEOUT, MSG_MORE, SO_BINDTODEVICE, SO_PRIORITY, SO_MARK, IP_PKTINFO-style Linux options are not.",
       "effort": 20
+    },
+    {
+      "id": "QNX-HDR-ENDIAN",
+      "title": "Includes <endian.h>, <sys/endian.h> or <byteswap.h>",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Byte-order conversion is in <net/netbyte.h> (pulled in by <netinet/in.h>): htole16/32/64, le16/32/64toh, htobe16/32/64 and be16/32/64toh are macros there (present in build 141); <gulliver.h> has ENDIAN_LE16/32 and ENDIAN_BE16/32; BYTE_ORDER and BIG_ENDIAN come from <sys/param.h>. There is no bswap_16/32/64 and no __BYTE_ORDER / __LITTLE_ENDIAN. Add a __QNXNTO__ branch that includes <net/netbyte.h> and <sys/param.h>.",
+      "verify": "Header absence and the macro names verified on SDP 8.0 build 141 (qcc probes); not run on a target.",
+      "message": "<endian.h>, <sys/endian.h> and <byteswap.h> do not exist in the QNX 8.0 SDP (build 141). Code that includes one without a QNX branch stops at the include (iperf's portable_endian.h falls into its 'platform not supported' branch and includes <endian.h>).",
+      "effort": 20
+    },
+    {
+      "id": "QNX-API-BYTEORDER",
+      "title": "glibc byte-order macros (__BYTE_ORDER, __LITTLE_ENDIAN)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Use BYTE_ORDER with LITTLE_ENDIAN / BIG_ENDIAN from <sys/param.h> (present in build 141), or the ENDIAN_* macros of <gulliver.h>; both x86_64 and aarch64le targets are little-endian, so a wrong branch would corrupt data without a compile error.",
+      "verify": "Macro absence and the replacement names verified on SDP 8.0 build 141 (probes); not run on a target.",
+      "message": "__BYTE_ORDER and __LITTLE_ENDIAN are glibc macros: on the QNX 8.0 SDP (build 141) __BYTE_ORDER is undeclared and __LITTLE_ENDIAN is in no user header. In an #if both evaluate to 0, so '#if __BYTE_ORDER == __LITTLE_ENDIAN' is silently TRUE on QNX whatever the CPU's order.",
+      "effort": 10
     }
   ]
 }

@@ -12,7 +12,7 @@
       "c": 379
     },
     "filesSkipped": 0,
-    "findings": 339,
+    "findings": 340,
     "suppressedQnxBranch": 0,
     "suppressedNonCall": 7,
     "build": {
@@ -20,18 +20,18 @@
       "findingsNotInBuildList": 0,
       "note": "307 source paths named in CMake/Makefile lists (variables and generated sources are not followed)"
     },
-    "rules": 56,
+    "rules": 61,
     "bySeverity": {
       "blocker": 76,
-      "major": 62,
+      "major": 63,
       "minor": 33,
       "info": 168
     },
-    "effortMinutes": 2575,
+    "effortMinutes": 2595,
     "sdp": {
       "build": "8.0.0.00141T202311271501L",
-      "classified": 172,
-      "verifiedAbsent": 139,
+      "classified": 173,
+      "verifiedAbsent": 140,
       "verifiedPartial": 11,
       "verifiedPresentKept": 16,
       "verifiedPresentDropped": 6,
@@ -4930,8 +4930,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 45,
       "guard": "none",
       "guards": []
@@ -5284,8 +5284,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 45,
       "guard": "none",
       "guards": []
@@ -5331,11 +5331,73 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 14,
       "guard": "none",
       "guards": []
+    },
+    {
+      "ruleId": "QNX-API-POLLRDHUP",
+      "title": "POLLRDHUP",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "verified-absent",
+      "file": "src/unix/internal.h",
+      "line": 143,
+      "column": 24,
+      "match": "POLLRDHUP",
+      "context": [
+        {
+          "n": 140,
+          "text": ""
+        },
+        {
+          "n": 141,
+          "text": "/* Leans on the fact that, on Linux, POLLRDHUP == EPOLLRDHUP. */"
+        },
+        {
+          "n": 142,
+          "text": "#ifdef POLLRDHUP"
+        },
+        {
+          "n": 143,
+          "text": "# define UV__POLLRDHUP POLLRDHUP"
+        },
+        {
+          "n": 144,
+          "text": "#elif defined(__QNX__)"
+        },
+        {
+          "n": 145,
+          "text": "/* On QNX, POLLRDHUP is not available and the 0x2000 workaround"
+        },
+        {
+          "n": 146,
+          "text": " * leads to undefined bahavior."
+        }
+      ],
+      "message": "POLLRDHUP (peer shut down its writing half) is Linux-specific. It is not defined in the QNX 8.0 SDP (build 141). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: POLLRDHUP: not declared in any user header of the SDP and not exported by any SDP library; probe: #error POLLRDHUP not defined]",
+      "remedy": "Detect a peer's close by reading: POLLIN, then read()/recv() returning 0 means orderly shutdown; POLLHUP, POLLPRI and POLLRDNORM are defined in <poll.h> (build 141). Whether POLLHUP is raised for a half-close on QNX sockets was not tested, so keep the read()==0 path as the authority.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 20,
+      "guard": "other",
+      "guards": [
+        "#ifndef UV_UNIX_INTERNAL_H_",
+        "#ifdef POLLRDHUP"
+      ],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "POLLRDHUP",
+            "kind": "name",
+            "result": "absent",
+            "evidence": "POLLRDHUP: not declared in any user header of the SDP and not exported by any SDP library; probe: #error POLLRDHUP not defined"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
     },
     {
       "ruleId": "QNX-HDR-SYS-LINUX",
@@ -5555,8 +5617,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 45,
       "guard": "none",
       "guards": []
@@ -5602,8 +5664,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 14,
       "guard": "none",
       "guards": []
@@ -5649,8 +5711,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 14,
       "guard": "none",
       "guards": []
@@ -5696,8 +5758,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 14,
       "guard": "none",
       "guards": []
@@ -5743,8 +5805,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 14,
       "guard": "none",
       "guards": []
@@ -5837,7 +5899,7 @@
         }
       ],
       "message": "prctl is a Linux process-control multiplexer. It does not exist on QNX 8.0 (no <sys/prctl.h>, no prctl symbol, no PR_* macro in SDP 8.0 build 141). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: prctl: found only in io-sock kernel/driver headers (devs/), not in any user-facing header; compile probe fails]",
-      "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np() (declared and exported in SDP 8.0 build 141; so is pthread_getname_np); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE/NO_NEW_PRIVS -> drop (no QNX analogue is known).",
+      "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np() (declared and exported in SDP 8.0 build 141; so is pthread_getname_np); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE -> drop (no QNX analogue is known). PR_SET_NO_NEW_PRIVS: dropping the call silently weakens a sandbox; re-implement with procmgr abilities (procmgr_ability() and the PROCMGR_AID_* / PROCMGR_ADN_* / PROCMGR_AOP_* constants in <sys/procmgr.h>, present in SDP 8.0 build 141; which abilities to drop is design work) or accept the loss explicitly and write it down.",
       "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
       "effort": 30,
       "guard": "other",
@@ -5898,8 +5960,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 14,
       "guard": "none",
       "guards": []
@@ -6133,8 +6195,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 14,
       "guard": "none",
       "guards": []
@@ -6321,8 +6383,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 14,
       "guard": "none",
       "guards": []
@@ -6509,8 +6571,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 14,
       "guard": "none",
       "guards": []
@@ -6556,8 +6618,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 14,
       "guard": "none",
       "guards": []
@@ -6886,8 +6948,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 45,
       "guard": "none",
       "guards": []
@@ -6933,8 +6995,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 45,
       "guard": "none",
       "guards": []
@@ -18083,7 +18145,7 @@
       "guards": []
     }
   ],
-  "groups": 28,
+  "groups": 29,
   "rules": [
     {
       "id": "QNX-BLD-LRT",
@@ -18232,8 +18294,8 @@
       "category": "linux-api",
       "severity": "major",
       "confidence": "guess",
-      "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np() (declared and exported in SDP 8.0 build 141; so is pthread_getname_np); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE/NO_NEW_PRIVS -> drop (no QNX analogue is known).",
-      "verify": "Absence and pthread_setname_np verified on SDP 8.0 build 141 (probes); argument limits of pthread_setname_np not checked.",
+      "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np() (declared and exported in SDP 8.0 build 141; so is pthread_getname_np); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE -> drop (no QNX analogue is known). PR_SET_NO_NEW_PRIVS: dropping the call silently weakens a sandbox; re-implement with procmgr abilities (procmgr_ability() and the PROCMGR_AID_* / PROCMGR_ADN_* / PROCMGR_AOP_* constants in <sys/procmgr.h>, present in SDP 8.0 build 141; which abilities to drop is design work) or accept the loss explicitly and write it down.",
+      "verify": "Absence of prctl and PR_* verified on SDP 8.0 build 141 (probes); pthread_setname_np, procmgr_ability and the PROCMGR_* constants verified present by probe. Which abilities replace NO_NEW_PRIVS, and the name-length limit of pthread_setname_np, are not verified.",
       "message": "prctl is a Linux process-control multiplexer. It does not exist on QNX 8.0 (no <sys/prctl.h>, no prctl symbol, no PR_* macro in SDP 8.0 build 141).",
       "effort": 30
     },
@@ -18399,8 +18461,8 @@
       "category": "linux-api",
       "severity": "major",
       "confidence": "guess",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "refs": [
         "QNX docs: procfs / DCMD_PROC_INFO"
       ],
@@ -18417,6 +18479,17 @@
       "verify": "verify against SDP.",
       "message": "sysfs is a Linux kernel pseudo-filesystem; not assumed on QNX.",
       "effort": 60
+    },
+    {
+      "id": "QNX-API-POLLRDHUP",
+      "title": "POLLRDHUP",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Detect a peer's close by reading: POLLIN, then read()/recv() returning 0 means orderly shutdown; POLLHUP, POLLPRI and POLLRDNORM are defined in <poll.h> (build 141). Whether POLLHUP is raised for a half-close on QNX sockets was not tested, so keep the read()==0 path as the authority.",
+      "verify": "Absence of POLLRDHUP and presence of POLLHUP verified on SDP 8.0 build 141 (probes); half-close behaviour not run on a target.",
+      "message": "POLLRDHUP (peer shut down its writing half) is Linux-specific. It is not defined in the QNX 8.0 SDP (build 141).",
+      "effort": 20
     }
   ]
 }

@@ -11,7 +11,7 @@
       "make": 13
     },
     "filesSkipped": 0,
-    "findings": 41,
+    "findings": 46,
     "suppressedQnxBranch": 0,
     "suppressedNonCall": 1,
     "build": {
@@ -19,18 +19,18 @@
       "findingsNotInBuildList": 0,
       "note": "build files use globs/wildcards: source lists are not knowable, nothing was marked"
     },
-    "rules": 56,
+    "rules": 61,
     "bySeverity": {
       "blocker": 1,
-      "major": 10,
+      "major": 15,
       "minor": 8,
       "info": 22
     },
-    "effortMinutes": 439,
+    "effortMinutes": 476,
     "sdp": {
       "build": "8.0.0.00141T202311271501L",
-      "classified": 13,
-      "verifiedAbsent": 9,
+      "classified": 18,
+      "verifiedAbsent": 14,
       "verifiedPartial": 1,
       "verifiedPresentKept": 1,
       "verifiedPresentDropped": 2,
@@ -111,6 +111,130 @@
       }
     },
     {
+      "ruleId": "QNX-API-BYTEORDER",
+      "title": "glibc byte-order macros (__BYTE_ORDER, __LITTLE_ENDIAN)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "verified-absent",
+      "file": "libtomcrypt/src/headers/tomcrypt_cfg.h",
+      "line": 177,
+      "column": 15,
+      "match": "__BYTE_ORDER",
+      "context": [
+        {
+          "n": 174,
+          "text": "/* endianness fallback */"
+        },
+        {
+          "n": 175,
+          "text": "#if !defined(ENDIAN_BIG) && !defined(ENDIAN_LITTLE)"
+        },
+        {
+          "n": 176,
+          "text": "  #if defined(_BYTE_ORDER) && _BYTE_ORDER == _BIG_ENDIAN || \\"
+        },
+        {
+          "n": 177,
+          "text": "      defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || \\"
+        },
+        {
+          "n": 178,
+          "text": "      defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__ || \\"
+        },
+        {
+          "n": 179,
+          "text": "      defined(__BIG_ENDIAN__) || \\"
+        },
+        {
+          "n": 180,
+          "text": "      defined(__ARMEB__) || defined(__THUMBEB__) || defined(__AARCH64EB__) || \\"
+        }
+      ],
+      "message": "__BYTE_ORDER and __LITTLE_ENDIAN are glibc macros: on the QNX 8.0 SDP (build 141) __BYTE_ORDER is undeclared and __LITTLE_ENDIAN is in no user header. In an #if both evaluate to 0, so '#if __BYTE_ORDER == __LITTLE_ENDIAN' is silently TRUE on QNX whatever the CPU's order. [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: __BYTE_ORDER: not declared in any user header of the SDP and not exported by any SDP library; probe: #error __BYTE_ORDER not defined]",
+      "remedy": "Use BYTE_ORDER with LITTLE_ENDIAN / BIG_ENDIAN from <sys/param.h> (present in build 141), or the ENDIAN_* macros of <gulliver.h>; both x86_64 and aarch64le targets are little-endian, so a wrong branch would corrupt data without a compile error.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 10,
+      "guard": "other",
+      "guards": [
+        "#if !defined(ENDIAN_BIG) && !defined(ENDIAN_LITTLE)",
+        "#if defined(_BYTE_ORDER) && _BYTE_ORDER == _BIG_ENDIAN || \\"
+      ],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "__BYTE_ORDER",
+            "kind": "name",
+            "result": "absent",
+            "evidence": "__BYTE_ORDER: not declared in any user header of the SDP and not exported by any SDP library; probe: #error __BYTE_ORDER not defined"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-API-BYTEORDER",
+      "title": "glibc byte-order macros (__BYTE_ORDER, __LITTLE_ENDIAN)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "verified-absent",
+      "file": "libtomcrypt/src/headers/tomcrypt_cfg.h",
+      "line": 184,
+      "column": 15,
+      "match": "__BYTE_ORDER",
+      "context": [
+        {
+          "n": 181,
+          "text": "      defined(_MIPSEB) || defined(__MIPSEB) || defined(__MIPSEB__)"
+        },
+        {
+          "n": 182,
+          "text": "    #define ENDIAN_BIG"
+        },
+        {
+          "n": 183,
+          "text": "  #elif defined(_BYTE_ORDER) && _BYTE_ORDER == _LITTLE_ENDIAN || \\"
+        },
+        {
+          "n": 184,
+          "text": "      defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || \\"
+        },
+        {
+          "n": 185,
+          "text": "      defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ || \\"
+        },
+        {
+          "n": 186,
+          "text": "      defined(__LITTLE_ENDIAN__) || \\"
+        },
+        {
+          "n": 187,
+          "text": "      defined(__ARMEL__) || defined(__THUMBEL__) || defined(__AARCH64EL__) || \\"
+        }
+      ],
+      "message": "__BYTE_ORDER and __LITTLE_ENDIAN are glibc macros: on the QNX 8.0 SDP (build 141) __BYTE_ORDER is undeclared and __LITTLE_ENDIAN is in no user header. In an #if both evaluate to 0, so '#if __BYTE_ORDER == __LITTLE_ENDIAN' is silently TRUE on QNX whatever the CPU's order. [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: __BYTE_ORDER: not declared in any user header of the SDP and not exported by any SDP library; probe: #error __BYTE_ORDER not defined]",
+      "remedy": "Use BYTE_ORDER with LITTLE_ENDIAN / BIG_ENDIAN from <sys/param.h> (present in build 141), or the ENDIAN_* macros of <gulliver.h>; both x86_64 and aarch64le targets are little-endian, so a wrong branch would corrupt data without a compile error.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 3,
+      "guard": "other",
+      "guards": [
+        "#if !defined(ENDIAN_BIG) && !defined(ENDIAN_LITTLE)",
+        "#elif defined(_BYTE_ORDER) && _BYTE_ORDER == _LITTLE_ENDIAN || \\"
+      ],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "__BYTE_ORDER",
+            "kind": "name",
+            "result": "absent",
+            "evidence": "__BYTE_ORDER: not declared in any user header of the SDP and not exported by any SDP library; probe: #error __BYTE_ORDER not defined"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
       "ruleId": "QNX-PATH-PROC",
       "title": "Linux /proc paths",
       "category": "linux-api",
@@ -151,8 +275,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 23,
       "guard": "linux-only",
       "guards": [
@@ -200,8 +324,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 7,
       "guard": "linux-only",
       "guards": [
@@ -249,8 +373,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 7,
       "guard": "linux-only",
       "guards": [
@@ -298,8 +422,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 7,
       "guard": "linux-only",
       "guards": [
@@ -347,8 +471,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 7,
       "guard": "linux-only",
       "guards": [
@@ -396,8 +520,8 @@
         }
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "effort": 7,
       "guard": "linux-only",
       "guards": [
@@ -461,6 +585,130 @@
             "kind": "header",
             "result": "absent",
             "evidence": "<sys/prctl.h> not found / does not compile with qcc on x86_64 and aarch64le"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-HDR-ENDIAN",
+      "title": "Includes <endian.h>, <sys/endian.h> or <byteswap.h>",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "verified-absent",
+      "file": "src/includes.h",
+      "line": 135,
+      "column": 1,
+      "match": "#include <endian.h>",
+      "context": [
+        {
+          "n": 132,
+          "text": "#endif"
+        },
+        {
+          "n": 133,
+          "text": ""
+        },
+        {
+          "n": 134,
+          "text": "#ifdef HAVE_ENDIAN_H"
+        },
+        {
+          "n": 135,
+          "text": "#include <endian.h>"
+        },
+        {
+          "n": 136,
+          "text": "#endif"
+        },
+        {
+          "n": 137,
+          "text": ""
+        },
+        {
+          "n": 138,
+          "text": "#ifdef HAVE_SYS_ENDIAN_H"
+        }
+      ],
+      "message": "<endian.h>, <sys/endian.h> and <byteswap.h> do not exist in the QNX 8.0 SDP (build 141). Code that includes one without a QNX branch stops at the include (iperf's portable_endian.h falls into its 'platform not supported' branch and includes <endian.h>). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: <endian.h> not found / does not compile with qcc on x86_64 and aarch64le]",
+      "remedy": "Byte-order conversion is in <net/netbyte.h> (pulled in by <netinet/in.h>): htole16/32/64, le16/32/64toh, htobe16/32/64 and be16/32/64toh are macros there (present in build 141); <gulliver.h> has ENDIAN_LE16/32 and ENDIAN_BE16/32; BYTE_ORDER and BIG_ENDIAN come from <sys/param.h>. There is no bswap_16/32/64 and no __BYTE_ORDER / __LITTLE_ENDIAN. Add a __QNXNTO__ branch that includes <net/netbyte.h> and <sys/param.h>.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 20,
+      "guard": "other",
+      "guards": [
+        "#ifndef DROPBEAR_INCLUDES_H_",
+        "#ifdef HAVE_ENDIAN_H"
+      ],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "endian.h",
+            "kind": "header",
+            "result": "absent",
+            "evidence": "<endian.h> not found / does not compile with qcc on x86_64 and aarch64le"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-HDR-ENDIAN",
+      "title": "Includes <endian.h>, <sys/endian.h> or <byteswap.h>",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "verified-absent",
+      "file": "src/includes.h",
+      "line": 139,
+      "column": 1,
+      "match": "#include <sys/endian.h>",
+      "context": [
+        {
+          "n": 136,
+          "text": "#endif"
+        },
+        {
+          "n": 137,
+          "text": ""
+        },
+        {
+          "n": 138,
+          "text": "#ifdef HAVE_SYS_ENDIAN_H"
+        },
+        {
+          "n": 139,
+          "text": "#include <sys/endian.h>"
+        },
+        {
+          "n": 140,
+          "text": "#endif"
+        },
+        {
+          "n": 141,
+          "text": ""
+        },
+        {
+          "n": 142,
+          "text": "#ifdef BUNDLED_LIBTOM"
+        }
+      ],
+      "message": "<endian.h>, <sys/endian.h> and <byteswap.h> do not exist in the QNX 8.0 SDP (build 141). Code that includes one without a QNX branch stops at the include (iperf's portable_endian.h falls into its 'platform not supported' branch and includes <endian.h>). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: <sys/endian.h> not found / does not compile with qcc on x86_64 and aarch64le]",
+      "remedy": "Byte-order conversion is in <net/netbyte.h> (pulled in by <netinet/in.h>): htole16/32/64, le16/32/64toh, htobe16/32/64 and be16/32/64toh are macros there (present in build 141); <gulliver.h> has ENDIAN_LE16/32 and ENDIAN_BE16/32; BYTE_ORDER and BIG_ENDIAN come from <sys/param.h>. There is no bswap_16/32/64 and no __BYTE_ORDER / __LITTLE_ENDIAN. Add a __QNXNTO__ branch that includes <net/netbyte.h> and <sys/param.h>.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 6,
+      "guard": "other",
+      "guards": [
+        "#ifndef DROPBEAR_INCLUDES_H_",
+        "#ifdef HAVE_SYS_ENDIAN_H"
+      ],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "sys/endian.h",
+            "kind": "header",
+            "result": "absent",
+            "evidence": "<sys/endian.h> not found / does not compile with qcc on x86_64 and aarch64le"
           }
         ],
         "build": "8.0.0.00141T202311271501L"
@@ -591,6 +839,67 @@
       }
     },
     {
+      "ruleId": "QNX-HDR-ENDIAN",
+      "title": "Includes <endian.h>, <sys/endian.h> or <byteswap.h>",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "verified-absent",
+      "file": "src/mlkem768.c",
+      "line": 39,
+      "column": 1,
+      "match": "# include <endian.h>",
+      "context": [
+        {
+          "n": 36,
+          "text": "#include <string.h>"
+        },
+        {
+          "n": 37,
+          "text": "#include <signal.h>"
+        },
+        {
+          "n": 38,
+          "text": "#ifdef HAVE_ENDIAN_H"
+        },
+        {
+          "n": 39,
+          "text": "# include <endian.h>"
+        },
+        {
+          "n": 40,
+          "text": "#endif"
+        },
+        {
+          "n": 41,
+          "text": ""
+        },
+        {
+          "n": 42,
+          "text": "#include \"kex.h\""
+        }
+      ],
+      "message": "<endian.h>, <sys/endian.h> and <byteswap.h> do not exist in the QNX 8.0 SDP (build 141). Code that includes one without a QNX branch stops at the include (iperf's portable_endian.h falls into its 'platform not supported' branch and includes <endian.h>). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: <endian.h> not found / does not compile with qcc on x86_64 and aarch64le]",
+      "remedy": "Byte-order conversion is in <net/netbyte.h> (pulled in by <netinet/in.h>): htole16/32/64, le16/32/64toh, htobe16/32/64 and be16/32/64toh are macros there (present in build 141); <gulliver.h> has ENDIAN_LE16/32 and ENDIAN_BE16/32; BYTE_ORDER and BIG_ENDIAN come from <sys/param.h>. There is no bswap_16/32/64 and no __BYTE_ORDER / __LITTLE_ENDIAN. Add a __QNXNTO__ branch that includes <net/netbyte.h> and <sys/param.h>.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 20,
+      "guard": "other",
+      "guards": [
+        "#ifdef HAVE_ENDIAN_H"
+      ],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "endian.h",
+            "kind": "header",
+            "result": "absent",
+            "evidence": "<endian.h> not found / does not compile with qcc on x86_64 and aarch64le"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
       "ruleId": "QNX-API-PRCTL",
       "title": "prctl",
       "category": "linux-api",
@@ -631,7 +940,7 @@
         }
       ],
       "message": "prctl is a Linux process-control multiplexer. It does not exist on QNX 8.0 (no <sys/prctl.h>, no prctl symbol, no PR_* macro in SDP 8.0 build 141). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: PR_SET_NAME: not declared in any user header of the SDP and not exported by any SDP library; probe: #error PR_SET_NAME not defined]",
-      "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np() (declared and exported in SDP 8.0 build 141; so is pthread_getname_np); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE/NO_NEW_PRIVS -> drop (no QNX analogue is known).",
+      "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np() (declared and exported in SDP 8.0 build 141; so is pthread_getname_np); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE -> drop (no QNX analogue is known). PR_SET_NO_NEW_PRIVS: dropping the call silently weakens a sandbox; re-implement with procmgr abilities (procmgr_ability() and the PROCMGR_AID_* / PROCMGR_ADN_* / PROCMGR_AOP_* constants in <sys/procmgr.h>, present in SDP 8.0 build 141; which abilities to drop is design work) or accept the loss explicitly and write it down.",
       "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
       "effort": 30,
       "guard": "other",
@@ -833,7 +1142,7 @@
         }
       ],
       "message": "getrandom is a Linux syscall wrapper. On SDP 8.0 build 141 getrandom is not declared and GRND_* do not exist; getentropy is not declared either (an unrelated library, libunbound, exports a private symbol of that name, so a call without a prototype would link to the wrong thing). arc4random is not available to user code. [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: getrandom: not declared in any user header of the SDP and not exported by any SDP library; probe: 'getrandom' undeclared (first use in this function); did you mean 'srandom'?]",
-      "remedy": "Read from /dev/urandom (QNX provides it; a helper that handles short reads and EINTR is enough). <entropy.h> in the SDP is the QNX entropy-source interface (entropy_return_status/entropy_sleep exist in the header; entropy_return_status does not link by default), not a getrandom replacement.",
+      "remedy": "Read from /dev/urandom with a helper that handles short reads, EINTR and open failure. /dev/urandom exists only while QNX's random service (the `random` resource manager) is running: an image built with mkqnximage starts it (its startup script runs `random` and waits for /dev/random), but a minimal or custom image may not, so add it to the image's startup and treat a failed open as a hard error. <entropy.h> in the SDP is the QNX entropy-source interface (entropy_return_status/entropy_sleep exist in the header; entropy_return_status does not link by default), not a getrandom replacement.",
       "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
       "effort": 8,
       "guard": "linux-only",
@@ -942,7 +1251,7 @@
         }
       ],
       "message": "getrandom is a Linux syscall wrapper. On SDP 8.0 build 141 getrandom is not declared and GRND_* do not exist; getentropy is not declared either (an unrelated library, libunbound, exports a private symbol of that name, so a call without a prototype would link to the wrong thing). arc4random is not available to user code. [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: getrandom: not declared in any user header of the SDP and not exported by any SDP library; probe: 'getrandom' undeclared (first use in this function); did you mean 'srandom'?]",
-      "remedy": "Read from /dev/urandom (QNX provides it; a helper that handles short reads and EINTR is enough). <entropy.h> in the SDP is the QNX entropy-source interface (entropy_return_status/entropy_sleep exist in the header; entropy_return_status does not link by default), not a getrandom replacement.",
+      "remedy": "Read from /dev/urandom with a helper that handles short reads, EINTR and open failure. /dev/urandom exists only while QNX's random service (the `random` resource manager) is running: an image built with mkqnximage starts it (its startup script runs `random` and waits for /dev/random), but a minimal or custom image may not, so add it to the image's startup and treat a failed open as a hard error. <entropy.h> in the SDP is the QNX entropy-source interface (entropy_return_status/entropy_sleep exist in the header; entropy_return_status does not link by default), not a getrandom replacement.",
       "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
       "effort": 15,
       "guard": "other",
@@ -1003,7 +1312,7 @@
         }
       ],
       "message": "getrandom is a Linux syscall wrapper. On SDP 8.0 build 141 getrandom is not declared and GRND_* do not exist; getentropy is not declared either (an unrelated library, libunbound, exports a private symbol of that name, so a call without a prototype would link to the wrong thing). arc4random is not available to user code. [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: getrandom: not declared in any user header of the SDP and not exported by any SDP library; probe: 'getrandom' undeclared (first use in this function); did you mean 'srandom'?]",
-      "remedy": "Read from /dev/urandom (QNX provides it; a helper that handles short reads and EINTR is enough). <entropy.h> in the SDP is the QNX entropy-source interface (entropy_return_status/entropy_sleep exist in the header; entropy_return_status does not link by default), not a getrandom replacement.",
+      "remedy": "Read from /dev/urandom with a helper that handles short reads, EINTR and open failure. /dev/urandom exists only while QNX's random service (the `random` resource manager) is running: an image built with mkqnximage starts it (its startup script runs `random` and waits for /dev/random), but a minimal or custom image may not, so add it to the image's startup and treat a failed open as a hard error. <entropy.h> in the SDP is the QNX entropy-source interface (entropy_return_status/entropy_sleep exist in the header; entropy_return_status does not link by default), not a getrandom replacement.",
       "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
       "effort": 5,
       "guard": "other",
@@ -2126,7 +2435,7 @@
       "guards": []
     }
   ],
-  "groups": 14,
+  "groups": 16,
   "rules": [
     {
       "id": "QNX-BLD-HARDCODED-CC",
@@ -2213,8 +2522,8 @@
       "category": "linux-api",
       "severity": "major",
       "confidence": "guess",
-      "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np() (declared and exported in SDP 8.0 build 141; so is pthread_getname_np); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE/NO_NEW_PRIVS -> drop (no QNX analogue is known).",
-      "verify": "Absence and pthread_setname_np verified on SDP 8.0 build 141 (probes); argument limits of pthread_setname_np not checked.",
+      "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np() (declared and exported in SDP 8.0 build 141; so is pthread_getname_np); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE -> drop (no QNX analogue is known). PR_SET_NO_NEW_PRIVS: dropping the call silently weakens a sandbox; re-implement with procmgr abilities (procmgr_ability() and the PROCMGR_AID_* / PROCMGR_ADN_* / PROCMGR_AOP_* constants in <sys/procmgr.h>, present in SDP 8.0 build 141; which abilities to drop is design work) or accept the loss explicitly and write it down.",
+      "verify": "Absence of prctl and PR_* verified on SDP 8.0 build 141 (probes); pthread_setname_np, procmgr_ability and the PROCMGR_* constants verified present by probe. Which abilities replace NO_NEW_PRIVS, and the name-length limit of pthread_setname_np, are not verified.",
       "message": "prctl is a Linux process-control multiplexer. It does not exist on QNX 8.0 (no <sys/prctl.h>, no prctl symbol, no PR_* macro in SDP 8.0 build 141).",
       "effort": 30
     },
@@ -2224,8 +2533,8 @@
       "category": "linux-api",
       "severity": "minor",
       "confidence": "guess",
-      "remedy": "Read from /dev/urandom (QNX provides it; a helper that handles short reads and EINTR is enough). <entropy.h> in the SDP is the QNX entropy-source interface (entropy_return_status/entropy_sleep exist in the header; entropy_return_status does not link by default), not a getrandom replacement.",
-      "verify": "Absence verified on SDP 8.0 build 141; /dev/urandom exists on the target image: not checked here.",
+      "remedy": "Read from /dev/urandom with a helper that handles short reads, EINTR and open failure. /dev/urandom exists only while QNX's random service (the `random` resource manager) is running: an image built with mkqnximage starts it (its startup script runs `random` and waits for /dev/random), but a minimal or custom image may not, so add it to the image's startup and treat a failed open as a hard error. <entropy.h> in the SDP is the QNX entropy-source interface (entropy_return_status/entropy_sleep exist in the header; entropy_return_status does not link by default), not a getrandom replacement.",
+      "verify": "Absence verified on SDP 8.0 build 141. That a default mkqnximage image starts `random` was read from its generated startup script; that /dev/urandom (not only /dev/random) appears was not run on a target.",
       "message": "getrandom is a Linux syscall wrapper. On SDP 8.0 build 141 getrandom is not declared and GRND_* do not exist; getentropy is not declared either (an unrelated library, libunbound, exports a private symbol of that name, so a call without a prototype would link to the wrong thing). arc4random is not available to user code.",
       "effort": 15
     },
@@ -2281,13 +2590,35 @@
       "category": "linux-api",
       "severity": "major",
       "confidence": "guess",
-      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+      "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
       "refs": [
         "QNX docs: procfs / DCMD_PROC_INFO"
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
       "effort": 45
+    },
+    {
+      "id": "QNX-HDR-ENDIAN",
+      "title": "Includes <endian.h>, <sys/endian.h> or <byteswap.h>",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Byte-order conversion is in <net/netbyte.h> (pulled in by <netinet/in.h>): htole16/32/64, le16/32/64toh, htobe16/32/64 and be16/32/64toh are macros there (present in build 141); <gulliver.h> has ENDIAN_LE16/32 and ENDIAN_BE16/32; BYTE_ORDER and BIG_ENDIAN come from <sys/param.h>. There is no bswap_16/32/64 and no __BYTE_ORDER / __LITTLE_ENDIAN. Add a __QNXNTO__ branch that includes <net/netbyte.h> and <sys/param.h>.",
+      "verify": "Header absence and the macro names verified on SDP 8.0 build 141 (qcc probes); not run on a target.",
+      "message": "<endian.h>, <sys/endian.h> and <byteswap.h> do not exist in the QNX 8.0 SDP (build 141). Code that includes one without a QNX branch stops at the include (iperf's portable_endian.h falls into its 'platform not supported' branch and includes <endian.h>).",
+      "effort": 20
+    },
+    {
+      "id": "QNX-API-BYTEORDER",
+      "title": "glibc byte-order macros (__BYTE_ORDER, __LITTLE_ENDIAN)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Use BYTE_ORDER with LITTLE_ENDIAN / BIG_ENDIAN from <sys/param.h> (present in build 141), or the ENDIAN_* macros of <gulliver.h>; both x86_64 and aarch64le targets are little-endian, so a wrong branch would corrupt data without a compile error.",
+      "verify": "Macro absence and the replacement names verified on SDP 8.0 build 141 (probes); not run on a target.",
+      "message": "__BYTE_ORDER and __LITTLE_ENDIAN are glibc macros: on the QNX 8.0 SDP (build 141) __BYTE_ORDER is undeclared and __LITTLE_ENDIAN is in no user header. In an #if both evaluate to 0, so '#if __BYTE_ORDER == __LITTLE_ENDIAN' is silently TRUE on QNX whatever the CPU's order.",
+      "effort": 10
     }
   ]
 }

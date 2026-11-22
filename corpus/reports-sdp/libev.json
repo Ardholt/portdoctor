@@ -19,7 +19,7 @@
       "findingsNotInBuildList": 0,
       "note": "8 source paths named in CMake/Makefile lists (variables and generated sources are not followed)"
     },
-    "rules": 56,
+    "rules": 61,
     "bySeverity": {
       "blocker": 21,
       "major": 10,

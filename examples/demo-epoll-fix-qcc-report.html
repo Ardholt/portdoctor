@@ -12,7 +12,7 @@ section.step{background:var(--s);border:1px solid var(--b);border-radius:10px;pa
 </style></head><body><main>
 <h1>PortDoctor fix report</h1>
 <p class="note">demo-epoll &middot; patches were applied to a copy, the original tree is untouched.</p>
-<p class="banner"><strong>Not a QNX build.</strong> Compile check here is the QNX SDP compiler (qcc/q++ -c, compile only): it knows which QNX headers, macros and prototypes exist. It does not link and nothing was run on a QNX target. Proposed patches are from a model or provider you chose; PortDoctor calls none itself.</p>
+<p class="banner"><strong>Not a QNX build.</strong> Compile check here is the QNX SDP compiler (qcc/q++ -c, compile only): it knows which QNX headers, macros and prototypes exist. It does not link C/C++ files and nothing was run on a QNX target. Makefile and CMake changes are checked by a dry run (make -n / cmake configure with the generated qnx-toolchain.cmake) plus a qcc link probe for every -l library; nothing is built. Proposed patches are from a model or provider you chose; PortDoctor calls none itself.</p>
 <h2>Before and after</h2>
 <div class="ba"><div class="card"><div class="n">12</div>findings before<br><span class="note">9 blocker &middot; 2 major &middot; 1 minor &middot; 0 info</span></div>
 <div class="card"><div class="n">0</div>findings after (re-scan of the patched copy)<br><span class="note">0 blocker &middot; 0 major &middot; 0 minor &middot; 0 info</span></div></div>
@@ -103,7 +103,7 @@ section.step{background:var(--s);border:1px solid var(--b);border-radius:10px;pa
 <span class=""> </span>
 <span class=""></span></pre>
 <p class="note">git apply --check: git apply --check passed</p>
-<p class="note">Check <strong>skipped</strong> (errors before 0, after 0): <code>(no C/C++ file touched)</code></p>
+<p class="note">Check <strong>pass</strong> (errors before 1, after 0): <code>make -n (qcc toolchain); qcc -Vgcc_ntox86_64 link probe per -l</code></p><pre class="out">make -n (qcc toolchain) ok; link probe ok for 2 libraries: -lsocket -lm</pre>
 <p class="note">Assumptions not verified: -lrt is not needed on Linux for this program either (glibc 2.34+ has clock_* in libc), and -lsocket does not exist on Linux: guard the line per platform if the Makefile must keep building on Linux</p></section>
 <section class="step st-already-resolved"><h3>3. Includes a Linux-specific &lt;sys/...&gt; header <code>server.c:1</code> <span class="pill">already-resolved</span></h3>
 <p class="note">QNX-HDR-SYS-LINUX &middot; findings 0 &rarr; 0</p>

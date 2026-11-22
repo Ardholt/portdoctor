@@ -15,6 +15,7 @@ scan:
   --html            single-file HTML report
   -o <file>         write to file instead of stdout
   --fail-on <sev>   exit 1 if any finding at or above severity (blocker|major|minor|info)
+  --ignore <regex>  skip paths matching the regex (repeatable), e.g. --ignore 'os390|mingw|/test/'
   --rules <dir>     use a different rules directory
 `;
 
@@ -65,11 +66,13 @@ export async function main(argv: string[]): Promise<void> {
     const out = opt(args, '-o');
     const failOn = opt(args, '--fail-on') as Severity | undefined;
     const rulesDir = opt(args, '--rules');
+    const ignore: string[] = [];
+    for (let v = opt(args, '--ignore'); v !== undefined; v = opt(args, '--ignore')) ignore.push(v);
     const dir = args.shift();
     if (!dir || args.length) throw new Error('usage: portdoctor scan <dir> [--json|--html] [-o file]');
     if (!existsSync(dir) || !statSync(dir).isDirectory()) throw new Error(`not a directory: ${dir}`);
     if (failOn && !SEVERITIES.includes(failOn)) throw new Error('--fail-on must be blocker|major|minor|info');
-    const res = scanDir(dir, { rulesDir });
+    const res = scanDir(dir, { rulesDir, ignore });
     const renderHtml = html ? (await import('./report-html.ts')).renderHtml : null;
     const body = renderHtml ? renderHtml(res) : json ? JSON.stringify(res, null, 2) + '\n' : textSummary(res);
     if (out) writeFileSync(out, body);

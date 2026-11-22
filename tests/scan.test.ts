@@ -115,3 +115,19 @@ test('CLI --json and --fail-on exit code', () => {
     rmSync(d, { recursive: true, force: true });
   }
 });
+
+test('feature-test lines (#ifndef EFD_NONBLOCK, defined(TCP_INFO)) are not uses', () => {
+  assert.deepEqual(ids('# ifndef EFD_NONBLOCK\n#elif (defined(__NetBSD__)) && defined(TCP_INFO)\n#endif\n').filter((x) => x !== 'QNX-ADV-LINUX-IFDEF'), []);
+});
+
+test('--ignore skips matching paths', () => {
+  const d = mkdtempSync(join(tmpdir(), 'pd-'));
+  try {
+    mkdirSync(join(d, 'os390'));
+    writeFileSync(join(d, 'os390', 'a.c'), 'int e = epoll_create1(0);\n');
+    writeFileSync(join(d, 'b.c'), 'int e = epoll_create1(0);\n');
+    assert.deepEqual(scanDir(d, { ignore: ['os390'] }).findings.map((f) => f.file), ['b.c']);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});

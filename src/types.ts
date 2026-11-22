@@ -61,6 +61,7 @@ export interface ScanOptions {
   contextLines?: number;
   rulesDir?: string;
   ruleIds?: string[];
+  ignore?: string[];
 }
 
 export interface ScanResult {

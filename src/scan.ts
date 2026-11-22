@@ -97,6 +97,8 @@ export function maskScript(text: string, kind: Kind): string {
   return lines.join('\n');
 }
 
+const COND_LINE = /^[ \t]*#[ \t]*(?:if|ifdef|ifndef|elif)\b/;
+
 type Cls = 'linux' | 'notlinux' | 'qnx' | 'notqnx' | 'other' | 'plain';
 interface Frame {
   cls: Cls;
@@ -140,7 +142,7 @@ export function conditionalFrames(noComment: string): Frame[][] {
   return out;
 }
 
-function walk(root: string, rel: string, out: string[], skipped: { n: number }): void {
+function walk(root: string, rel: string, out: string[], skipped: { n: number }, ignore: RegExp[]): void {
   let ents;
   try {
     ents = readdirSync(join(root, rel), { withFileTypes: true });
@@ -153,8 +155,8 @@ function walk(root: string, rel: string, out: string[], skipped: { n: number }):
     const r = rel ? rel + '/' + e.name : e.name;
     if (e.isSymbolicLink()) continue;
     if (e.isDirectory()) {
-      if (!SKIP_DIRS.has(e.name)) walk(root, r, out, skipped);
-    } else if (e.isFile() && detectKind(e.name)) out.push(r);
+      if (!SKIP_DIRS.has(e.name) && !ignore.some((x) => x.test(r + '/'))) walk(root, r, out, skipped, ignore);
+    } else if (e.isFile() && detectKind(e.name) && !ignore.some((x) => x.test(r))) out.push(r);
   }
 }
 
@@ -206,6 +208,7 @@ export function scanText(
       }
       if (r.scope === 'string' && code[m.index] === noComment[m.index]) continue;
       const li = lineOf(m.index);
+      if (r.scope === 'code' && kind === 'c' && COND_LINE.test(rawLines[li])) continue;
       if (seenLines.has(li)) continue;
       seenLines.add(li);
       let guard: Finding['guard'] = 'none';
@@ -259,7 +262,7 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
   const maxBytes = opts.maxFileBytes ?? 2_000_000;
   const files: string[] = [];
   const skipped = { n: 0 };
-  walk(root, '', files, skipped);
+  walk(root, '', files, skipped, (opts.ignore ?? []).map((x) => new RegExp(x)));
   const findings: Finding[] = [];
   const counters = { suppressed: 0 };
   const seenRuleFile = new Set<string>();

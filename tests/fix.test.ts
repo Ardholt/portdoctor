@@ -173,7 +173,7 @@ test('qcc check understands Makefiles: make -n plus a link probe per -l library;
   try {
     const bad = runBuildCheck('make', d, 'Makefile', 'gcc_ntox86_64');
     assert.equal(bad.status, 'fail');
-    assert.match(bad.output, /-lrt: ld: cannot find -lrt/);
+    assert.match(bad.output, /-lrt: cannot find -lrt/);
     writeFileSync(join(d, 'Makefile'), readFileSync(join(d, 'Makefile'), 'utf8').replace('LDLIBS = -lrt', 'LDLIBS ='));
     const good = runBuildCheck('make', d, 'Makefile', 'gcc_ntox86_64');
     assert.equal(good.status, 'pass', good.output);

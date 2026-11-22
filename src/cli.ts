@@ -7,13 +7,15 @@ import type { Severity } from './types.ts';
 const HELP = `portdoctor ${VERSION} - QNX 8.0 porting blocker scanner (static; nothing is compiled)
 
 Usage:
-  portdoctor scan <dir> [--json] [--html] [-o <file>] [--fail-on <severity>]
+  portdoctor scan <dir> [--json|--html|--sarif] [-o <file>] [--fail-on <severity>]
   portdoctor propose <scan.json|dir> --finding <n> [--provider "<cmd>"] [--patch-file <f>] [--no-check]
   portdoctor fix <dir> --provider "<cmd>" [--check "<cmd>"] [--count N] [--rule ID] [--keep <dir>] [-o fix-report.html]
+  portdoctor init-toolchain [<dir>] [--arch aarch64le|x86_64] [--out <dir>] [--force]
   portdoctor rules [--json]
 
 scan:
   --json            machine-readable result (default output is a text summary)
+  --sarif           SARIF 2.1.0 for CI/IDE
   --html            single-file HTML report
   -o <file>         write to file instead of stdout
   --fail-on <sev>   exit 1 if any finding at or above severity (blocker|major|minor|info)
@@ -73,6 +75,7 @@ export async function main(argv: string[]): Promise<void> {
   if (cmd === 'scan') {
     const json = flag(args, '--json');
     const html = flag(args, '--html');
+    const sarif = flag(args, '--sarif');
     const out = opt(args, '-o');
     const failOn = opt(args, '--fail-on') as Severity | undefined;
     const rulesDir = opt(args, '--rules');
@@ -84,7 +87,7 @@ export async function main(argv: string[]): Promise<void> {
     if (failOn && !SEVERITIES.includes(failOn)) throw new Error('--fail-on must be blocker|major|minor|info');
     const res = scanDir(dir, { rulesDir, ignore });
     const renderHtml = html ? (await import('./report-html.ts')).renderHtml : null;
-    const body = renderHtml ? renderHtml(res) : json ? JSON.stringify(res, null, 2) + '\n' : textSummary(res);
+    const body = sarif ? JSON.stringify((await import('./sarif.ts')).toSarif(res), null, 2) + '\n' : renderHtml ? renderHtml(res) : json ? JSON.stringify(res, null, 2) + '\n' : textSummary(res);
     if (out) writeFileSync(out, body);
     else process.stdout.write(body);
     if (failOn) {
@@ -98,6 +101,10 @@ export async function main(argv: string[]): Promise<void> {
     const rs = loadRules();
     if (flag(args, '--json')) process.stdout.write(JSON.stringify(rs.map(({ re, ...r }) => r), null, 2) + '\n');
     else for (const r of rs) process.stdout.write(`${r.id.padEnd(34)} ${r.severity.padEnd(8)} ${r.confidence.padEnd(6)} ${r.title}\n`);
+    return;
+  }
+  if (cmd === 'init-toolchain') {
+    process.exitCode = await (await import('./init.ts')).runInit(args);
     return;
   }
   if (cmd === 'fix') {

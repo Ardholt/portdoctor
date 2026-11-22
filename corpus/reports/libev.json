@@ -11,16 +11,17 @@
       "c": 13
     },
     "filesSkipped": 0,
-    "findings": 55,
+    "findings": 54,
     "suppressedQnxBranch": 0,
+    "suppressedNonCall": 1,
     "rules": 55,
     "bySeverity": {
       "blocker": 33,
-      "major": 14,
+      "major": 13,
       "minor": 0,
       "info": 8
     },
-    "effortMinutes": 2253
+    "effortMinutes": 2226
   },
   "findings": [
     {
@@ -1826,55 +1827,6 @@
       "severity": "major",
       "confidence": "guess",
       "file": "ev.c",
-      "line": 461,
-      "column": 25,
-      "match": "signalfd (",
-      "context": [
-        {
-          "n": 458,
-          "text": "#   define SFD_CLOEXEC 02000000"
-        },
-        {
-          "n": 459,
-          "text": "#  endif"
-        },
-        {
-          "n": 460,
-          "text": "# endif"
-        },
-        {
-          "n": 461,
-          "text": "EV_CPP (extern \"C\") int signalfd (int fd, const sigset_t *mask, int flags);"
-        },
-        {
-          "n": 462,
-          "text": ""
-        },
-        {
-          "n": 463,
-          "text": "struct signalfd_siginfo"
-        },
-        {
-          "n": 464,
-          "text": "{"
-        }
-      ],
-      "message": "signalfd turns signals into a readable fd; Linux-only.",
-      "remedy": "Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse.",
-      "verify": "verify against SDP.",
-      "effort": 90,
-      "guard": "other",
-      "guards": [
-        "#if EV_USE_SIGNALFD"
-      ]
-    },
-    {
-      "ruleId": "QNX-API-SIGNALFD",
-      "title": "signalfd",
-      "category": "linux-api",
-      "severity": "major",
-      "confidence": "guess",
-      "file": "ev.c",
       "line": 463,
       "column": 1,
       "match": "struct signalfd_siginfo",
@@ -1911,7 +1863,7 @@
       "message": "signalfd turns signals into a readable fd; Linux-only.",
       "remedy": "Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse.",
       "verify": "verify against SDP.",
-      "effort": 27,
+      "effort": 90,
       "guard": "other",
       "guards": [
         "#if EV_USE_SIGNALFD"

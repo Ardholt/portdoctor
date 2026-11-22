@@ -142,6 +142,72 @@ export function conditionalFrames(noComment: string): Frame[][] {
   return out;
 }
 
+
+const KEYWORDS = new Set(['return', 'else', 'do', 'case', 'goto', 'sizeof', 'throw', 'new', 'delete', 'typeof', 'defined', 'and', 'or', 'not', 'if', 'while', 'for', 'switch']);
+
+function prevTok(s: string, i: number): { t: string; at: number } {
+  let j = i - 1;
+  while (j >= 0 && /\s/.test(s[j])) j--;
+  if (j < 0) return { t: '', at: -1 };
+  if (/\w/.test(s[j])) {
+    let k = j;
+    while (k > 0 && /\w/.test(s[k - 1])) k--;
+    return { t: s.slice(k, j + 1), at: k };
+  }
+  return { t: s[j], at: j };
+}
+
+/**
+ * Syntactic sensor, not a judge: is the identifier at `i` a plain function call, or is it a member call
+ * (x->f(), x.f(), Cls::f()), or a declaration/definition of a function with that name (type before the name)?
+ */
+export function isPlainCall(code: string, i: number): boolean {
+  const p = prevTok(code, i);
+  if (p.t === '.') return false;
+  if (p.t === '>' && code[p.at - 1] === '-') return false;
+  if (p.t === ':' && code[p.at - 1] === ':') {
+    const q = prevTok(code, p.at - 1);
+    return !(/^\w/.test(q.t) || q.t === '>');
+  }
+  if (/^[A-Za-z_]\w*$/.test(p.t)) return KEYWORDS.has(p.t);
+  if (p.t === '*' || p.t === '&') {
+    const q = prevTok(code, p.at);
+    if (/^[A-Za-z_]\w*$/.test(q.t) && !KEYWORDS.has(q.t)) return false;
+  }
+  return true;
+}
+
+/**
+ * Names this text declares as functions (a type or `define` precedes the name). With bodyOnly, only those
+ * followed by a `{ body }`: a bare prototype may just re-declare a libc function (libev's signalfd shim does).
+ */
+export function declaredNames(code: string, bodyOnly = false): Set<string> {
+  const out = new Set<string>();
+  const re = /\b([A-Za-z_]\w*)[ \t]*\(/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(code))) {
+    if (KEYWORDS.has(m[1]) || isPlainCall(code, m.index)) continue;
+    const p = prevTok(code, m.index);
+    if (p.t === '.' || p.t === '>' || p.t === ':') continue;
+    if (bodyOnly) {
+      let d = 1;
+      let j = m.index + m[0].length;
+      while (j < code.length && d > 0) {
+        if (code[j] === '(') d++;
+        else if (code[j] === ')') d--;
+        j++;
+      }
+      const rest = /^\s*(?:const\b\s*|noexcept\b\s*|override\b\s*|__attribute__\s*\(\([^)]*\)\)\s*)*\{/.test(code.slice(j, j + 120));
+      if (!rest) continue;
+    }
+    out.add(m[1]);
+  }
+  return out;
+}
+
+const CALL_RE = /^([A-Za-z_]\w*)\s*\($/;
+const IDENT_RE = /^(?:struct\s+)?([A-Za-z_]\w*)/;
+
 function walk(root: string, rel: string, out: string[], skipped: { n: number }, ignore: RegExp[]): void {
   let ents;
   try {
@@ -166,8 +232,9 @@ export function scanText(
   text: string,
   rules: CompiledRule[],
   contextLines = 3,
-  counters = { suppressed: 0 },
+  counters: { suppressed: number; nonCall?: number } = { suppressed: 0 },
   seenRuleFile = new Set<string>(),
+  userFns?: Set<string>,
 ): Finding[] {
   const raw = text.replace(/\r\n?/g, '\n');
   const rawLines = raw.split('\n');
@@ -195,6 +262,7 @@ export function scanText(
     return lo;
   };
   const findings: Finding[] = [];
+  const fileFns = kind === 'c' ? declaredNames(code, true) : null;
   for (const r of rules) {
     if (!r.re || !r.appliesTo.includes(kind)) continue;
     const hay = r.scope === 'code' ? code : noComment;
@@ -209,6 +277,17 @@ export function scanText(
       if (r.scope === 'string' && code[m.index] === noComment[m.index]) continue;
       const li = lineOf(m.index);
       if (r.scope === 'code' && kind === 'c' && COND_LINE.test(rawLines[li])) continue;
+      if (kind === 'c' && r.scope === 'code') {
+        const id = IDENT_RE.exec(m[0])?.[1];
+        const ev = id && r.evidence?.[id];
+        const skip =
+          (ev && !new RegExp(ev).test(noComment)) ||
+          (CALL_RE.test(m[0]) && id && (!isPlainCall(code, m.index) || fileFns!.has(id) || userFns?.has(id)));
+        if (skip) {
+          counters.nonCall = (counters.nonCall ?? 0) + 1;
+          continue;
+        }
+      }
       if (seenLines.has(li)) continue;
       seenLines.add(li);
       let guard: Finding['guard'] = 'none';
@@ -264,7 +343,7 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
   const skipped = { n: 0 };
   walk(root, '', files, skipped, (opts.ignore ?? []).map((x) => new RegExp(x)));
   const findings: Finding[] = [];
-  const counters = { suppressed: 0 };
+  const counters: { suppressed: number; nonCall: number } = { suppressed: 0, nonCall: 0 };
   const seenRuleFile = new Set<string>();
   const byKind: Record<string, string[]> = { c: [], cmake: [], make: [], autoconf: [] };
   const projRules = rules.filter((r) => r.project);
@@ -273,6 +352,9 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
   for (const r of projRules) absentRes.set(r.id, new RegExp(r.project!.absent));
   let scanned = 0;
   const kindCount: Record<string, number> = {};
+  const loaded: Array<{ rel: string; kind: Kind; text: string }> = [];
+  const projectDefined = new Set<string>();
+  const declaredIn = new Map<string, Set<string>>();
   for (const rel of files) {
     const abs = join(root, rel.split('/').join(sep));
     const kind = detectKind(basename(rel))!;
@@ -292,11 +374,28 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
       skipped.n++;
       continue;
     }
+    loaded.push({ rel, kind, text });
+    if (kind === 'c') {
+      const code = maskC(text.replace(/\r\n?/g, '\n')).code;
+      declaredIn.set(rel, declaredNames(code));
+      for (const n of declaredNames(code, true)) projectDefined.add(n);
+    }
+  }
+  const userFnsFor = (rel: string, text: string): Set<string> => {
+    const out = new Set<string>();
+    for (const m of text.matchAll(/^[ \t]*#[ \t]*include[ \t]*"([^"\n]+)"/gm)) {
+      for (const [other, names] of declaredIn) {
+        if (other === m[1] || other.endsWith('/' + m[1].replace(/^\.\//, ''))) for (const n of names) if (projectDefined.has(n)) out.add(n);
+      }
+    }
+    return out;
+  };
+  for (const { rel, kind, text } of loaded) {
     scanned++;
     kindCount[kind] = (kindCount[kind] ?? 0) + 1;
     byKind[kind].push(rel);
     for (const r of projRules) if (!mentions.get(r.id) && absentRes.get(r.id)!.test(text)) mentions.set(r.id, true);
-    findings.push(...scanText(rel, kind, text, rules, opts.contextLines ?? 3, counters, seenRuleFile));
+    findings.push(...scanText(rel, kind, text, rules, opts.contextLines ?? 3, counters, seenRuleFile, kind === 'c' ? userFnsFor(rel, text) : undefined));
   }
   for (const r of projRules) {
     const list = byKind[r.project!.requireKind];
@@ -334,6 +433,7 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
       filesSkipped: skipped.n,
       findings: findings.length,
       suppressedQnxBranch: counters.suppressed,
+      suppressedNonCall: counters.nonCall,
       rules: rules.length,
       bySeverity,
       effortMinutes: effort,

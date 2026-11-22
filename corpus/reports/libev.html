@@ -95,16 +95,16 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <h2>Summary</h2>
 <div class="cards" role="list">
 <div class="card sev-blocker" role="listitem"><div class="n">33</div><div class="l"><span aria-hidden="true">■</span> blocker: Likely will not build or has no direct QNX equivalent</div></div>
-<div class="card sev-major" role="listitem"><div class="n">14</div><div class="l"><span aria-hidden="true">▲</span> major: Needs a semantic change to port</div></div>
+<div class="card sev-major" role="listitem"><div class="n">13</div><div class="l"><span aria-hidden="true">▲</span> major: Needs a semantic change to port</div></div>
 <div class="card sev-minor" role="listitem"><div class="n">0</div><div class="l"><span aria-hidden="true">●</span> minor: Small mechanical change</div></div>
 <div class="card sev-info" role="listitem"><div class="n">8</div><div class="l"><span aria-hidden="true">○</span> info: Worth checking, probably fine</div></div>
-<div class="card" role="listitem"><div class="n">37.5 h</div><div class="l">estimated porting effort (heuristic), about 4.7 person-days</div></div>
-<div class="card" role="listitem"><div class="n">7/55</div><div class="l">findings from rules marked <em>known</em>; the rest are <em>guess</em></div></div>
+<div class="card" role="listitem"><div class="n">37.1 h</div><div class="l">estimated porting effort (heuristic), about 4.6 person-days</div></div>
+<div class="card" role="listitem"><div class="n">7/54</div><div class="l">findings from rules marked <em>known</em>; the rest are <em>guess</em></div></div>
 <div class="card" role="listitem"><div class="n">0</div><div class="l">matches suppressed inside <code>#if __QNXNTO__</code> branches</div></div>
 </div>
 <h2>Where the work is <span class="meta">(by file, few directories)</span></h2>
-<ul class="heat"><li><button type="button" class="tile" style="--i:55" data-dir="ev.c" aria-pressed="false" aria-label="File ev.c: 33 findings, 22 h (~2.7 person-days). Press to filter.">
-<span class="d">ev.c</span><span class="m">33 findings &middot; 22 h (~2.7 person-days)</span><span class="m">■13 ▲13 ○7</span></button></li><li><button type="button" class="tile" style="--i:37" data-dir="ev_epoll.c" aria-pressed="false" aria-label="File ev_epoll.c: 20 findings, 13.3 h. Press to filter.">
+<ul class="heat"><li><button type="button" class="tile" style="--i:55" data-dir="ev.c" aria-pressed="false" aria-label="File ev.c: 32 findings, 21 h (~2.7 person-days). Press to filter.">
+<span class="d">ev.c</span><span class="m">32 findings &middot; 21 h (~2.7 person-days)</span><span class="m">■13 ▲12 ○7</span></button></li><li><button type="button" class="tile" style="--i:37" data-dir="ev_epoll.c" aria-pressed="false" aria-label="File ev_epoll.c: 20 findings, 13.3 h. Press to filter.">
 <span class="d">ev_epoll.c</span><span class="m">20 findings &middot; 13.3 h</span><span class="m">■19 ▲1 </span></button></li><li><button type="button" class="tile" style="--i:12" data-dir="ev_vars.h" aria-pressed="false" aria-label="File ev_vars.h: 1 findings, 2.0 h. Press to filter.">
 <span class="d">ev_vars.h</span><span class="m">1 findings &middot; 2.0 h</span><span class="m">■1 </span></button></li><li><button type="button" class="tile" style="--i:9" data-dir="configure.ac" aria-pressed="false" aria-label="File configure.ac: 1 findings, 30 min. Press to filter.">
 <span class="d">configure.ac</span><span class="m">1 findings &middot; 30 min</span><span class="m">○1</span></button></li></ul><p class="legend"><span>less effort</span><i></i><span>more effort (colour is relative to the busiest directory; counts and effort are in the text)</span></p>
@@ -112,17 +112,17 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <div class="bar" role="search" aria-label="Filter findings">
 <input id="q" type="search" placeholder="Search file, rule, text ( / )" aria-label="Search findings">
 <button type="button" class="chip" data-sevbtn="blocker" aria-pressed="true" title="Toggle blocker (1)"><span aria-hidden="true">■</span> blocker <span class="sr">toggle</span>(33)</button>
-<button type="button" class="chip" data-sevbtn="major" aria-pressed="true" title="Toggle major (2)"><span aria-hidden="true">▲</span> major <span class="sr">toggle</span>(14)</button>
+<button type="button" class="chip" data-sevbtn="major" aria-pressed="true" title="Toggle major (2)"><span aria-hidden="true">▲</span> major <span class="sr">toggle</span>(13)</button>
 <button type="button" class="chip" data-sevbtn="minor" aria-pressed="true" title="Toggle minor (3)"><span aria-hidden="true">●</span> minor <span class="sr">toggle</span>(0)</button>
 <button type="button" class="chip" data-sevbtn="info" aria-pressed="true" title="Toggle info (4)"><span aria-hidden="true">○</span> info <span class="sr">toggle</span>(8)</button>
 <label class="note">Confidence <select id="conf" aria-label="Confidence filter"><option value="all">all</option><option value="known">known</option><option value="guess">guess</option></select></label>
 <label class="note"><input type="checkbox" id="guard" checked> include Linux-guarded</label>
 <button class="btn" id="expand" type="button">Collapse all</button>
 <button class="btn" id="clear" type="button">Reset filters</button>
-<span id="count" role="status" aria-live="polite">55 findings</span>
+<span id="count" role="status" aria-live="polite">54 findings</span>
 </div>
 <details class="file" open><summary><span class="path">ev.c</span>
-<span class="meta"><span class="vis">33</span>/33 findings &middot; 22 h (~2.7 person-days)</span></summary>
+<span class="meta"><span class="vis">32</span>/32 findings &middot; 21 h (~2.7 person-days)</span></summary>
 <article class="finding" id="f-0" tabindex="-1" data-sev="blocker" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-syscall raw linux syscall() ev.c syscall ( linux syscall numbers (sys_*, __nr_*) have no meaning on qnx." aria-labelledby="f-0-t">
 <h3 id="f-0-t"><span class="badge b-blocker" title="Likely will not build or has no direct QNX equivalent"><span aria-hidden="true">■</span> blocker</span>
 <span>Raw Linux syscall()</span>
@@ -293,28 +293,18 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP whether eventfd is provided in 8.0.</p><p class="note">Inside conditional(s): <code>#if EV_USE_EVENTFD &gt; #ifndef EFD_CLOEXEC &gt; #ifdef O_CLOEXEC (#else)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 14 min (heuristic)</p>
 </article>
-<article class="finding" id="f-37" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-signalfd signalfd ev.c signalfd ( signalfd turns signals into a readable fd; linux-only." aria-labelledby="f-37-t">
+<article class="finding" id="f-37" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-signalfd signalfd ev.c struct signalfd_siginfo signalfd turns signals into a readable fd; linux-only." aria-labelledby="f-37-t">
 <h3 id="f-37-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
-<span>signalfd</span>
-<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
-<span class="loc">ev.c:461</span></h3>
-<p>signalfd turns signals into a readable fd; Linux-only.</p><pre class="code" tabindex="0" aria-label="Code context for ev.c line 461"><span class="ln"><b>458</b>#   define SFD_CLOEXEC 02000000</span><span class="ln"><b>459</b>#  endif</span><span class="ln"><b>460</b># endif</span><span class="ln hit"><b>461</b>EV_CPP (extern &quot;C&quot;) int signalfd (int fd, const sigset_t *mask, int flags);</span><span class="ln"><b>462</b> </span><span class="ln"><b>463</b>struct signalfd_siginfo</span><span class="ln"><b>464</b>{</span></pre>
-<div class="remedy"><strong>Remedy</strong>Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse. <a href="#rule-QNX-API-SIGNALFD">Rule QNX-API-SIGNALFD</a></div>
-<p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if EV_USE_SIGNALFD</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
-<p class="note">Estimated effort for this item: 1.5 h (heuristic)</p>
-</article>
-<article class="finding" id="f-38" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-signalfd signalfd ev.c struct signalfd_siginfo signalfd turns signals into a readable fd; linux-only." aria-labelledby="f-38-t">
-<h3 id="f-38-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>signalfd</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">ev.c:463</span></h3>
 <p>signalfd turns signals into a readable fd; Linux-only.</p><pre class="code" tabindex="0" aria-label="Code context for ev.c line 463"><span class="ln"><b>460</b># endif</span><span class="ln"><b>461</b>EV_CPP (extern &quot;C&quot;) int signalfd (int fd, const sigset_t *mask, int flags);</span><span class="ln"><b>462</b> </span><span class="ln hit"><b>463</b>struct signalfd_siginfo</span><span class="ln"><b>464</b>{</span><span class="ln"><b>465</b>  uint32_t ssi_signo;</span><span class="ln"><b>466</b>  char pad[128 - sizeof (uint32_t)];</span></pre>
 <div class="remedy"><strong>Remedy</strong>Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse. <a href="#rule-QNX-API-SIGNALFD">Rule QNX-API-SIGNALFD</a></div>
 <p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if EV_USE_SIGNALFD</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
-<p class="note">Estimated effort for this item: 27 min (heuristic)</p>
+<p class="note">Estimated effort for this item: 1.5 h (heuristic)</p>
 </article>
-<article class="finding" id="f-39" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-eventfd eventfd ev.c eventfd ( eventfd is a linux file-descriptor wake-up primitive." aria-labelledby="f-39-t">
-<h3 id="f-39-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-38" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-eventfd eventfd ev.c eventfd ( eventfd is a linux file-descriptor wake-up primitive." aria-labelledby="f-38-t">
+<h3 id="f-38-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>eventfd</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">ev.c:2390</span></h3>
@@ -323,8 +313,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP whether eventfd is provided in 8.0.</p><p class="note">Inside conditional(s): <code>#if EV_SIGNAL_ENABLE || EV_ASYNC_ENABLE &gt; #if EV_USE_EVENTFD</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 14 min (heuristic)</p>
 </article>
-<article class="finding" id="f-40" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-eventfd eventfd ev.c eventfd ( eventfd is a linux file-descriptor wake-up primitive." aria-labelledby="f-40-t">
-<h3 id="f-40-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-39" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-eventfd eventfd ev.c eventfd ( eventfd is a linux file-descriptor wake-up primitive." aria-labelledby="f-39-t">
+<h3 id="f-39-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>eventfd</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">ev.c:2392</span></h3>
@@ -333,8 +323,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP whether eventfd is provided in 8.0.</p><p class="note">Inside conditional(s): <code>#if EV_SIGNAL_ENABLE || EV_ASYNC_ENABLE &gt; #if EV_USE_EVENTFD</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 14 min (heuristic)</p>
 </article>
-<article class="finding" id="f-41" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-signalfd signalfd ev.c struct signalfd_siginfo signalfd turns signals into a readable fd; linux-only." aria-labelledby="f-41-t">
-<h3 id="f-41-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-40" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-signalfd signalfd ev.c struct signalfd_siginfo signalfd turns signals into a readable fd; linux-only." aria-labelledby="f-40-t">
+<h3 id="f-40-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>signalfd</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">ev.c:2598</span></h3>
@@ -343,8 +333,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if EV_SIGNAL_ENABLE || EV_ASYNC_ENABLE &gt; #if EV_USE_SIGNALFD</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 27 min (heuristic)</p>
 </article>
-<article class="finding" id="f-42" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-signalfd signalfd ev.c signalfd ( signalfd turns signals into a readable fd; linux-only." aria-labelledby="f-42-t">
-<h3 id="f-42-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-41" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-signalfd signalfd ev.c signalfd ( signalfd turns signals into a readable fd; linux-only." aria-labelledby="f-41-t">
+<h3 id="f-41-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>signalfd</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">ev.c:4055</span></h3>
@@ -353,8 +343,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if EV_SIGNAL_ENABLE &gt; #if EV_USE_SIGNALFD</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 27 min (heuristic)</p>
 </article>
-<article class="finding" id="f-43" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-signalfd signalfd ev.c signalfd ( signalfd turns signals into a readable fd; linux-only." aria-labelledby="f-43-t">
-<h3 id="f-43-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-42" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-signalfd signalfd ev.c signalfd ( signalfd turns signals into a readable fd; linux-only." aria-labelledby="f-42-t">
+<h3 id="f-42-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>signalfd</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">ev.c:4057</span></h3>
@@ -363,8 +353,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if EV_SIGNAL_ENABLE &gt; #if EV_USE_SIGNALFD</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 27 min (heuristic)</p>
 </article>
-<article class="finding" id="f-44" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-signalfd signalfd ev.c signalfd ( signalfd turns signals into a readable fd; linux-only." aria-labelledby="f-44-t">
-<h3 id="f-44-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-43" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-signalfd signalfd ev.c signalfd ( signalfd turns signals into a readable fd; linux-only." aria-labelledby="f-43-t">
+<h3 id="f-43-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>signalfd</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">ev.c:4078</span></h3>
@@ -373,8 +363,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if EV_SIGNAL_ENABLE &gt; #if EV_USE_SIGNALFD</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 27 min (heuristic)</p>
 </article>
-<article class="finding" id="f-45" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-signalfd signalfd ev.c signalfd ( signalfd turns signals into a readable fd; linux-only." aria-labelledby="f-45-t">
-<h3 id="f-45-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-44" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev.c" data-guard="other" data-text="qnx-api-signalfd signalfd ev.c signalfd ( signalfd turns signals into a readable fd; linux-only." aria-labelledby="f-44-t">
+<h3 id="f-44-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>signalfd</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">ev.c:4142</span></h3>
@@ -383,8 +373,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if EV_SIGNAL_ENABLE &gt; #if EV_USE_SIGNALFD</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 27 min (heuristic)</p>
 </article>
-<article class="finding" id="f-48" tabindex="-1" data-sev="info" data-conf="known" data-file="ev.c" data-guard="other" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch ev.c # if __linux a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-48-t">
-<h3 id="f-48-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
+<article class="finding" id="f-47" tabindex="-1" data-sev="info" data-conf="known" data-file="ev.c" data-guard="other" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch ev.c # if __linux a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-47-t">
+<h3 id="f-47-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
 <span>Linux-only preprocessor branch without QNX branch</span>
 <span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
 <span class="loc">ev.c:254</span></h3>
@@ -393,8 +383,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="note">Inside conditional(s): <code>#ifndef EV_USE_CLOCK_SYSCALL</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 10 min (heuristic)</p>
 </article>
-<article class="finding" id="f-49" tabindex="-1" data-sev="info" data-conf="known" data-file="ev.c" data-guard="other" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch ev.c # if __linux a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-49-t">
-<h3 id="f-49-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
+<article class="finding" id="f-48" tabindex="-1" data-sev="info" data-conf="known" data-file="ev.c" data-guard="other" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch ev.c # if __linux a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-48-t">
+<h3 id="f-48-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
 <span>Linux-only preprocessor branch without QNX branch</span>
 <span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
 <span class="loc">ev.c:303</span></h3>
@@ -403,8 +393,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="note">Inside conditional(s): <code>#ifndef EV_USE_EPOLL</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 3 min (heuristic)</p>
 </article>
-<article class="finding" id="f-50" tabindex="-1" data-sev="info" data-conf="known" data-file="ev.c" data-guard="other" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch ev.c # if __linux a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-50-t">
-<h3 id="f-50-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
+<article class="finding" id="f-49" tabindex="-1" data-sev="info" data-conf="known" data-file="ev.c" data-guard="other" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch ev.c # if __linux a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-49-t">
+<h3 id="f-49-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
 <span>Linux-only preprocessor branch without QNX branch</span>
 <span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
 <span class="loc">ev.c:319</span></h3>
@@ -413,8 +403,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="note">Inside conditional(s): <code>#ifndef EV_USE_INOTIFY</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 3 min (heuristic)</p>
 </article>
-<article class="finding" id="f-51" tabindex="-1" data-sev="info" data-conf="known" data-file="ev.c" data-guard="other" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch ev.c # if __linux a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-51-t">
-<h3 id="f-51-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
+<article class="finding" id="f-50" tabindex="-1" data-sev="info" data-conf="known" data-file="ev.c" data-guard="other" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch ev.c # if __linux a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-50-t">
+<h3 id="f-50-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
 <span>Linux-only preprocessor branch without QNX branch</span>
 <span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
 <span class="loc">ev.c:335</span></h3>
@@ -423,8 +413,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="note">Inside conditional(s): <code>#ifndef EV_USE_EVENTFD</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 3 min (heuristic)</p>
 </article>
-<article class="finding" id="f-52" tabindex="-1" data-sev="info" data-conf="known" data-file="ev.c" data-guard="other" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch ev.c # if __linux a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-52-t">
-<h3 id="f-52-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
+<article class="finding" id="f-51" tabindex="-1" data-sev="info" data-conf="known" data-file="ev.c" data-guard="other" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch ev.c # if __linux a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-51-t">
+<h3 id="f-51-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
 <span>Linux-only preprocessor branch without QNX branch</span>
 <span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
 <span class="loc">ev.c:343</span></h3>
@@ -433,8 +423,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="note">Inside conditional(s): <code>#ifndef EV_USE_SIGNALFD</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 3 min (heuristic)</p>
 </article>
-<article class="finding" id="f-53" tabindex="-1" data-sev="info" data-conf="known" data-file="ev.c" data-guard="none" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch ev.c #ifdef __linux a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-53-t">
-<h3 id="f-53-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
+<article class="finding" id="f-52" tabindex="-1" data-sev="info" data-conf="known" data-file="ev.c" data-guard="none" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch ev.c #ifdef __linux a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-52-t">
+<h3 id="f-52-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
 <span>Linux-only preprocessor branch without QNX branch</span>
 <span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
 <span class="loc">ev.c:1627</span></h3>
@@ -443,8 +433,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 
 <p class="note">Estimated effort for this item: 3 min (heuristic)</p>
 </article>
-<article class="finding" id="f-54" tabindex="-1" data-sev="info" data-conf="known" data-file="ev.c" data-guard="none" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch ev.c #ifdef __linux a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-54-t">
-<h3 id="f-54-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
+<article class="finding" id="f-53" tabindex="-1" data-sev="info" data-conf="known" data-file="ev.c" data-guard="none" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch ev.c #ifdef __linux a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-53-t">
+<h3 id="f-53-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
 <span>Linux-only preprocessor branch without QNX branch</span>
 <span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
 <span class="loc">ev.c:1634</span></h3>
@@ -645,8 +635,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.</p>
 <p class="note">Estimated effort for this item: 36 min (heuristic)</p>
 </article>
-<article class="finding" id="f-46" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev_epoll.c" data-guard="none" data-text="qnx-hdr-sys-linux includes a linux-specific &lt;sys/...&gt; header ev_epoll.c #include &lt;sys/epoll.h&gt; this glibc/linux &lt;sys/...&gt; header is believed to be absent from the qnx 8.0 sdp." aria-labelledby="f-46-t">
-<h3 id="f-46-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-45" tabindex="-1" data-sev="major" data-conf="guess" data-file="ev_epoll.c" data-guard="none" data-text="qnx-hdr-sys-linux includes a linux-specific &lt;sys/...&gt; header ev_epoll.c #include &lt;sys/epoll.h&gt; this glibc/linux &lt;sys/...&gt; header is believed to be absent from the qnx 8.0 sdp." aria-labelledby="f-45-t">
+<h3 id="f-45-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>Includes a Linux-specific &lt;sys/...&gt; header</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">ev_epoll.c:66</span></h3>
@@ -669,8 +659,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 </article></details>
 <details class="file" open><summary><span class="path">configure.ac</span>
 <span class="meta"><span class="vis">1</span>/1 findings &middot; 30 min</span></summary>
-<article class="finding" id="f-47" tabindex="-1" data-sev="info" data-conf="guess" data-file="configure.ac" data-guard="none" data-text="qnx-bld-autoconf-host autotools project with no qnx host support configure.ac (project-level) no qnx mention in the tree. old bundled config.sub/config.guess may not recognise a qnx host triplet." aria-labelledby="f-47-t">
-<h3 id="f-47-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
+<article class="finding" id="f-46" tabindex="-1" data-sev="info" data-conf="guess" data-file="configure.ac" data-guard="none" data-text="qnx-bld-autoconf-host autotools project with no qnx host support configure.ac (project-level) no qnx mention in the tree. old bundled config.sub/config.guess may not recognise a qnx host triplet." aria-labelledby="f-46-t">
+<h3 id="f-46-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
 <span>Autotools project with no QNX host support</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">configure.ac:1</span></h3>
@@ -704,37 +694,37 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <div class="remedy"><strong>Remedy</strong>Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.</div>
 <p class="verify">⚠ verify against SDP whether eventfd is provided in 8.0.</p>
 <p class="note">Documentation to read (names only, not fetched by this tool): QNX docs: MsgSendPulse()</p>
-<p class="note">5 occurrences: <a href="#f-34">ev.c:436</a>, <a href="#f-35">ev.c:440</a>, <a href="#f-36">ev.c:442</a>, <a href="#f-39">ev.c:2390</a>, <a href="#f-40">ev.c:2392</a></p></section>
+<p class="note">5 occurrences: <a href="#f-34">ev.c:436</a>, <a href="#f-35">ev.c:440</a>, <a href="#f-36">ev.c:442</a>, <a href="#f-38">ev.c:2390</a>, <a href="#f-39">ev.c:2392</a></p></section>
 <section class="rule" id="rule-QNX-API-SIGNALFD"><h3>QNX-API-SIGNALFD <span class="badge b-major"><span aria-hidden="true">▲</span> major</span> <span class="badge b-guess">guess</span></h3>
 <p><strong>signalfd.</strong> signalfd turns signals into a readable fd; Linux-only.</p>
 <div class="remedy"><strong>Remedy</strong>Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse.</div>
 <p class="verify">⚠ verify against SDP.</p>
 <p class="note">Documentation to read (names only, not fetched by this tool): POSIX: sigwaitinfo()</p>
-<p class="note">7 occurrences: <a href="#f-37">ev.c:461</a>, <a href="#f-38">ev.c:463</a>, <a href="#f-41">ev.c:2598</a>, <a href="#f-42">ev.c:4055</a>, <a href="#f-43">ev.c:4057</a>, <a href="#f-44">ev.c:4078</a>, <a href="#f-45">ev.c:4142</a></p></section>
+<p class="note">6 occurrences: <a href="#f-37">ev.c:463</a>, <a href="#f-40">ev.c:2598</a>, <a href="#f-41">ev.c:4055</a>, <a href="#f-42">ev.c:4057</a>, <a href="#f-43">ev.c:4078</a>, <a href="#f-44">ev.c:4142</a></p></section>
 <section class="rule" id="rule-QNX-HDR-SYS-LINUX"><h3>QNX-HDR-SYS-LINUX <span class="badge b-major"><span aria-hidden="true">▲</span> major</span> <span class="badge b-guess">guess</span></h3>
 <p><strong>Includes a Linux-specific &lt;sys/...&gt; header.</strong> This glibc/Linux &lt;sys/...&gt; header is believed to be absent from the QNX 8.0 SDP.</p>
 <div class="remedy"><strong>Remedy</strong>Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.</div>
 <p class="verify">⚠ verify against SDP: grep $QNX_TARGET/usr/include for the header.</p>
 
-<p class="note">2 occurrences: <a href="#f-33">ev.c:424</a>, <a href="#f-46">ev_epoll.c:66</a></p></section>
+<p class="note">2 occurrences: <a href="#f-33">ev.c:424</a>, <a href="#f-45">ev_epoll.c:66</a></p></section>
 <section class="rule" id="rule-QNX-ADV-LINUX-IFDEF"><h3>QNX-ADV-LINUX-IFDEF <span class="badge b-info"><span aria-hidden="true">○</span> info</span> <span class="badge b-known">known</span></h3>
 <p><strong>Linux-only preprocessor branch without QNX branch.</strong> A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).</p>
 <div class="remedy"><strong>Remedy</strong>Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.</div>
 
 <p class="note">Documentation to read (names only, not fetched by this tool): QNX docs: Predefined macros (__QNX__, __QNXNTO__)</p>
-<p class="note">7 occurrences: <a href="#f-48">ev.c:254</a>, <a href="#f-49">ev.c:303</a>, <a href="#f-50">ev.c:319</a>, <a href="#f-51">ev.c:335</a>, <a href="#f-52">ev.c:343</a>, <a href="#f-53">ev.c:1627</a>, <a href="#f-54">ev.c:1634</a></p></section>
+<p class="note">7 occurrences: <a href="#f-47">ev.c:254</a>, <a href="#f-48">ev.c:303</a>, <a href="#f-49">ev.c:319</a>, <a href="#f-50">ev.c:335</a>, <a href="#f-51">ev.c:343</a>, <a href="#f-52">ev.c:1627</a>, <a href="#f-53">ev.c:1634</a></p></section>
 <section class="rule" id="rule-QNX-BLD-AUTOCONF-HOST"><h3>QNX-BLD-AUTOCONF-HOST <span class="badge b-info"><span aria-hidden="true">○</span> info</span> <span class="badge b-guess">guess</span></h3>
 <p><strong>Autotools project with no QNX host support.</strong> No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet.</p>
 <div class="remedy"><strong>Remedy</strong>Refresh config.sub/config.guess (autoreconf -fi or copy from a current automake), then configure with --host=&lt;cpu&gt;-unknown-nto-qnx&lt;version&gt; and CC set to qcc.</div>
 <p class="verify">⚠ verify against SDP: exact host triplet format for 8.0.</p>
 
-<p class="note">1 occurrence: <a href="#f-47">configure.ac:1</a></p></section>
+<p class="note">1 occurrence: <a href="#f-46">configure.ac:1</a></p></section>
 <footer><p>What this report does not claim: that anything here compiled or ran on QNX; that a missing finding means the code ports; that 'guess' rules are true. Remedies name public QNX/POSIX interfaces from documentation the authors recall; confirm each against your SDP.</p></footer>
 </main>
 <dialog id="help" aria-labelledby="help-t"><h2 id="help-t" style="margin-top:0">Keyboard shortcuts</h2>
 <p><kbd>/</kbd> search &nbsp; <kbd>j</kbd> / <kbd>k</kbd> next / previous finding &nbsp; <kbd>1</kbd>&ndash;<kbd>4</kbd> toggle blocker, major, minor, info &nbsp; <kbd>t</kbd> theme &nbsp; <kbd>Esc</kbd> leave search or clear directory filter &nbsp; <kbd>?</kbd> this help</p>
 <form method="dialog"><button class="btn">Close</button></form></dialog>
-<script type="application/json" id="pd-data">{"tool":"portdoctor","version":"0.1.0","stats":{"filesScanned":15,"filesByKind":{"make":1,"autoconf":1,"c":13},"filesSkipped":0,"findings":55,"suppressedQnxBranch":0,"rules":55,"bySeverity":{"blocker":33,"major":14,"minor":0,"info":8},"effortMinutes":2253}}</script>
+<script type="application/json" id="pd-data">{"tool":"portdoctor","version":"0.1.0","stats":{"filesScanned":15,"filesByKind":{"make":1,"autoconf":1,"c":13},"filesSkipped":0,"findings":54,"suppressedQnxBranch":0,"suppressedNonCall":1,"rules":55,"bySeverity":{"blocker":33,"major":13,"minor":0,"info":8},"effortMinutes":2226}}</script>
 <script>
 (function(){
 var root=document.documentElement;root.classList.add('js');

@@ -12,16 +12,17 @@
       "c": 379
     },
     "filesSkipped": 0,
-    "findings": 352,
+    "findings": 348,
     "suppressedQnxBranch": 0,
+    "suppressedNonCall": 7,
     "rules": 55,
     "bySeverity": {
-      "blocker": 95,
-      "major": 62,
+      "blocker": 92,
+      "major": 61,
       "minor": 43,
       "info": 152
     },
-    "effortMinutes": 6814
+    "effortMinutes": 6646
   },
   "findings": [
     {
@@ -2769,100 +2770,6 @@
       "severity": "blocker",
       "confidence": "guess",
       "file": "src/unix/os390-syscalls.c",
-      "line": 213,
-      "column": 18,
-      "match": "epoll_create1(",
-      "context": [
-        {
-          "n": 210,
-          "text": "}"
-        },
-        {
-          "n": 211,
-          "text": ""
-        },
-        {
-          "n": 212,
-          "text": ""
-        },
-        {
-          "n": 213,
-          "text": "uv__os390_epoll* epoll_create1(int flags) {"
-        },
-        {
-          "n": 214,
-          "text": "  uv__os390_epoll* lst;"
-        },
-        {
-          "n": 215,
-          "text": ""
-        },
-        {
-          "n": 216,
-          "text": "  lst = uv__malloc(sizeof(*lst));"
-        }
-      ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
-      "effort": 120,
-      "guard": "none",
-      "guards": []
-    },
-    {
-      "ruleId": "QNX-API-EPOLL",
-      "title": "epoll event loop",
-      "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "guess",
-      "file": "src/unix/os390-syscalls.c",
-      "line": 236,
-      "column": 5,
-      "match": "epoll_ctl(",
-      "context": [
-        {
-          "n": 233,
-          "text": "}"
-        },
-        {
-          "n": 234,
-          "text": ""
-        },
-        {
-          "n": 235,
-          "text": ""
-        },
-        {
-          "n": 236,
-          "text": "int epoll_ctl(uv__os390_epoll* lst,"
-        },
-        {
-          "n": 237,
-          "text": "              int op,"
-        },
-        {
-          "n": 238,
-          "text": "              int fd,"
-        },
-        {
-          "n": 239,
-          "text": "              struct epoll_event *event) {"
-        }
-      ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
-      "effort": 36,
-      "guard": "none",
-      "guards": []
-    },
-    {
-      "ruleId": "QNX-API-EPOLL",
-      "title": "epoll event loop",
-      "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "guess",
-      "file": "src/unix/os390-syscalls.c",
       "line": 239,
       "column": 15,
       "match": "struct epoll_event",
@@ -2899,7 +2806,7 @@
       "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
       "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
       "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
-      "effort": 36,
+      "effort": 120,
       "guard": "none",
       "guards": []
     },
@@ -3099,8 +3006,8 @@
       "confidence": "guess",
       "file": "src/unix/os390-syscalls.c",
       "line": 282,
-      "column": 5,
-      "match": "epoll_wait(",
+      "column": 38,
+      "match": "struct epoll_event",
       "context": [
         {
           "n": 279,
@@ -3435,58 +3342,9 @@
       "severity": "blocker",
       "confidence": "guess",
       "file": "src/unix/os390-syscalls.h",
-      "line": 53,
-      "column": 18,
-      "match": "epoll_create1(",
-      "context": [
-        {
-          "n": 50,
-          "text": "} uv__os390_epoll;"
-        },
-        {
-          "n": 51,
-          "text": ""
-        },
-        {
-          "n": 52,
-          "text": "/* epoll api */"
-        },
-        {
-          "n": 53,
-          "text": "uv__os390_epoll* epoll_create1(int flags);"
-        },
-        {
-          "n": 54,
-          "text": "int epoll_ctl(uv__os390_epoll* ep, int op, int fd, struct epoll_event *event);"
-        },
-        {
-          "n": 55,
-          "text": "int epoll_wait(uv__os390_epoll* ep, struct epoll_event *events, int maxevents, int timeout);"
-        },
-        {
-          "n": 56,
-          "text": "int epoll_file_close(int fd);"
-        }
-      ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
-      "effort": 36,
-      "guard": "other",
-      "guards": [
-        "#ifndef UV_OS390_SYSCALL_H_"
-      ]
-    },
-    {
-      "ruleId": "QNX-API-EPOLL",
-      "title": "epoll event loop",
-      "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "guess",
-      "file": "src/unix/os390-syscalls.h",
       "line": 54,
-      "column": 5,
-      "match": "epoll_ctl(",
+      "column": 52,
+      "match": "struct epoll_event",
       "context": [
         {
           "n": 51,
@@ -3534,8 +3392,8 @@
       "confidence": "guess",
       "file": "src/unix/os390-syscalls.h",
       "line": 55,
-      "column": 5,
-      "match": "epoll_wait(",
+      "column": 37,
+      "match": "struct epoll_event",
       "context": [
         {
           "n": 52,
@@ -4819,55 +4677,6 @@
       "effort": 45,
       "guard": "none",
       "guards": []
-    },
-    {
-      "ruleId": "QNX-API-SENDFILE",
-      "title": "sendfile/splice zero-copy calls",
-      "category": "linux-api",
-      "severity": "major",
-      "confidence": "guess",
-      "file": "src/unix/freebsd.c",
-      "line": 292,
-      "column": 9,
-      "match": "copy_file_range(",
-      "context": [
-        {
-          "n": 289,
-          "text": "                       unsigned int flags)"
-        },
-        {
-          "n": 290,
-          "text": "{"
-        },
-        {
-          "n": 291,
-          "text": "#if __FreeBSD__ >= 13 && !defined(__DragonFly__)"
-        },
-        {
-          "n": 292,
-          "text": "\treturn copy_file_range(fd_in, off_in, fd_out, off_out, len, flags);"
-        },
-        {
-          "n": 293,
-          "text": "#else"
-        },
-        {
-          "n": 294,
-          "text": "\treturn errno = ENOSYS, -1;"
-        },
-        {
-          "n": 295,
-          "text": "#endif"
-        }
-      ],
-      "message": "Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile.",
-      "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
-      "verify": "verify against SDP: some of these may exist with other semantics.",
-      "effort": 60,
-      "guard": "other",
-      "guards": [
-        "#if __FreeBSD__ >= 13 && !defined(__DragonFly__)"
-      ]
     },
     {
       "ruleId": "QNX-HDR-SYS-LINUX",

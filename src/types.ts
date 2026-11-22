@@ -21,6 +21,8 @@ export interface Rule {
   pattern?: string;
   flags?: string;
   project?: { requireKind: Kind; absent: string; reportOnKind: Kind };
+  /** identifier -> regex source that must match somewhere in the file (a visible include/macro) before the identifier counts */
+  evidence?: Record<string, string>;
   message: string;
   remedy: string;
   verify?: string;
@@ -75,6 +77,7 @@ export interface ScanResult {
     filesSkipped: number;
     findings: number;
     suppressedQnxBranch: number;
+    suppressedNonCall: number;
     rules: number;
     bySeverity: Record<Severity, number>;
     effortMinutes: number;

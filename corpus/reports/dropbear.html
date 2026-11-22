@@ -351,7 +351,7 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 </article></details>
 <details class="file" open><summary><span class="path">src/svr-main.c</span>
 <span class="meta"><span class="vis">1</span>/1 findings &middot; 30 min</span></summary>
-<article class="finding" id="f-11" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/svr-main.c" data-guard="other" data-text="qnx-api-prctl prctl src/svr-main.c prctl( prctl is a linux process-control multiplexer." aria-labelledby="f-11-t">
+<article class="finding" id="f-11" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/svr-main.c" data-guard="other" data-text="qnx-api-prctl prctl src/svr-main.c pr_set_name prctl is a linux process-control multiplexer." aria-labelledby="f-11-t">
 <h3 id="f-11-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>prctl</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
@@ -702,7 +702,7 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <dialog id="help" aria-labelledby="help-t"><h2 id="help-t" style="margin-top:0">Keyboard shortcuts</h2>
 <p><kbd>/</kbd> search &nbsp; <kbd>j</kbd> / <kbd>k</kbd> next / previous finding &nbsp; <kbd>1</kbd>&ndash;<kbd>4</kbd> toggle blocker, major, minor, info &nbsp; <kbd>t</kbd> theme &nbsp; <kbd>Esc</kbd> leave search or clear directory filter &nbsp; <kbd>?</kbd> this help</p>
 <form method="dialog"><button class="btn">Close</button></form></dialog>
-<script type="application/json" id="pd-data">{"tool":"portdoctor","version":"0.1.0","stats":{"filesScanned":832,"filesByKind":{"autoconf":1,"c":818,"make":13},"filesSkipped":0,"findings":45,"suppressedQnxBranch":0,"rules":55,"bySeverity":{"blocker":3,"major":9,"minor":12,"info":21},"effortMinutes":509}}</script>
+<script type="application/json" id="pd-data">{"tool":"portdoctor","version":"0.1.0","stats":{"filesScanned":832,"filesByKind":{"autoconf":1,"c":818,"make":13},"filesSkipped":0,"findings":45,"suppressedQnxBranch":0,"suppressedNonCall":1,"rules":55,"bySeverity":{"blocker":3,"major":9,"minor":12,"info":21},"effortMinutes":509}}</script>
 <script>
 (function(){
 var root=document.documentElement;root.classList.add('js');

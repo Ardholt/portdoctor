@@ -13,6 +13,7 @@
     "filesSkipped": 0,
     "findings": 45,
     "suppressedQnxBranch": 0,
+    "suppressedNonCall": 1,
     "rules": 55,
     "bySeverity": {
       "blocker": 3,
@@ -571,8 +572,8 @@
       "confidence": "guess",
       "file": "src/svr-main.c",
       "line": 79,
-      "column": 3,
-      "match": "prctl(",
+      "column": 9,
+      "match": "PR_SET_NAME",
       "context": [
         {
           "n": 76,

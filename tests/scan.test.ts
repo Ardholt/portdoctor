@@ -131,3 +131,39 @@ test('--ignore skips matching paths', () => {
     rmSync(d, { recursive: true, force: true });
   }
 });
+
+test('judge probe: method calls and user functions named clone/tee/sysinfo/syscall/pthread_yield do not fire', () => {
+  const src = [
+    'struct N { N *clone() const; };',
+    'int t(N *n, Obj o) {',
+    '  N *c = n->clone();',
+    '  o.tee(3);',
+    '  return tee(3) + sysinfo() + syscall(4) + pthread_yield();',
+    '}',
+    'int tee(int fd) { return fd; }',
+    'int sysinfo(void) { return 0; }',
+    'int syscall(int n) { return n; }',
+    'int pthread_yield(void) { return 0; }',
+    '',
+  ].join('\n');
+  assert.deepEqual(ids(src), []);
+});
+
+test('scanDir: a function declared in an included project header and defined in the project is not a Linux call, even from another file', () => {
+  const d = mkdtempSync(join(tmpdir(), 'pd-'));
+  try {
+    writeFileSync(join(d, 'x.h'), 'int clone(int);\n');
+    writeFileSync(join(d, 'y.c'), 'int clone(int a) { return a; }\n');
+    writeFileSync(join(d, 'x.c'), '#include <sched.h>\n#include "x.h"\nint f(void) { return clone(1); }\n');
+    const r = scanDir(d);
+    assert.equal(r.findings.filter((f) => f.ruleId === 'QNX-API-CLONE-NS').length, 0);
+    assert.ok(r.stats.suppressedNonCall >= 1);
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});
+
+test('real Linux uses still fire: clone with CLONE_ flags, tee with SPLICE_F_, syscall(SYS_x)', () => {
+  const src = '#define _GNU_SOURCE\n#include <sched.h>\nint f(void) {\n  pid_t p = clone(fn, stk, CLONE_VM, 0);\n  tee(a, b, 1, SPLICE_F_MOVE);\n  return syscall(SYS_gettid);\n}\n';
+  assert.deepEqual(ids(src).sort(), ['QNX-API-CLONE-NS', 'QNX-API-SENDFILE', 'QNX-API-SYSCALL'].sort());
+});

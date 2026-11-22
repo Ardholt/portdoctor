@@ -13,6 +13,7 @@
     "filesSkipped": 0,
     "findings": 38,
     "suppressedQnxBranch": 0,
+    "suppressedNonCall": 0,
     "rules": 55,
     "bySeverity": {
       "blocker": 6,

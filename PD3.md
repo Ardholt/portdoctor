@@ -1,7 +1,7 @@
 # PD3: PortDoctor against the real QNX SDP 8.0
 
 Slice PD3, QNX Global Hackathon (closes 15 Dec 19:00Z). Built on PD1/PD2 and judge report J1. Repo: this repository, version 0.3.0.
-Date: 2026-11-22. One commit per step (see `git log`). The SDP ran only inside the sandbox jail (`a sandbox`, no network, no /<home>, as uid `sandbox user`);
+Date: 2026-11-22. One commit per step (see `git log`). The SDP ran only inside the sandbox jail (a sandbox: no network, no home directory, unprivileged user);
 no vendor header, library or binary is in the repo, only derived facts.
 
 ## 1. Facts (measured in the jail; `data/sdp-8.0-facts.md`)

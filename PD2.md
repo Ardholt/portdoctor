@@ -1,6 +1,6 @@
 # PD2: PortDoctor build report
 
-Slice PD2, QNX Global Hackathon. Repo `<repo>`  (Node v26.13.0, git 2.43, headless Chrome, gcc).
+Slice PD2, QNX Global Hackathon. This repository (Node v26.13.0, git 2.43, headless Chrome, gcc).
 Built on top of PD1 and the fresh judge report J1 (T7 D8 I6 AI5, trust 5, eight ranked changes). One commit per item.
 Version bumped to 0.2.0. No QNX SDP exists yet: every QNX claim below is `known` (recalled) or `guess`.
 

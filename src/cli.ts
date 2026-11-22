@@ -1,6 +1,7 @@
 import { writeFileSync, existsSync, statSync } from 'node:fs';
 import { scanDir, VERSION } from './scan.ts';
 import { SEVERITIES } from './types.ts';
+import { groupFindings, startHere, fmtRange } from './group.ts';
 import type { Severity } from './types.ts';
 
 const HELP = `portdoctor ${VERSION} - QNX 8.0 porting blocker scanner (static; nothing is compiled)
@@ -8,6 +9,7 @@ const HELP = `portdoctor ${VERSION} - QNX 8.0 porting blocker scanner (static; n
 Usage:
   portdoctor scan <dir> [--json] [--html] [-o <file>] [--fail-on <severity>]
   portdoctor propose <scan.json|dir> --finding <n> [--provider "<cmd>"] [--patch-file <f>] [--no-check]
+  portdoctor fix <dir> --provider "<cmd>" [--check "<cmd>"] [--count N] [--rule ID] [--keep <dir>] [-o fix-report.html]
   portdoctor rules [--json]
 
 scan:
@@ -36,14 +38,22 @@ function opt(args: string[], name: string): string | undefined {
 
 export function textSummary(r: ReturnType<typeof scanDir>): string {
   const s = r.stats;
+  const groups = groupFindings(r);
   const lines = [
     `PortDoctor ${r.version} - ${r.root}`,
-    `${s.filesScanned} files scanned, ${s.findings} findings (blocker ${s.bySeverity.blocker}, major ${s.bySeverity.major}, minor ${s.bySeverity.minor}, info ${s.bySeverity.info}); ~${(s.effortMinutes / 60).toFixed(1)} h estimated effort (heuristic)`,
-    `${s.suppressedQnxBranch} matches suppressed inside QNX-specific #if branches`,
+    `${s.filesScanned} files scanned, ${s.findings} findings in ${groups.length} rule group${groups.length === 1 ? '' : 's'} (blocker ${s.bySeverity.blocker}, major ${s.bySeverity.major}, minor ${s.bySeverity.minor}, info ${s.bySeverity.info})`,
+    `rough effort: ${fmtRange(s.effortMinutes)}`,
+    `${s.suppressedQnxBranch} matches suppressed inside QNX-specific #if branches; ${s.suppressedNonCall} skipped as non-calls or user-defined functions`,
     '',
   ];
-  for (const f of r.findings) {
-    lines.push(`${f.file}:${f.line}  [${f.severity}/${f.confidence}] ${f.ruleId}  ${f.title}${f.guard === 'linux-only' ? ' (inside Linux-only #if)' : ''}`);
+  const top = startHere(groups, 3);
+  if (top.length) lines.push('Start here: ' + top.map((g) => `${g.title} (${g.sites.length} sites)`).join('; '), '');
+  for (const g of groups) {
+    lines.push(`${g.title}: ${g.sites.length} site${g.sites.length === 1 ? '' : 's'} in ${g.files.length} file${g.files.length === 1 ? '' : 's'}  [${g.severity}/${g.confidence}] ${g.ruleId}`);
+    for (const i of g.sites) {
+      const f = r.findings[i];
+      lines.push(`  ${f.file}:${f.line}${f.guard === 'linux-only' ? ' (inside Linux-only #if)' : ''}`);
+    }
   }
   lines.push('', r.disclaimer);
   return lines.join('\n') + '\n';
@@ -88,6 +98,10 @@ export async function main(argv: string[]): Promise<void> {
     const rs = loadRules();
     if (flag(args, '--json')) process.stdout.write(JSON.stringify(rs.map(({ re, ...r }) => r), null, 2) + '\n');
     else for (const r of rs) process.stdout.write(`${r.id.padEnd(34)} ${r.severity.padEnd(8)} ${r.confidence.padEnd(6)} ${r.title}\n`);
+    return;
+  }
+  if (cmd === 'fix') {
+    process.exitCode = await (await import('./fix.ts')).runFixCli(args);
     return;
   }
   if (cmd === 'propose') {

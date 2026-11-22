@@ -11,17 +11,17 @@
       "c": 13
     },
     "filesSkipped": 0,
-    "findings": 54,
+    "findings": 51,
     "suppressedQnxBranch": 0,
     "suppressedNonCall": 1,
     "rules": 55,
     "bySeverity": {
       "blocker": 33,
-      "major": 13,
+      "major": 10,
       "minor": 0,
       "info": 8
     },
-    "effortMinutes": 2226
+    "effortMinutes": 2184
   },
   "findings": [
     {
@@ -1669,158 +1669,6 @@
       ]
     },
     {
-      "ruleId": "QNX-API-EVENTFD",
-      "title": "eventfd",
-      "category": "linux-api",
-      "severity": "major",
-      "confidence": "guess",
-      "file": "ev.c",
-      "line": 436,
-      "column": 11,
-      "match": "EFD_NONBLOCK",
-      "context": [
-        {
-          "n": 433,
-          "text": "/* our minimum requirement is glibc 2.7 which has the stub, but not the header */"
-        },
-        {
-          "n": 434,
-          "text": "# include <stdint.h>"
-        },
-        {
-          "n": 435,
-          "text": "# ifndef EFD_NONBLOCK"
-        },
-        {
-          "n": 436,
-          "text": "#  define EFD_NONBLOCK O_NONBLOCK"
-        },
-        {
-          "n": 437,
-          "text": "# endif"
-        },
-        {
-          "n": 438,
-          "text": "# ifndef EFD_CLOEXEC"
-        },
-        {
-          "n": 439,
-          "text": "#  ifdef O_CLOEXEC"
-        }
-      ],
-      "message": "eventfd is a Linux file-descriptor wake-up primitive.",
-      "remedy": "Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.",
-      "verify": "verify against SDP whether eventfd is provided in 8.0.",
-      "effort": 45,
-      "guard": "other",
-      "guards": [
-        "#if EV_USE_EVENTFD",
-        "#ifndef EFD_NONBLOCK"
-      ]
-    },
-    {
-      "ruleId": "QNX-API-EVENTFD",
-      "title": "eventfd",
-      "category": "linux-api",
-      "severity": "major",
-      "confidence": "guess",
-      "file": "ev.c",
-      "line": 440,
-      "column": 12,
-      "match": "EFD_CLOEXEC",
-      "context": [
-        {
-          "n": 437,
-          "text": "# endif"
-        },
-        {
-          "n": 438,
-          "text": "# ifndef EFD_CLOEXEC"
-        },
-        {
-          "n": 439,
-          "text": "#  ifdef O_CLOEXEC"
-        },
-        {
-          "n": 440,
-          "text": "#   define EFD_CLOEXEC O_CLOEXEC"
-        },
-        {
-          "n": 441,
-          "text": "#  else"
-        },
-        {
-          "n": 442,
-          "text": "#   define EFD_CLOEXEC 02000000"
-        },
-        {
-          "n": 443,
-          "text": "#  endif"
-        }
-      ],
-      "message": "eventfd is a Linux file-descriptor wake-up primitive.",
-      "remedy": "Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.",
-      "verify": "verify against SDP whether eventfd is provided in 8.0.",
-      "effort": 14,
-      "guard": "other",
-      "guards": [
-        "#if EV_USE_EVENTFD",
-        "#ifndef EFD_CLOEXEC",
-        "#ifdef O_CLOEXEC"
-      ]
-    },
-    {
-      "ruleId": "QNX-API-EVENTFD",
-      "title": "eventfd",
-      "category": "linux-api",
-      "severity": "major",
-      "confidence": "guess",
-      "file": "ev.c",
-      "line": 442,
-      "column": 12,
-      "match": "EFD_CLOEXEC",
-      "context": [
-        {
-          "n": 439,
-          "text": "#  ifdef O_CLOEXEC"
-        },
-        {
-          "n": 440,
-          "text": "#   define EFD_CLOEXEC O_CLOEXEC"
-        },
-        {
-          "n": 441,
-          "text": "#  else"
-        },
-        {
-          "n": 442,
-          "text": "#   define EFD_CLOEXEC 02000000"
-        },
-        {
-          "n": 443,
-          "text": "#  endif"
-        },
-        {
-          "n": 444,
-          "text": "# endif"
-        },
-        {
-          "n": 445,
-          "text": "EV_CPP(extern \"C\") int (eventfd) (unsigned int initval, int flags);"
-        }
-      ],
-      "message": "eventfd is a Linux file-descriptor wake-up primitive.",
-      "remedy": "Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.",
-      "verify": "verify against SDP whether eventfd is provided in 8.0.",
-      "effort": 14,
-      "guard": "other",
-      "guards": [
-        "#if EV_USE_EVENTFD",
-        "#ifndef EFD_CLOEXEC",
-        "#ifdef O_CLOEXEC (#else)"
-      ]
-    },
-    {
       "ruleId": "QNX-API-SIGNALFD",
       "title": "signalfd",
       "category": "linux-api",
@@ -1912,7 +1760,7 @@
       "message": "eventfd is a Linux file-descriptor wake-up primitive.",
       "remedy": "Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.",
       "verify": "verify against SDP whether eventfd is provided in 8.0.",
-      "effort": 14,
+      "effort": 45,
       "guard": "other",
       "guards": [
         "#if EV_SIGNAL_ENABLE || EV_ASYNC_ENABLE",

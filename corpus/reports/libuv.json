@@ -12,17 +12,17 @@
       "c": 379
     },
     "filesSkipped": 0,
-    "findings": 348,
+    "findings": 344,
     "suppressedQnxBranch": 0,
     "suppressedNonCall": 7,
     "rules": 55,
     "bySeverity": {
-      "blocker": 92,
+      "blocker": 89,
       "major": 61,
-      "minor": 43,
+      "minor": 42,
       "info": 152
     },
-    "effortMinutes": 6646
+    "effortMinutes": 6532
   },
   "findings": [
     {
@@ -3146,153 +3146,6 @@
       "severity": "blocker",
       "confidence": "guess",
       "file": "src/unix/os390-syscalls.h",
-      "line": 33,
-      "column": 9,
-      "match": "EPOLL_CTL_ADD",
-      "context": [
-        {
-          "n": 30,
-          "text": "#include <pthread.h>"
-        },
-        {
-          "n": 31,
-          "text": "#include \"zos-base.h\""
-        },
-        {
-          "n": 32,
-          "text": ""
-        },
-        {
-          "n": 33,
-          "text": "#define EPOLL_CTL_ADD             1"
-        },
-        {
-          "n": 34,
-          "text": "#define EPOLL_CTL_DEL             2"
-        },
-        {
-          "n": 35,
-          "text": "#define EPOLL_CTL_MOD             3"
-        },
-        {
-          "n": 36,
-          "text": "#define MAX_EPOLL_INSTANCES       256"
-        }
-      ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
-      "effort": 120,
-      "guard": "other",
-      "guards": [
-        "#ifndef UV_OS390_SYSCALL_H_"
-      ]
-    },
-    {
-      "ruleId": "QNX-API-EPOLL",
-      "title": "epoll event loop",
-      "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "guess",
-      "file": "src/unix/os390-syscalls.h",
-      "line": 34,
-      "column": 9,
-      "match": "EPOLL_CTL_DEL",
-      "context": [
-        {
-          "n": 31,
-          "text": "#include \"zos-base.h\""
-        },
-        {
-          "n": 32,
-          "text": ""
-        },
-        {
-          "n": 33,
-          "text": "#define EPOLL_CTL_ADD             1"
-        },
-        {
-          "n": 34,
-          "text": "#define EPOLL_CTL_DEL             2"
-        },
-        {
-          "n": 35,
-          "text": "#define EPOLL_CTL_MOD             3"
-        },
-        {
-          "n": 36,
-          "text": "#define MAX_EPOLL_INSTANCES       256"
-        },
-        {
-          "n": 37,
-          "text": "#define MAX_ITEMS_PER_EPOLL       1024"
-        }
-      ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
-      "effort": 36,
-      "guard": "other",
-      "guards": [
-        "#ifndef UV_OS390_SYSCALL_H_"
-      ]
-    },
-    {
-      "ruleId": "QNX-API-EPOLL",
-      "title": "epoll event loop",
-      "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "guess",
-      "file": "src/unix/os390-syscalls.h",
-      "line": 35,
-      "column": 9,
-      "match": "EPOLL_CTL_MOD",
-      "context": [
-        {
-          "n": 32,
-          "text": ""
-        },
-        {
-          "n": 33,
-          "text": "#define EPOLL_CTL_ADD             1"
-        },
-        {
-          "n": 34,
-          "text": "#define EPOLL_CTL_DEL             2"
-        },
-        {
-          "n": 35,
-          "text": "#define EPOLL_CTL_MOD             3"
-        },
-        {
-          "n": 36,
-          "text": "#define MAX_EPOLL_INSTANCES       256"
-        },
-        {
-          "n": 37,
-          "text": "#define MAX_ITEMS_PER_EPOLL       1024"
-        },
-        {
-          "n": 38,
-          "text": ""
-        }
-      ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
-      "effort": 36,
-      "guard": "other",
-      "guards": [
-        "#ifndef UV_OS390_SYSCALL_H_"
-      ]
-    },
-    {
-      "ruleId": "QNX-API-EPOLL",
-      "title": "epoll event loop",
-      "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "guess",
-      "file": "src/unix/os390-syscalls.h",
       "line": 39,
       "column": 1,
       "match": "struct epoll_event",
@@ -3329,7 +3182,7 @@
       "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
       "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
       "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
-      "effort": 36,
+      "effort": 120,
       "guard": "other",
       "guards": [
         "#ifndef UV_OS390_SYSCALL_H_"
@@ -7889,55 +7742,6 @@
       "severity": "minor",
       "confidence": "guess",
       "file": "src/unix/core.c",
-      "line": 2153,
-      "column": 15,
-      "match": "SO_REUSEPORT",
-      "context": [
-        {
-          "n": 2150,
-          "text": "      defined(_AIX73) || \\"
-        },
-        {
-          "n": 2151,
-          "text": "      (defined(__DragonFly__) && __DragonFly_version >= 300600) || \\"
-        },
-        {
-          "n": 2152,
-          "text": "      (defined(UV__SOLARIS_11_4) && UV__SOLARIS_11_4)) && \\"
-        },
-        {
-          "n": 2153,
-          "text": "      defined(SO_REUSEPORT)"
-        },
-        {
-          "n": 2154,
-          "text": "  /* On Linux 3.9+, the SO_REUSEPORT implementation distributes connections"
-        },
-        {
-          "n": 2155,
-          "text": "   * evenly across all of the threads (or processes) that are blocked in"
-        },
-        {
-          "n": 2156,
-          "text": "   * accept() on the same port. As with TCP, SO_REUSEPORT distributes datagrams"
-        }
-      ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
-      "effort": 20,
-      "guard": "other",
-      "guards": [
-        "#elif (defined(__linux__) || \\"
-      ]
-    },
-    {
-      "ruleId": "QNX-API-SOCKOPT-LINUX",
-      "title": "Linux-specific socket options",
-      "category": "linux-api",
-      "severity": "minor",
-      "confidence": "guess",
-      "file": "src/unix/core.c",
       "line": 2169,
       "column": 34,
       "match": "SO_REUSEPORT",
@@ -7974,7 +7778,7 @@
       "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
       "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
       "verify": "verify against SDP.",
-      "effort": 6,
+      "effort": 20,
       "guard": "other",
       "guards": [
         "#elif (defined(__linux__) || \\"

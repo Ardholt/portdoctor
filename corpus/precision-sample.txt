@@ -1,0 +1,61 @@
+# n | project | file:line | rule | verdict | note      (verdicts: TP TPf TPg INFO OTHER FP; see PRECISION.md)
+1|libuv|src/unix/linux.c:429|API-SYSCALL|TPf|syscall(__NR_statx) in linux.c
+2|libuv|src/unix/linux.c:1352|API-EPOLL|TPf|struct epoll_event in linux.c
+3|libuv|src/unix/linux.c:2680|API-INOTIFY|TPf|linux.c
+4|libuv|src/unix/os390-syscalls.h:35|API-EPOLL|OTHER|z/OS shim defines EPOLL_CTL_* constants
+5|libuv|src/unix/process.c:550|API-CLONE-NS|TPg|clone() inside #if __linux__
+6|libuv|src/unix/linux.c:49|HDR-SYS-LINUX|TPf|<sys/prctl.h> in linux.c
+7|libuv|src/unix/linux.c:2364|PATH-SYS|TPf|/sys/fs/cgroup in linux.c
+8|libuv|src/unix/thread.c:246|API-AFFINITY|OTHER|Android-only branch
+9|libuv|src/unix/core.c:2153|API-SOCKOPT-LINUX|FP|defined(SO_REUSEPORT) on a continued #elif line (fixed)
+10|libuv|src/unix/sysinfo-loadavg.c:31|API-SYSINFO|TPf|Linux/Android-selected file
+11|libuv|CMakeLists.txt:91|BLD-SANITIZE|OTHER|optional developer sanitizer option
+12|libuv|src/unix/async.c:36|ADV-LINUX-IFDEF|INFO|#ifdef __linux__ before <sys/eventfd.h>
+13|libuv|src/unix/fs.c:408|ADV-LINUX-IFDEF|INFO|
+14|libuv|src/unix/pipe.c:144|ADV-UNIX-SOCKET-IPC|INFO|
+15|libuv|src/unix/tty.c:482|ADV-UNIX-SOCKET-IPC|INFO|
+16|libuv|src/uv-common.h:451|ADV-LINUX-IFDEF|INFO|
+17|libuv|test/test-pipe-getsockname.c:83|ADV-LINUX-IFDEF|INFO|test file
+18|libuv|test/test-threadpool-cancel.c:26|ADV-LINUX-IFDEF|INFO|test file
+19|dropbear|src/includes.h:180|HDR-LINUX-DIR|TPg|<linux/pkt_sched.h> under HAVE_LINUX_PKT_SCHED_H
+20|dropbear|src/dbrandom.c:275|PATH-SYS|FP|"/proc/sys/kernel/..." matched the /sys rule (fixed; PATH-PROC covers it)
+21|dropbear|src/includes.h:131|HDR-SYS-LINUX|TPg|under HAVE_SYS_PRCTL_H
+22|dropbear|configure.ac:95|BLD-PIE|OTHER|configure probe that tolerates failure
+23|dropbear|libtommath/bn_s_mp_rand_platform.c:61|API-GETRANDOM|TPg|inside Linux-only #if
+24|dropbear|src/dbrandom.c:189|API-GETRANDOM|TPg|under HAVE_GETRANDOM
+25|dropbear|libtommath/bn_s_mp_rand_platform.c:51|ADV-LINUX-IFDEF|INFO|
+26|dropbear|src/dbutil.c:249|ADV-UNIX-SOCKET-IPC|INFO|
+27|dropbear|src/netio.c:32|ADV-UNIX-SOCKET-IPC|INFO|
+28|dropbear|src/netio.c:278|ADV-UNIX-SOCKET-IPC|INFO|
+29|dropbear|src/svr-agentfwd.c:248|ADV-UNIX-SOCKET-IPC|INFO|
+30|dropbear|src/sysoptions.h:45|ADV-LINUX-IFDEF|INFO|
+31|iperf|src/flowlabel.h:35|HDR-LINUX-DIR|TPg|<linux/in6.h> under LINUX_VERSION_CODE
+32|iperf|src/iperf_api.c:3449|API-AFFINITY|OTHER|FreeBSD cpuset branch
+33|iperf|src/iperf_api.c:5573|API-AFFINITY|TPg|under HAVE_SCHED_SETAFFINITY
+34|iperf|src/iperf_api.c:5593|API-AFFINITY|OTHER|FreeBSD cpuset branch
+35|iperf|src/main.c:95|API-AFFINITY|TPg|under TEST_PROC_AFFINITY (off by default)
+36|iperf|src/main.c:107|API-AFFINITY|TPg|same block as 35
+37|iperf|src/net.c:796|API-SENDFILE|OTHER|Apple sendfile branch
+38|iperf|src/iperf_server_api.c:180|API-SOCKOPT-LINUX|TPg|under HAVE_TCP_USER_TIMEOUT
+39|iperf|src/net.c:136|API-SOCKOPT-LINUX|TPg|under HAVE_SO_BINDTODEVICE
+40|iperf|src/tcp_info.c:105|API-SOCKOPT-LINUX|TPg|platform list (linux/BSDs) without QNX
+41|libev|ev.c:4213|API-INOTIFY|TPg|under EV_USE_INOTIFY
+42|libev|ev.c:4301|API-INOTIFY|TPg|under EV_USE_INOTIFY
+43|libev|ev_epoll.c:93|API-EPOLL|TPf|epoll backend file
+44|libev|ev_epoll.c:166|API-EPOLL|TPf|epoll backend file
+45|libev|ev_epoll.c:204|API-EPOLL|TPf|epoll backend file
+46|libev|ev_epoll.c:258|API-EPOLL|TPf|epoll backend file
+47|libev|ev.c:440|API-EVENTFD|FP|#define EFD_CLOEXEC fallback, a definition not a use (fixed)
+48|libev|ev.c:4055|API-SIGNALFD|TPg|under EV_USE_SIGNALFD
+49|libev|configure.ac:1|BLD-AUTOCONF-HOST|TP|project-level
+50|libev|ev.c:343|ADV-LINUX-IFDEF|INFO|
+51|cJSON|Makefile:27|BLD-HARDCODED-CC|TP|CC = gcc -std=c89
+52|cJSON|tests/unity/examples/example_1/makefile:24|BLD-UNAME|OTHER|vendored unity example
+53|cJSON|tests/unity/examples/example_2/makefile:24|BLD-UNAME|OTHER|vendored unity example
+54|cJSON|tests/unity/test/Makefile:1|BLD-HARDCODED-CC|OTHER|vendored unity tests
+55|cJSON|CMakeLists.txt:1|BLD-CMAKE-NO-TOOLCHAIN|TP|project-level
+56|cJSON|CMakeLists.txt:69|BLD-SANITIZE|OTHER|optional developer option
+57|cJSON|CMakeLists.txt:83|BLD-SANITIZE|OTHER|optional developer option
+58|lua|makefile:83|BLD-HARDCODED-CC|TP|CC= gcc
+59|lua|testes/libs/makefile:5|BLD-HARDCODED-CC|OTHER|test helper makefile
+60|lua|testes/libs/makefile:8|BLD-FPIC|OTHER|test helper makefile

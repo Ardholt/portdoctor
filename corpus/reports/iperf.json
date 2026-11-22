@@ -11,17 +11,17 @@
       "c": 43
     },
     "filesSkipped": 0,
-    "findings": 38,
+    "findings": 35,
     "suppressedQnxBranch": 0,
     "suppressedNonCall": 0,
     "rules": 55,
     "bySeverity": {
       "blocker": 6,
       "major": 21,
-      "minor": 10,
+      "minor": 7,
       "info": 1
     },
-    "effortMinutes": 876
+    "effortMinutes": 844
   },
   "findings": [
     {
@@ -1353,56 +1353,6 @@
       "category": "linux-api",
       "severity": "minor",
       "confidence": "guess",
-      "file": "src/iperf.h",
-      "line": 112,
-      "column": 10,
-      "match": "TCP_INFO",
-      "context": [
-        {
-          "n": 109,
-          "text": ""
-        },
-        {
-          "n": 110,
-          "text": "    int omitted;"
-        },
-        {
-          "n": 111,
-          "text": "#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \\"
-        },
-        {
-          "n": 112,
-          "text": "\tdefined(TCP_INFO)"
-        },
-        {
-          "n": 113,
-          "text": "    struct tcp_info tcpInfo; /* getsockopt(TCP_INFO) for Linux, {Free,Net,Open}BSD */"
-        },
-        {
-          "n": 114,
-          "text": "#elif (defined(__APPLE__) && defined(__MACH__))  && defined(TCP_CONNECTION_INFO)"
-        },
-        {
-          "n": 115,
-          "text": "    struct tcp_connection_info tcpConnInfo;"
-        }
-      ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
-      "effort": 20,
-      "guard": "other",
-      "guards": [
-        "#ifndef __IPERF_H",
-        "#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \\"
-      ]
-    },
-    {
-      "ruleId": "QNX-API-SOCKOPT-LINUX",
-      "title": "Linux-specific socket options",
-      "category": "linux-api",
-      "severity": "minor",
-      "confidence": "guess",
       "file": "src/iperf_client_api.c",
       "line": 479,
       "column": 53,
@@ -1698,104 +1648,6 @@
       "severity": "minor",
       "confidence": "guess",
       "file": "src/tcp_info.c",
-      "line": 64,
-      "column": 13,
-      "match": "TCP_INFO",
-      "context": [
-        {
-          "n": 61,
-          "text": "has_tcpinfo(void)"
-        },
-        {
-          "n": 62,
-          "text": "{"
-        },
-        {
-          "n": 63,
-          "text": "#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) \\"
-        },
-        {
-          "n": 64,
-          "text": "\t&& defined(TCP_INFO)"
-        },
-        {
-          "n": 65,
-          "text": "    return 1;"
-        },
-        {
-          "n": 66,
-          "text": "#elif (defined(__APPLE__) && defined(__MACH__)) && defined(TCP_CONNECTION_INFO)"
-        },
-        {
-          "n": 67,
-          "text": "    return 1;"
-        }
-      ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
-      "effort": 20,
-      "guard": "other",
-      "guards": [
-        "#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) \\"
-      ]
-    },
-    {
-      "ruleId": "QNX-API-SOCKOPT-LINUX",
-      "title": "Linux-specific socket options",
-      "category": "linux-api",
-      "severity": "minor",
-      "confidence": "guess",
-      "file": "src/tcp_info.c",
-      "line": 102,
-      "column": 10,
-      "match": "TCP_INFO",
-      "context": [
-        {
-          "n": 99,
-          "text": "save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)"
-        },
-        {
-          "n": 100,
-          "text": "{"
-        },
-        {
-          "n": 101,
-          "text": "#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \\"
-        },
-        {
-          "n": 102,
-          "text": "\tdefined(TCP_INFO)"
-        },
-        {
-          "n": 103,
-          "text": "    socklen_t tcp_info_length = sizeof(struct tcp_info);"
-        },
-        {
-          "n": 104,
-          "text": ""
-        },
-        {
-          "n": 105,
-          "text": "    if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&irp->tcpInfo, &tcp_info_length) < 0)"
-        }
-      ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
-      "effort": 6,
-      "guard": "other",
-      "guards": [
-        "#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \\"
-      ]
-    },
-    {
-      "ruleId": "QNX-API-SOCKOPT-LINUX",
-      "title": "Linux-specific socket options",
-      "category": "linux-api",
-      "severity": "minor",
-      "confidence": "guess",
-      "file": "src/tcp_info.c",
       "line": 105,
       "column": 45,
       "match": "TCP_INFO",
@@ -1832,7 +1684,7 @@
       "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
       "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
       "verify": "verify against SDP.",
-      "effort": 6,
+      "effort": 20,
       "guard": "other",
       "guards": [
         "#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \\"

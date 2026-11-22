@@ -17,6 +17,8 @@ their licences below. No QNX SDP was used: every finding is a static text match,
 
 Counts are after the precision fixes described below (516 findings total; before the fixes there were 555).
 
+> PD2 update: counts in the table below are the PD1 numbers. After the PD2 false-positive fixes the totals are cJSON 21, kilo 1, libev 51, libuv 344, iperf 35, dropbear 43, Lua 4 (`corpus/reports/`). A second, larger hand review (60 new findings) with per-rule precision is in `PRECISION.md`.
+
 ## Hand review of 30 findings
 
 `node corpus/sample.mjs` picks a deterministic stratified sample (libuv 8, dropbear 6, iperf 6, libev 6, cJSON 2, Lua 1,

@@ -276,7 +276,13 @@ export function scanText(
       }
       if (r.scope === 'string' && code[m.index] === noComment[m.index]) continue;
       const li = lineOf(m.index);
-      if (r.scope === 'code' && kind === 'c' && COND_LINE.test(rawLines[li])) continue;
+      if (r.scope === 'code' && kind === 'c') {
+        let j = li;
+        while (j > 0 && rawLines[j - 1].trimEnd().endsWith('\\')) j--;
+        if (COND_LINE.test(rawLines[j])) continue;
+        const def = /^[ \t]*#[ \t]*define[ \t]+/.exec(rawLines[j]);
+        if (def && j === li && m.index - lineStarts[li] === def[0].length) continue;
+      }
       if (kind === 'c' && r.scope === 'code') {
         const id = IDENT_RE.exec(m[0])?.[1];
         const ev = id && r.evidence?.[id];

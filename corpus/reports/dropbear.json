@@ -11,17 +11,17 @@
       "make": 13
     },
     "filesSkipped": 0,
-    "findings": 45,
+    "findings": 43,
     "suppressedQnxBranch": 0,
     "suppressedNonCall": 1,
     "rules": 55,
     "bySeverity": {
       "blocker": 3,
-      "major": 9,
-      "minor": 12,
+      "major": 8,
+      "minor": 11,
       "info": 21
     },
-    "effortMinutes": 509
+    "effortMinutes": 459
   },
   "findings": [
     {
@@ -264,55 +264,6 @@
       "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
       "verify": "verify against SDP: procfs layout on QNX 8.0.",
       "effort": 7,
-      "guard": "linux-only",
-      "guards": [
-        "#ifdef __linux__"
-      ]
-    },
-    {
-      "ruleId": "QNX-PATH-SYS",
-      "title": "Linux /sys (sysfs) paths",
-      "category": "linux-api",
-      "severity": "major",
-      "confidence": "guess",
-      "file": "src/dbrandom.c",
-      "line": 275,
-      "column": 26,
-      "match": "/sys/kernel",
-      "context": [
-        {
-          "n": 272,
-          "text": "\tprocess_file(&hs, \"/proc/interrupts\", 0, 0);"
-        },
-        {
-          "n": 273,
-          "text": ""
-        },
-        {
-          "n": 274,
-          "text": "\tprocess_file(&hs, \"/proc/loadavg\", 0, 0);"
-        },
-        {
-          "n": 275,
-          "text": "\tprocess_file(&hs, \"/proc/sys/kernel/random/entropy_avail\", 0, 0);"
-        },
-        {
-          "n": 276,
-          "text": ""
-        },
-        {
-          "n": 277,
-          "text": "\t/* Mostly network visible but useful in some situations."
-        },
-        {
-          "n": 278,
-          "text": "\t * Limit size to avoid slowdowns on systems with lots of routes */"
-        }
-      ],
-      "message": "sysfs is a Linux kernel pseudo-filesystem; not assumed on QNX.",
-      "remedy": "Query the real source: sysconf/getifaddrs for system facts, device resource managers for hardware state, the system page for CPU data.",
-      "verify": "verify against SDP.",
-      "effort": 30,
       "guard": "linux-only",
       "guards": [
         "#ifdef __linux__"
@@ -1139,57 +1090,6 @@
       "guard": "other",
       "guards": [
         "#ifdef SO_BINDTODEVICE"
-      ]
-    },
-    {
-      "ruleId": "QNX-API-SOCKOPT-LINUX",
-      "title": "Linux-specific socket options",
-      "category": "linux-api",
-      "severity": "minor",
-      "confidence": "guess",
-      "file": "src/netio.h",
-      "line": 62,
-      "column": 9,
-      "match": "TCP_FASTOPEN",
-      "context": [
-        {
-          "n": 59,
-          "text": "void set_listen_fast_open(int sock);"
-        },
-        {
-          "n": 60,
-          "text": "/* Define values which may be supported by the kernel even if the libc is too old */"
-        },
-        {
-          "n": 61,
-          "text": "#ifndef TCP_FASTOPEN"
-        },
-        {
-          "n": 62,
-          "text": "#define TCP_FASTOPEN 23"
-        },
-        {
-          "n": 63,
-          "text": "#endif"
-        },
-        {
-          "n": 64,
-          "text": "#ifndef MSG_FASTOPEN"
-        },
-        {
-          "n": 65,
-          "text": "#define MSG_FASTOPEN 0x20000000"
-        }
-      ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
-      "effort": 20,
-      "guard": "other",
-      "guards": [
-        "#ifndef DROPBEAR_NETIO_H",
-        "#if DROPBEAR_SERVER_TCP_FAST_OPEN",
-        "#ifndef TCP_FASTOPEN"
       ]
     },
     {
@@ -2320,16 +2220,6 @@
         "QNX docs: procfs / DCMD_PROC_INFO"
       ],
       "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files)."
-    },
-    {
-      "id": "QNX-PATH-SYS",
-      "title": "Linux /sys (sysfs) paths",
-      "category": "linux-api",
-      "severity": "major",
-      "confidence": "guess",
-      "remedy": "Query the real source: sysconf/getifaddrs for system facts, device resource managers for hardware state, the system page for CPU data.",
-      "verify": "verify against SDP.",
-      "message": "sysfs is a Linux kernel pseudo-filesystem; not assumed on QNX."
     }
   ]
 }

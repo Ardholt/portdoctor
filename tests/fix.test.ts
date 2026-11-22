@@ -20,14 +20,14 @@ function demoCopy(): string {
   return join(d, 'demo');
 }
 
-test('fix loop end to end: propose -> git apply --check -> apply on a copy -> check -> re-scan; findings go 4 -> 0, original untouched', { skip: !hasGcc && 'no gcc' }, () => {
+test('fix loop end to end: propose -> git apply --check -> apply on a copy -> check -> re-scan; findings go 5 -> 0, original untouched', { skip: !hasGcc && 'no gcc' }, () => {
   const d = demoCopy();
   try {
     const orig = readFileSync(join(d, 'main.c'), 'utf8');
-    const r = runFix(d, { provider: STUB, count: 4 });
-    assert.equal(r.before.findings, 4);
+    const r = runFix(d, { provider: STUB, count: 5 });
+    assert.equal(r.before.findings, 5);
     assert.equal(r.after.findings, 0);
-    assert.deepEqual(r.steps.map((s) => s.status), ['applied', 'applied', 'applied', 'applied']);
+    assert.deepEqual(r.steps.map((s) => s.status), ['applied', 'applied', 'applied', 'applied', 'applied']);
     assert.ok(r.steps.filter((s) => s.file === 'main.c').every((s) => s.check?.status === 'pass'));
     assert.equal(r.steps.find((s) => s.file === 'Makefile')!.check?.status, 'skipped');
     assert.equal(readFileSync(join(d, 'main.c'), 'utf8'), orig, 'original tree must not change');
@@ -128,12 +128,12 @@ test('CLI fix exits 0 on full success and writes the report', { skip: !hasGcc &&
   const d = demoCopy();
   try {
     const out = join(dirname(d), 'fix-report.html');
-    const r = spawnSync('node', [join(ROOT, 'bin', 'portdoctor.mjs'), 'fix', d, '--provider', STUB, '--count', '4', '-o', out], { encoding: 'utf8' });
+    const r = spawnSync('node', [join(ROOT, 'bin', 'portdoctor.mjs'), 'fix', d, '--provider', STUB, '--count', '5', '-o', out], { encoding: 'utf8' });
     assert.equal(r.status, 0, r.stderr + r.stdout);
-    assert.match(r.stdout, /before: 4 findings/);
+    assert.match(r.stdout, /before: 5 findings/);
     assert.match(r.stdout, /after:  0 findings/);
     assert.match(readFileSync(out, 'utf8'), /PortDoctor fix report/);
-    assert.equal(scanDir(d).findings.length, 4);
+    assert.equal(scanDir(d).findings.length, 5);
   } finally {
     rmSync(dirname(d), { recursive: true, force: true });
   }

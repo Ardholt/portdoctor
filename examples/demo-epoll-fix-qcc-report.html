@@ -1,0 +1,115 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PortDoctor fix report</title><meta name="color-scheme" content="light dark">
+<style>
+:root{--bg:#f4f6f9;--s:#fff;--t:#14181f;--m:#566071;--b:#d5dae3;--ok:#0b6b2f;--bad:#a8200f;--acc:#0a58c9}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1218;--s:#161b23;--t:#e7eaf0;--m:#9aa4b5;--b:#2b3342;--ok:#7ddc9b;--bad:#ff9a8f;--acc:#79afff}}
+body{margin:0;background:var(--bg);color:var(--t);font:15px/1.5 system-ui,sans-serif}main{max-width:1000px;margin:0 auto;padding:1.5rem 1rem 4rem}
+.banner{border-left:4px solid #9a3f00;background:color-mix(in srgb,#ff9a3d 18%,var(--s));padding:.6rem 1rem;border-radius:6px}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}.card{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:.8rem 1rem}.card .n{font-size:2rem;font-weight:700}
+section.step{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:.2rem 1rem .8rem;margin:.8rem 0}
+.pill{font-size:.75rem;border:1px solid var(--b);border-radius:999px;padding:0 .5rem}.st-applied .pill{color:var(--ok);border-color:var(--ok)}.st-applied h3::before{content:"\2713 ";color:var(--ok)}
+.bad{color:var(--bad)}.note{color:var(--m);font-size:.88rem}pre{overflow:auto;background:color-mix(in srgb,var(--t) 5%,var(--s));border:1px solid var(--b);border-radius:8px;padding:.5rem .8rem;font:.82rem/1.45 ui-monospace,Menlo,monospace}
+.add{color:var(--ok)}.del{color:var(--bad)}code{font-family:ui-monospace,Menlo,monospace;font-size:.88em}
+</style></head><body><main>
+<h1>PortDoctor fix report</h1>
+<p class="note">demo-epoll &middot; patches were applied to a copy, the original tree is untouched.</p>
+<p class="banner"><strong>Not a QNX build.</strong> Compile check here is the QNX SDP compiler (qcc/q++ -c, compile only): it knows which QNX headers, macros and prototypes exist. It does not link and nothing was run on a QNX target. Proposed patches are from a model or provider you chose; PortDoctor calls none itself.</p>
+<h2>Before and after</h2>
+<div class="ba"><div class="card"><div class="n">12</div>findings before<br><span class="note">9 blocker &middot; 2 major &middot; 1 minor &middot; 0 info</span></div>
+<div class="card"><div class="n">0</div>findings after (re-scan of the patched copy)<br><span class="note">0 blocker &middot; 0 major &middot; 0 minor &middot; 0 info</span></div></div>
+<p>2 of 3 chosen findings patched and passing the check.</p>
+<h2>Steps</h2>
+<section class="step st-applied"><h3>1. epoll event loop <code>server.c:18</code> <span class="pill">applied</span></h3>
+<p class="note">QNX-API-EPOLL &middot; findings 12 &rarr; 2 &middot; model confidence: medium</p>
+<p>epoll does not exist on QNX 8.0 (no sys/epoll.h). Port the event loop to poll(), which the SDP provides: a pollfd array replaces the epoll set, closed descriptors are swapped out of the array. Also drops the &lt;sys/epoll.h&gt; include.</p>
+<pre class="diff"><span class="">diff --git a/server.c b/server.c</span>
+<span class="">index b47956d..0e5cb38 100644</span>
+<span class="">--- a/server.c</span>
+<span class="">+++ b/server.c</span>
+<span class="">@@ -1,4 +1,5 @@</span>
+<span class="del">-#include &lt;sys/epoll.h&gt;</span>
+<span class="add">+#include &lt;poll.h&gt;</span>
+<span class="add">+#include &lt;errno.h&gt;</span>
+<span class=""> #include &lt;sys/socket.h&gt;</span>
+<span class=""> #include &lt;netinet/in.h&gt;</span>
+<span class=""> #include &lt;unistd.h&gt;</span>
+<span class="">@@ -15,28 +16,38 @@ int serve(int port) {</span>
+<span class="">     a.sin_addr.s_addr = htonl(INADDR_ANY);</span>
+<span class="">     if (bind(ls, (struct sockaddr *)&amp;a, sizeof a) &lt; 0 || listen(ls, 16) &lt; 0) return -1;</span>
+<span class=""> </span>
+<span class="del">-    int ep = epoll_create1(0);</span>
+<span class="del">-    struct epoll_event ev;</span>
+<span class="del">-    ev.events = EPOLLIN;</span>
+<span class="del">-    ev.data.fd = ls;</span>
+<span class="del">-    epoll_ctl(ep, EPOLL_CTL_ADD, ls, &amp;ev);</span>
+<span class="add">+    struct pollfd pfds[MAXEV];</span>
+<span class="add">+    int nfds = 0;</span>
+<span class="add">+    pfds[nfds].fd = ls;</span>
+<span class="add">+    pfds[nfds].events = POLLIN;</span>
+<span class="add">+    nfds++;</span>
+<span class=""> </span>
+<span class="">     for (;;) {</span>
+<span class="del">-        struct epoll_event evs[MAXEV];</span>
+<span class="del">-        int n = epoll_wait(ep, evs, MAXEV, -1);</span>
+<span class="del">-        for (int i = 0; i &lt; n; i++) {</span>
+<span class="del">-            int fd = evs[i].data.fd;</span>
+<span class="add">+        int n = poll(pfds, (nfds_t)nfds, -1);</span>
+<span class="add">+        if (n &lt; 0) {</span>
+<span class="add">+            if (errno == EINTR) continue;</span>
+<span class="add">+            return -1;</span>
+<span class="add">+        }</span>
+<span class="add">+        for (int i = 0; i &lt; nfds; i++) {</span>
+<span class="add">+            if (!(pfds[i].revents &amp; (POLLIN | POLLHUP | POLLERR))) continue;</span>
+<span class="add">+            int fd = pfds[i].fd;</span>
+<span class="">             if (fd == ls) {</span>
+<span class="">                 int c = accept(ls, 0, 0);</span>
+<span class="del">-                ev.events = EPOLLIN;</span>
+<span class="del">-                ev.data.fd = c;</span>
+<span class="del">-                epoll_ctl(ep, EPOLL_CTL_ADD, c, &amp;ev);</span>
+<span class="add">+                if (c &gt;= 0 &amp;&amp; nfds &lt; MAXEV) {</span>
+<span class="add">+                    pfds[nfds].fd = c;</span>
+<span class="add">+                    pfds[nfds].events = POLLIN;</span>
+<span class="add">+                    nfds++;</span>
+<span class="add">+                } else if (c &gt;= 0) {</span>
+<span class="add">+                    close(c);</span>
+<span class="add">+                }</span>
+<span class="">             } else {</span>
+<span class="">                 char buf[256];</span>
+<span class="">                 ssize_t r = read(fd, buf, sizeof buf);</span>
+<span class="">                 if (r &lt;= 0) {</span>
+<span class="del">-                    epoll_ctl(ep, EPOLL_CTL_DEL, fd, 0);</span>
+<span class="">                     close(fd);</span>
+<span class="add">+                    pfds[i] = pfds[nfds - 1];</span>
+<span class="add">+                    nfds--;</span>
+<span class="add">+                    i--;</span>
+<span class="">                 } else {</span>
+<span class="">                     write(fd, buf, (size_t)r);</span>
+<span class="">                 }</span>
+<span class=""></span></pre>
+<p class="note">git apply --check: git apply --check passed</p>
+<p class="note">Check <strong>pass</strong> (errors before 1, after 0): <code>case '$WORK/out/after-epoll/server.c' in *.c|*.h) qcc -Vgcc_ntox86_64 -c -o /dev/null -x c -I'$WORK/out/after-epoll' -I'$WORK/out/after-epoll' '$WORK/out/after-epoll/server.c';; *.cc|*.cpp|*.cxx|*.hpp|*.hh|*.hxx) q++ -Vgcc_ntox86_64 -c -o /dev/null -x c++ -I'$WORK/out/after-epoll' -I'$WORK/out/after-epoll' '$WORK/out/after-epoll/server.c';; *) true;; esac</code></p>
+<p class="note">Assumptions not verified: poll() semantics match POSIX on QNX 8.0 (not run on a target); MAXEV doubles as the fd table size: connections beyond 16 are closed</p></section>
+<section class="step st-applied"><h3>2. Socket code without -lsocket <code>Makefile:1</code> <span class="pill">applied</span></h3>
+<p class="note">QNX-BLD-LSOCKET &middot; findings 2 &rarr; 0 &middot; model confidence: high</p>
+<p>On QNX 8.0 the socket functions live in libsocket, not libc, so the link needs -lsocket; there is no librt (the realtime functions are in libc), so -lrt is dropped in the same line.</p>
+<pre class="diff"><span class="">diff --git a/Makefile b/Makefile</span>
+<span class="">index 6fcac1f..e261c3e 100644</span>
+<span class="">--- a/Makefile</span>
+<span class="">+++ b/Makefile</span>
+<span class="">@@ -1,4 +1,4 @@</span>
+<span class="del">-LDLIBS = -lrt -lm</span>
+<span class="add">+LDLIBS = -lsocket -lm</span>
+<span class=""> </span>
+<span class=""> all: server</span>
+<span class=""> </span>
+<span class=""></span></pre>
+<p class="note">git apply --check: git apply --check passed</p>
+<p class="note">Check <strong>skipped</strong> (errors before 0, after 0): <code>(no C/C++ file touched)</code></p>
+<p class="note">Assumptions not verified: -lrt is not needed on Linux for this program either (glibc 2.34+ has clock_* in libc), and -lsocket does not exist on Linux: guard the line per platform if the Makefile must keep building on Linux</p></section>
+<section class="step st-already-resolved"><h3>3. Includes a Linux-specific &lt;sys/...&gt; header <code>server.c:1</code> <span class="pill">already-resolved</span></h3>
+<p class="note">QNX-HDR-SYS-LINUX &middot; findings 0 &rarr; 0</p>
+<p class="bad">no longer reported after earlier patches</p>
+
+
+
+</section>
+</main></body></html>

@@ -369,6 +369,9 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
   const mentions = new Map<string, boolean>();
   const absentRes = new Map<string, RegExp>();
   for (const r of projRules) absentRes.set(r.id, new RegExp(r.project!.absent));
+  const codeRes = new Map<string, RegExp>();
+  for (const r of projRules) if (r.project!.requireCode) codeRes.set(r.id, new RegExp(r.project!.requireCode, 'm'));
+  const codeUses = new Set<string>();
   let scanned = 0;
   const kindCount: Record<string, number> = {};
   const loaded: Array<{ rel: string; kind: Kind; text: string }> = [];
@@ -397,6 +400,7 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
     if (kind === 'c') {
       const code = maskC(text.replace(/\r\n?/g, '\n')).code;
       declaredIn.set(rel, declaredNames(code));
+      for (const [id, re] of codeRes) if (!codeUses.has(id) && re.test(code)) codeUses.add(id);
       for (const n of declaredNames(code, true)) projectDefined.add(n);
     }
   }
@@ -418,8 +422,9 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
   }
   for (const r of projRules) {
     const list = byKind[r.project!.requireKind];
-    const target = byKind[r.project!.reportOnKind];
+    const target = [r.project!.reportOnKind, ...(r.project!.reportFallback ?? [])].map((k) => byKind[k]).find((t) => t.length) ?? [];
     if (!list.length || !target.length || mentions.get(r.id)) continue;
+    if (codeRes.has(r.id) && !codeUses.has(r.id)) continue;
     const first = target.slice().sort((x, y) => x.split('/').length - y.split('/').length || (x < y ? -1 : 1))[0];
     findings.push({
       ruleId: r.id, title: r.title, category: r.category, severity: r.severity, confidence: r.confidence,

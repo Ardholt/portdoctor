@@ -1,0 +1,226 @@
+{
+  "tool": "portdoctor",
+  "version": "0.3.0",
+  "root": "lua",
+  "disclaimer": "PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked 'guess' are unverified claims about QNX 8.0 and must be checked against the SDP.",
+  "stats": {
+    "filesScanned": 70,
+    "filesByKind": {
+      "c": 68,
+      "make": 2
+    },
+    "filesSkipped": 0,
+    "findings": 3,
+    "suppressedQnxBranch": 0,
+    "suppressedNonCall": 0,
+    "build": {
+      "source": "build files",
+      "findingsNotInBuildList": 0,
+      "note": "141 source paths named in CMake/Makefile lists (variables and generated sources are not followed)"
+    },
+    "rules": 55,
+    "bySeverity": {
+      "blocker": 0,
+      "major": 0,
+      "minor": 3,
+      "info": 0
+    },
+    "effortMinutes": 27,
+    "sdp": {
+      "build": "8.0.0.00141T202311271501L",
+      "classified": 2,
+      "verifiedAbsent": 1,
+      "verifiedPartial": 0,
+      "verifiedPresentKept": 0,
+      "verifiedPresentDropped": 1,
+      "notCovered": 0,
+      "droppedByRule": {
+        "QNX-BLD-FPIC": [
+          "-fPIC"
+        ]
+      },
+      "uncovered": []
+    }
+  },
+  "findings": [
+    {
+      "ruleId": "QNX-BLD-LDL",
+      "title": "Links -ldl",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "verified-absent",
+      "file": "makefile",
+      "line": 80,
+      "column": 8,
+      "match": "-ldl",
+      "context": [
+        {
+          "n": 77,
+          "text": "# (For 32-bit, add option \"-m32\" to MYCFLAGS and MYLDFLAGS.)"
+        },
+        {
+          "n": 78,
+          "text": "MYCFLAGS= $(LOCAL) -std=c99 -DLUA_USE_LINUX"
+        },
+        {
+          "n": 79,
+          "text": "MYLDFLAGS= -Wl,-E"
+        },
+        {
+          "n": 80,
+          "text": "MYLIBS= -ldl"
+        },
+        {
+          "n": 81,
+          "text": ""
+        },
+        {
+          "n": 82,
+          "text": ""
+        },
+        {
+          "n": 83,
+          "text": "CC= gcc"
+        }
+      ],
+      "message": "There is no libdl in the QNX 8.0 SDP: linking with -ldl fails ('cannot find -ldl', SDP 8.0 build 141). dlopen/dlsym are in libc. [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: -ldl: ld: cannot find -ldl (no libdl.so/.a in the SDP)]",
+      "remedy": "Use ${CMAKE_DL_LIBS} in CMake (empty where unneeded), or conditionalise -ldl.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 10,
+      "guard": "none",
+      "guards": [],
+      "sdp": {
+        "verdict": "absent",
+        "items": [
+          {
+            "what": "-ldl",
+            "kind": "lib",
+            "result": "absent",
+            "evidence": "-ldl: ld: cannot find -ldl (no libdl.so/.a in the SDP)"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "makefile",
+      "line": 83,
+      "column": 1,
+      "match": "CC= gcc",
+      "context": [
+        {
+          "n": 80,
+          "text": "MYLIBS= -ldl"
+        },
+        {
+          "n": 81,
+          "text": ""
+        },
+        {
+          "n": 82,
+          "text": ""
+        },
+        {
+          "n": 83,
+          "text": "CC= gcc"
+        },
+        {
+          "n": 84,
+          "text": "# (Optionally we can use -march=native -mno-avx512f.)"
+        },
+        {
+          "n": 85,
+          "text": "CFLAGS= -Wall -O2 $(MYCFLAGS) -fno-stack-protector -fno-common"
+        },
+        {
+          "n": 86,
+          "text": "AR= ar rc"
+        }
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "testes/libs/makefile",
+      "line": 5,
+      "column": 1,
+      "match": "CC = gcc",
+      "context": [
+        {
+          "n": 2,
+          "text": "# of the version being tested"
+        },
+        {
+          "n": 3,
+          "text": "LUA_DIR = ../../"
+        },
+        {
+          "n": 4,
+          "text": ""
+        },
+        {
+          "n": 5,
+          "text": "CC = gcc"
+        },
+        {
+          "n": 6,
+          "text": ""
+        },
+        {
+          "n": 7,
+          "text": "# compilation should generate Dynamic-Link Libraries"
+        },
+        {
+          "n": 8,
+          "text": "CFLAGS = -Wall -O2 -I$(LUA_DIR) -fPIC -shared"
+        }
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    }
+  ],
+  "groups": 2,
+  "rules": [
+    {
+      "id": "QNX-BLD-LDL",
+      "title": "Links -ldl",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "guess",
+      "remedy": "Use ${CMAKE_DL_LIBS} in CMake (empty where unneeded), or conditionalise -ldl.",
+      "verify": "Verified on SDP 8.0 build 141.",
+      "message": "There is no libdl in the QNX 8.0 SDP: linking with -ldl fails ('cannot find -ldl', SDP 8.0 build 141). dlopen/dlsym are in libc.",
+      "effort": 10
+    },
+    {
+      "id": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "refs": [
+        "QNX docs: qcc",
+        "QNX SDP: qnxsdp-env.sh"
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "effort": 15
+    }
+  ]
+}

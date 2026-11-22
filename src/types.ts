@@ -23,7 +23,8 @@ export interface Rule {
   effort: number;
   pattern?: string;
   flags?: string;
-  project?: { requireKind: Kind; absent: string; reportOnKind: Kind };
+  /** project-level: fires once if a file of requireKind exists, `absent` matches no file, (optionally) C code matches requireCode; reported on the first file of reportOnKind, else of the reportFallback kinds */
+  project?: { requireKind: Kind; absent: string; reportOnKind: Kind; requireCode?: string; reportFallback?: Kind[] };
   /** identifier -> regex source that must match somewhere in the file (a visible include/macro) before the identifier counts */
   evidence?: Record<string, string>;
   message: string;

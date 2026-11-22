@@ -1,0 +1,921 @@
+{
+  "tool": "portdoctor",
+  "version": "0.3.0",
+  "root": "cJSON",
+  "disclaimer": "PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked 'guess' are unverified claims about QNX 8.0 and must be checked against the SDP.",
+  "stats": {
+    "filesScanned": 110,
+    "filesByKind": {
+      "cmake": 6,
+      "make": 5,
+      "c": 99
+    },
+    "filesSkipped": 0,
+    "findings": 18,
+    "suppressedQnxBranch": 0,
+    "suppressedNonCall": 0,
+    "build": {
+      "source": "none",
+      "findingsNotInBuildList": 0,
+      "note": "build files use globs/wildcards: source lists are not knowable, nothing was marked"
+    },
+    "rules": 55,
+    "bySeverity": {
+      "blocker": 0,
+      "major": 0,
+      "minor": 12,
+      "info": 6
+    },
+    "effortMinutes": 83,
+    "sdp": {
+      "build": "8.0.0.00141T202311271501L",
+      "classified": 8,
+      "verifiedAbsent": 0,
+      "verifiedPartial": 5,
+      "verifiedPresentKept": 0,
+      "verifiedPresentDropped": 3,
+      "notCovered": 0,
+      "droppedByRule": {
+        "QNX-BLD-FPIC": [
+          "-fPIC"
+        ],
+        "QNX-BLD-LDFLAGS": [
+          "-Wl,-soname"
+        ]
+      },
+      "uncovered": []
+    }
+  },
+  "findings": [
+    {
+      "ruleId": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "Makefile",
+      "line": 27,
+      "column": 1,
+      "match": "CC = gcc",
+      "context": [
+        {
+          "n": 24,
+          "text": ""
+        },
+        {
+          "n": 25,
+          "text": "INSTALL ?= cp -a"
+        },
+        {
+          "n": 26,
+          "text": ""
+        },
+        {
+          "n": 27,
+          "text": "CC = gcc -std=c89"
+        },
+        {
+          "n": 28,
+          "text": ""
+        },
+        {
+          "n": 29,
+          "text": "# validate gcc version for use fstack-protector-strong"
+        },
+        {
+          "n": 30,
+          "text": "MIN_GCC_VERSION = \"4.9\""
+        }
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-UNAME",
+      "title": "Makefile branches on uname",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "Makefile",
+      "line": 42,
+      "column": 25,
+      "match": "uname -s",
+      "context": [
+        {
+          "n": 39,
+          "text": "PIC_FLAGS = -fPIC"
+        },
+        {
+          "n": 40,
+          "text": "R_CFLAGS = $(PIC_FLAGS) -pedantic -Wall -Werror -Wstrict-prototypes -Wwrite-strings -Wshadow -Winit-self -Wcast-align -Wformat=2 -Wmissing-prototypes -Wstrict-overflow=2 -Wcast-qual -Wc++-compat -Wundef -Wswitch-default -Wconversion $(CFLAGS)"
+        },
+        {
+          "n": 41,
+          "text": ""
+        },
+        {
+          "n": 42,
+          "text": "uname := $(shell sh -c 'uname -s 2>/dev/null || echo false')"
+        },
+        {
+          "n": 43,
+          "text": ""
+        },
+        {
+          "n": 44,
+          "text": "#library file extensions"
+        },
+        {
+          "n": 45,
+          "text": "SHARED = so"
+        }
+      ],
+      "message": "Platform is taken from the build host. When cross-compiling the host is Linux/macOS while the target is QNX; uname on a QNX host reports QNX.",
+      "remedy": "Key the logic on a target variable (for example TARGET_OS passed on the command line) rather than uname of the build machine.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-UNAME",
+      "title": "Makefile branches on uname",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "tests/unity/examples/example_1/makefile",
+      "line": 9,
+      "column": 17,
+      "match": "uname -s",
+      "context": [
+        {
+          "n": 6,
+          "text": ""
+        },
+        {
+          "n": 7,
+          "text": "#We try to detect the OS we are running on, and adjust commands as needed"
+        },
+        {
+          "n": 8,
+          "text": "ifeq ($(OS),Windows_NT)"
+        },
+        {
+          "n": 9,
+          "text": "  ifeq ($(shell uname -s),) # not in a bash-like shell"
+        },
+        {
+          "n": 10,
+          "text": "\tCLEANUP = del /F /Q"
+        },
+        {
+          "n": 11,
+          "text": "\tMKDIR = mkdir"
+        },
+        {
+          "n": 12,
+          "text": "  else # in a bash-like shell, like msys"
+        }
+      ],
+      "message": "Platform is taken from the build host. When cross-compiling the host is Linux/macOS while the target is QNX; uname on a QNX host reports QNX.",
+      "remedy": "Key the logic on a target variable (for example TARGET_OS passed on the command line) rather than uname of the build machine.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-UNAME",
+      "title": "Makefile branches on uname",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "tests/unity/examples/example_1/makefile",
+      "line": 24,
+      "column": 15,
+      "match": "uname -s",
+      "context": [
+        {
+          "n": 21,
+          "text": "endif"
+        },
+        {
+          "n": 22,
+          "text": ""
+        },
+        {
+          "n": 23,
+          "text": "C_COMPILER=gcc"
+        },
+        {
+          "n": 24,
+          "text": "ifeq ($(shell uname -s), Darwin)"
+        },
+        {
+          "n": 25,
+          "text": "C_COMPILER=clang"
+        },
+        {
+          "n": 26,
+          "text": "endif"
+        },
+        {
+          "n": 27,
+          "text": ""
+        }
+      ],
+      "message": "Platform is taken from the build host. When cross-compiling the host is Linux/macOS while the target is QNX; uname on a QNX host reports QNX.",
+      "remedy": "Key the logic on a target variable (for example TARGET_OS passed on the command line) rather than uname of the build machine.",
+      "effort": 5,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-UNAME",
+      "title": "Makefile branches on uname",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "tests/unity/examples/example_2/makefile",
+      "line": 9,
+      "column": 17,
+      "match": "uname -s",
+      "context": [
+        {
+          "n": 6,
+          "text": ""
+        },
+        {
+          "n": 7,
+          "text": "#We try to detect the OS we are running on, and adjust commands as needed"
+        },
+        {
+          "n": 8,
+          "text": "ifeq ($(OS),Windows_NT)"
+        },
+        {
+          "n": 9,
+          "text": "  ifeq ($(shell uname -s),) # not in a bash-like shell"
+        },
+        {
+          "n": 10,
+          "text": "\tCLEANUP = del /F /Q"
+        },
+        {
+          "n": 11,
+          "text": "\tMKDIR = mkdir"
+        },
+        {
+          "n": 12,
+          "text": "  else # in a bash-like shell, like msys"
+        }
+      ],
+      "message": "Platform is taken from the build host. When cross-compiling the host is Linux/macOS while the target is QNX; uname on a QNX host reports QNX.",
+      "remedy": "Key the logic on a target variable (for example TARGET_OS passed on the command line) rather than uname of the build machine.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-UNAME",
+      "title": "Makefile branches on uname",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "tests/unity/examples/example_2/makefile",
+      "line": 24,
+      "column": 15,
+      "match": "uname -s",
+      "context": [
+        {
+          "n": 21,
+          "text": "endif"
+        },
+        {
+          "n": 22,
+          "text": ""
+        },
+        {
+          "n": 23,
+          "text": "C_COMPILER=gcc"
+        },
+        {
+          "n": 24,
+          "text": "ifeq ($(shell uname -s), Darwin)"
+        },
+        {
+          "n": 25,
+          "text": "C_COMPILER=clang"
+        },
+        {
+          "n": 26,
+          "text": "endif"
+        },
+        {
+          "n": 27,
+          "text": ""
+        }
+      ],
+      "message": "Platform is taken from the build host. When cross-compiling the host is Linux/macOS while the target is QNX; uname on a QNX host reports QNX.",
+      "remedy": "Key the logic on a target variable (for example TARGET_OS passed on the command line) rather than uname of the build machine.",
+      "effort": 5,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "tests/unity/extras/fixture/test/Makefile",
+      "line": 1,
+      "column": 1,
+      "match": "CC = gcc",
+      "context": [
+        {
+          "n": 1,
+          "text": "CC = gcc"
+        },
+        {
+          "n": 2,
+          "text": "ifeq ($(shell uname -s), Darwin)"
+        },
+        {
+          "n": 3,
+          "text": "CC = clang"
+        },
+        {
+          "n": 4,
+          "text": "endif"
+        }
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-UNAME",
+      "title": "Makefile branches on uname",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "tests/unity/extras/fixture/test/Makefile",
+      "line": 2,
+      "column": 15,
+      "match": "uname -s",
+      "context": [
+        {
+          "n": 1,
+          "text": "CC = gcc"
+        },
+        {
+          "n": 2,
+          "text": "ifeq ($(shell uname -s), Darwin)"
+        },
+        {
+          "n": 3,
+          "text": "CC = clang"
+        },
+        {
+          "n": 4,
+          "text": "endif"
+        },
+        {
+          "n": 5,
+          "text": "#DEBUG = -O0 -g"
+        }
+      ],
+      "message": "Platform is taken from the build host. When cross-compiling the host is Linux/macOS while the target is QNX; uname on a QNX host reports QNX.",
+      "remedy": "Key the logic on a target variable (for example TARGET_OS passed on the command line) rather than uname of the build machine.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "tests/unity/extras/fixture/test/Makefile",
+      "line": 3,
+      "column": 1,
+      "match": "CC = clang",
+      "context": [
+        {
+          "n": 1,
+          "text": "CC = gcc"
+        },
+        {
+          "n": 2,
+          "text": "ifeq ($(shell uname -s), Darwin)"
+        },
+        {
+          "n": 3,
+          "text": "CC = clang"
+        },
+        {
+          "n": 4,
+          "text": "endif"
+        },
+        {
+          "n": 5,
+          "text": "#DEBUG = -O0 -g"
+        },
+        {
+          "n": 6,
+          "text": "CFLAGS += -std=c99 -pedantic -Wall -Wextra -Werror"
+        }
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "effort": 5,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "tests/unity/test/Makefile",
+      "line": 1,
+      "column": 1,
+      "match": "CC = gcc",
+      "context": [
+        {
+          "n": 1,
+          "text": "CC = gcc"
+        },
+        {
+          "n": 2,
+          "text": "ifeq ($(shell uname -s), Darwin)"
+        },
+        {
+          "n": 3,
+          "text": "CC = clang"
+        },
+        {
+          "n": 4,
+          "text": "endif"
+        }
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-UNAME",
+      "title": "Makefile branches on uname",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "tests/unity/test/Makefile",
+      "line": 2,
+      "column": 15,
+      "match": "uname -s",
+      "context": [
+        {
+          "n": 1,
+          "text": "CC = gcc"
+        },
+        {
+          "n": 2,
+          "text": "ifeq ($(shell uname -s), Darwin)"
+        },
+        {
+          "n": 3,
+          "text": "CC = clang"
+        },
+        {
+          "n": 4,
+          "text": "endif"
+        },
+        {
+          "n": 5,
+          "text": "ifeq ($(findstring clang, $(CC)), clang)"
+        }
+      ],
+      "message": "Platform is taken from the build host. When cross-compiling the host is Linux/macOS while the target is QNX; uname on a QNX host reports QNX.",
+      "remedy": "Key the logic on a target variable (for example TARGET_OS passed on the command line) rather than uname of the build machine.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "tests/unity/test/Makefile",
+      "line": 3,
+      "column": 1,
+      "match": "CC = clang",
+      "context": [
+        {
+          "n": 1,
+          "text": "CC = gcc"
+        },
+        {
+          "n": 2,
+          "text": "ifeq ($(shell uname -s), Darwin)"
+        },
+        {
+          "n": 3,
+          "text": "CC = clang"
+        },
+        {
+          "n": 4,
+          "text": "endif"
+        },
+        {
+          "n": 5,
+          "text": "ifeq ($(findstring clang, $(CC)), clang)"
+        },
+        {
+          "n": 6,
+          "text": "E = -Weverything"
+        }
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "effort": 5,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-CMAKE-NO-TOOLCHAIN",
+      "title": "CMake project has no QNX toolchain/platform support",
+      "category": "build",
+      "severity": "info",
+      "confidence": "known",
+      "file": "CMakeLists.txt",
+      "line": 1,
+      "column": 1,
+      "match": "(project-level)",
+      "context": [],
+      "message": "No file in this tree mentions QNX. Cross-building for QNX with CMake needs a toolchain file.",
+      "remedy": "Provide a toolchain file: CMAKE_SYSTEM_NAME QNX, CMAKE_C_COMPILER/CMAKE_CXX_COMPILER set to qcc/q++ with the -V variant (for example gcc_ntoaarch64le), roots from QNX_HOST/QNX_TARGET after sourcing qnxsdp-env.sh; run cmake -DCMAKE_TOOLCHAIN_FILE=...",
+      "verify": "verify against SDP: variant names and the toolchain file template shipped with the SDP.",
+      "effort": 30,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-SANITIZE",
+      "title": "Sanitizer flags",
+      "category": "build",
+      "severity": "info",
+      "confidence": "verified-partial",
+      "file": "CMakeLists.txt",
+      "line": 68,
+      "column": 9,
+      "match": "-fsanitize=",
+      "context": [
+        {
+          "n": 65,
+          "text": "if (ENABLE_SANITIZERS)"
+        },
+        {
+          "n": 66,
+          "text": "    list(APPEND custom_compiler_flags"
+        },
+        {
+          "n": 67,
+          "text": "        -fno-omit-frame-pointer"
+        },
+        {
+          "n": 68,
+          "text": "        -fsanitize=address"
+        },
+        {
+          "n": 69,
+          "text": "        -fsanitize=undefined"
+        },
+        {
+          "n": 70,
+          "text": "        -fsanitize=float-cast-overflow"
+        },
+        {
+          "n": 71,
+          "text": "        -fsanitize-address-use-after-scope"
+        }
+      ],
+      "message": "Sanitizers on SDP 8.0 build 141: -fsanitize=undefined and =leak link; =address and =thread are rejected by qcc (libasan exists in the SDP lib dir but the driver rejects the flag in this probe). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: -fsanitize=: qcc rejects -fsanitize=address -fsanitize=thread, links with -fsanitize=undefined -fsanitize=leak]",
+      "remedy": "Keep sanitizer builds as host-only (Linux) test configurations, or use -fsanitize=undefined where supported.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 0,
+      "guard": "none",
+      "guards": [],
+      "sdp": {
+        "verdict": "partial",
+        "items": [
+          {
+            "what": "-fsanitize=",
+            "kind": "flag",
+            "result": "mixed",
+            "evidence": "-fsanitize=: qcc rejects -fsanitize=address -fsanitize=thread, links with -fsanitize=undefined -fsanitize=leak"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-BLD-SANITIZE",
+      "title": "Sanitizer flags",
+      "category": "build",
+      "severity": "info",
+      "confidence": "verified-partial",
+      "file": "CMakeLists.txt",
+      "line": 69,
+      "column": 9,
+      "match": "-fsanitize=",
+      "context": [
+        {
+          "n": 66,
+          "text": "    list(APPEND custom_compiler_flags"
+        },
+        {
+          "n": 67,
+          "text": "        -fno-omit-frame-pointer"
+        },
+        {
+          "n": 68,
+          "text": "        -fsanitize=address"
+        },
+        {
+          "n": 69,
+          "text": "        -fsanitize=undefined"
+        },
+        {
+          "n": 70,
+          "text": "        -fsanitize=float-cast-overflow"
+        },
+        {
+          "n": 71,
+          "text": "        -fsanitize-address-use-after-scope"
+        },
+        {
+          "n": 72,
+          "text": "        -fsanitize=integer"
+        }
+      ],
+      "message": "Sanitizers on SDP 8.0 build 141: -fsanitize=undefined and =leak link; =address and =thread are rejected by qcc (libasan exists in the SDP lib dir but the driver rejects the flag in this probe). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: -fsanitize=: qcc rejects -fsanitize=address -fsanitize=thread, links with -fsanitize=undefined -fsanitize=leak]",
+      "remedy": "Keep sanitizer builds as host-only (Linux) test configurations, or use -fsanitize=undefined where supported.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 0,
+      "guard": "none",
+      "guards": [],
+      "sdp": {
+        "verdict": "partial",
+        "items": [
+          {
+            "what": "-fsanitize=",
+            "kind": "flag",
+            "result": "mixed",
+            "evidence": "-fsanitize=: qcc rejects -fsanitize=address -fsanitize=thread, links with -fsanitize=undefined -fsanitize=leak"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-BLD-SANITIZE",
+      "title": "Sanitizer flags",
+      "category": "build",
+      "severity": "info",
+      "confidence": "verified-partial",
+      "file": "CMakeLists.txt",
+      "line": 70,
+      "column": 9,
+      "match": "-fsanitize=",
+      "context": [
+        {
+          "n": 67,
+          "text": "        -fno-omit-frame-pointer"
+        },
+        {
+          "n": 68,
+          "text": "        -fsanitize=address"
+        },
+        {
+          "n": 69,
+          "text": "        -fsanitize=undefined"
+        },
+        {
+          "n": 70,
+          "text": "        -fsanitize=float-cast-overflow"
+        },
+        {
+          "n": 71,
+          "text": "        -fsanitize-address-use-after-scope"
+        },
+        {
+          "n": 72,
+          "text": "        -fsanitize=integer"
+        },
+        {
+          "n": 73,
+          "text": "        -fno-sanitize-recover"
+        }
+      ],
+      "message": "Sanitizers on SDP 8.0 build 141: -fsanitize=undefined and =leak link; =address and =thread are rejected by qcc (libasan exists in the SDP lib dir but the driver rejects the flag in this probe). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: -fsanitize=: qcc rejects -fsanitize=address -fsanitize=thread, links with -fsanitize=undefined -fsanitize=leak]",
+      "remedy": "Keep sanitizer builds as host-only (Linux) test configurations, or use -fsanitize=undefined where supported.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 0,
+      "guard": "none",
+      "guards": [],
+      "sdp": {
+        "verdict": "partial",
+        "items": [
+          {
+            "what": "-fsanitize=",
+            "kind": "flag",
+            "result": "mixed",
+            "evidence": "-fsanitize=: qcc rejects -fsanitize=address -fsanitize=thread, links with -fsanitize=undefined -fsanitize=leak"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-BLD-SANITIZE",
+      "title": "Sanitizer flags",
+      "category": "build",
+      "severity": "info",
+      "confidence": "verified-partial",
+      "file": "CMakeLists.txt",
+      "line": 72,
+      "column": 9,
+      "match": "-fsanitize=",
+      "context": [
+        {
+          "n": 69,
+          "text": "        -fsanitize=undefined"
+        },
+        {
+          "n": 70,
+          "text": "        -fsanitize=float-cast-overflow"
+        },
+        {
+          "n": 71,
+          "text": "        -fsanitize-address-use-after-scope"
+        },
+        {
+          "n": 72,
+          "text": "        -fsanitize=integer"
+        },
+        {
+          "n": 73,
+          "text": "        -fno-sanitize-recover"
+        },
+        {
+          "n": 74,
+          "text": "        )"
+        },
+        {
+          "n": 75,
+          "text": "endif()"
+        }
+      ],
+      "message": "Sanitizers on SDP 8.0 build 141: -fsanitize=undefined and =leak link; =address and =thread are rejected by qcc (libasan exists in the SDP lib dir but the driver rejects the flag in this probe). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: -fsanitize=: qcc rejects -fsanitize=address -fsanitize=thread, links with -fsanitize=undefined -fsanitize=leak]",
+      "remedy": "Keep sanitizer builds as host-only (Linux) test configurations, or use -fsanitize=undefined where supported.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 0,
+      "guard": "none",
+      "guards": [],
+      "sdp": {
+        "verdict": "partial",
+        "items": [
+          {
+            "what": "-fsanitize=",
+            "kind": "flag",
+            "result": "mixed",
+            "evidence": "-fsanitize=: qcc rejects -fsanitize=address -fsanitize=thread, links with -fsanitize=undefined -fsanitize=leak"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    },
+    {
+      "ruleId": "QNX-BLD-SANITIZE",
+      "title": "Sanitizer flags",
+      "category": "build",
+      "severity": "info",
+      "confidence": "verified-partial",
+      "file": "CMakeLists.txt",
+      "line": 83,
+      "column": 9,
+      "match": "-fsanitize=",
+      "context": [
+        {
+          "n": 80,
+          "text": "        message(FATAL_ERROR \"ENABLE_SAFE_STACK cannot be used in combination with ENABLE_SANITIZERS\")"
+        },
+        {
+          "n": 81,
+          "text": "    endif()"
+        },
+        {
+          "n": 82,
+          "text": "    list(APPEND custom_compiler_flags"
+        },
+        {
+          "n": 83,
+          "text": "        -fsanitize=safe-stack"
+        },
+        {
+          "n": 84,
+          "text": "        )"
+        },
+        {
+          "n": 85,
+          "text": "endif()"
+        },
+        {
+          "n": 86,
+          "text": ""
+        }
+      ],
+      "message": "Sanitizers on SDP 8.0 build 141: -fsanitize=undefined and =leak link; =address and =thread are rejected by qcc (libasan exists in the SDP lib dir but the driver rejects the flag in this probe). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: -fsanitize=: qcc rejects -fsanitize=address -fsanitize=thread, links with -fsanitize=undefined -fsanitize=leak]",
+      "remedy": "Keep sanitizer builds as host-only (Linux) test configurations, or use -fsanitize=undefined where supported.",
+      "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+      "effort": 0,
+      "guard": "none",
+      "guards": [],
+      "sdp": {
+        "verdict": "partial",
+        "items": [
+          {
+            "what": "-fsanitize=",
+            "kind": "flag",
+            "result": "mixed",
+            "evidence": "-fsanitize=: qcc rejects -fsanitize=address -fsanitize=thread, links with -fsanitize=undefined -fsanitize=leak"
+          }
+        ],
+        "build": "8.0.0.00141T202311271501L"
+      }
+    }
+  ],
+  "groups": 4,
+  "rules": [
+    {
+      "id": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "refs": [
+        "QNX docs: qcc",
+        "QNX SDP: qnxsdp-env.sh"
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "effort": 15
+    },
+    {
+      "id": "QNX-BLD-SANITIZE",
+      "title": "Sanitizer flags",
+      "category": "build",
+      "severity": "info",
+      "confidence": "guess",
+      "remedy": "Keep sanitizer builds as host-only (Linux) test configurations, or use -fsanitize=undefined where supported.",
+      "verify": "Flag results from qcc link probes on SDP 8.0 build 141.",
+      "message": "Sanitizers on SDP 8.0 build 141: -fsanitize=undefined and =leak link; =address and =thread are rejected by qcc (libasan exists in the SDP lib dir but the driver rejects the flag in this probe).",
+      "effort": 0
+    },
+    {
+      "id": "QNX-BLD-CMAKE-NO-TOOLCHAIN",
+      "title": "CMake project has no QNX toolchain/platform support",
+      "category": "build",
+      "severity": "info",
+      "confidence": "known",
+      "remedy": "Provide a toolchain file: CMAKE_SYSTEM_NAME QNX, CMAKE_C_COMPILER/CMAKE_CXX_COMPILER set to qcc/q++ with the -V variant (for example gcc_ntoaarch64le), roots from QNX_HOST/QNX_TARGET after sourcing qnxsdp-env.sh; run cmake -DCMAKE_TOOLCHAIN_FILE=...",
+      "verify": "verify against SDP: variant names and the toolchain file template shipped with the SDP.",
+      "refs": [
+        "QNX SDP: qnxsdp-env.sh (sets QNX_HOST, QNX_TARGET)",
+        "CMake docs: cmake-toolchains(7)"
+      ],
+      "message": "No file in this tree mentions QNX. Cross-building for QNX with CMake needs a toolchain file.",
+      "effort": 30
+    },
+    {
+      "id": "QNX-BLD-UNAME",
+      "title": "Makefile branches on uname",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "remedy": "Key the logic on a target variable (for example TARGET_OS passed on the command line) rather than uname of the build machine.",
+      "message": "Platform is taken from the build host. When cross-compiling the host is Linux/macOS while the target is QNX; uname on a QNX host reports QNX.",
+      "effort": 15
+    }
+  ]
+}

@@ -13,7 +13,8 @@ process.stdin.on('data', (d) => (s += d)).on('end', () => {
     'QNX-API-PIPE2': (l) => l.replace('return pipe2(fds, O_CLOEXEC);', 'int r = pipe(fds);\n    if (r == 0) {\n        fcntl(fds[0], F_SETFD, FD_CLOEXEC);\n        fcntl(fds[1], F_SETFD, FD_CLOEXEC);\n    }\n    return r;'),
     'QNX-API-SOCK-FLAGS': (l) => l.replace('return socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);', 'int s = socket(AF_INET, SOCK_STREAM, 0);\n    if (s >= 0) fcntl(s, F_SETFL, O_NONBLOCK);\n    return s;'),
     'QNX-PATH-DEV-SHM': (l) => l.replace('return open("/dev/shm/demo", O_RDWR | O_CREAT, 0600);', 'return shm_open("/demo", O_RDWR | O_CREAT, 0600);'),
-    'QNX-BLD-LRT': (l) => l.replace('LDLIBS = -lrt', 'LDLIBS ='),
+    'QNX-BLD-LRT': (l) => l.replace(/-lrt\s*/, '').trimEnd(),
+    'QNX-BLD-LSOCKET': (l) => l.replace(/^LDLIBS =\s*/, 'LDLIBS = -lsocket ').trimEnd(),
   };
   const fix = FIX[f.ruleId];
   const out = (o) => process.stdout.write(JSON.stringify({ assumptions: [], confidence: 'low', needsHuman: true, ...o }));

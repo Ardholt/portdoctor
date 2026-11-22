@@ -1,0 +1,105 @@
+{
+  "tool": "portdoctor",
+  "version": "0.3.0",
+  "root": "kilo",
+  "disclaimer": "PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked 'guess' are unverified claims about QNX 8.0 and must be checked against the SDP.",
+  "stats": {
+    "filesScanned": 2,
+    "filesByKind": {
+      "make": 1,
+      "c": 1
+    },
+    "filesSkipped": 0,
+    "findings": 1,
+    "suppressedQnxBranch": 0,
+    "suppressedNonCall": 0,
+    "build": {
+      "source": "build files",
+      "findingsNotInBuildList": 0,
+      "note": "1 source paths named in CMake/Makefile lists (variables and generated sources are not followed)"
+    },
+    "rules": 55,
+    "bySeverity": {
+      "blocker": 0,
+      "major": 0,
+      "minor": 0,
+      "info": 1
+    },
+    "effortMinutes": 10,
+    "sdp": {
+      "build": "8.0.0.00141T202311271501L",
+      "classified": 0,
+      "verifiedAbsent": 0,
+      "verifiedPartial": 0,
+      "verifiedPresentKept": 0,
+      "verifiedPresentDropped": 0,
+      "notCovered": 0,
+      "droppedByRule": {},
+      "uncovered": []
+    }
+  },
+  "findings": [
+    {
+      "ruleId": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "file": "kilo.c",
+      "line": 37,
+      "column": 1,
+      "match": "#ifdef __linux__",
+      "context": [
+        {
+          "n": 34,
+          "text": ""
+        },
+        {
+          "n": 35,
+          "text": "#define KILO_VERSION \"0.0.1\""
+        },
+        {
+          "n": 36,
+          "text": ""
+        },
+        {
+          "n": 37,
+          "text": "#ifdef __linux__"
+        },
+        {
+          "n": 38,
+          "text": "#define _POSIX_C_SOURCE 200809L"
+        },
+        {
+          "n": 39,
+          "text": "#endif"
+        },
+        {
+          "n": 40,
+          "text": ""
+        }
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "effort": 10,
+      "guard": "none",
+      "guards": []
+    }
+  ],
+  "groups": 1,
+  "rules": [
+    {
+      "id": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "refs": [
+        "QNX docs: Predefined macros (__QNX__, __QNXNTO__)"
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "effort": 10
+    }
+  ]
+}

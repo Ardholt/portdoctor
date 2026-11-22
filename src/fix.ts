@@ -36,9 +36,20 @@ export interface FixResult {
   checkLabel: string;
 }
 
+/** `--check qcc` / `--check qcc:gcc_ntoaarch64le`: the QNX compiler driver, compile only (-fsyntax-only still links under qcc, so -c is used). Needs the SDP environment sourced. */
+export function expandCheck(check: string | undefined): string | undefined {
+  const m = check && /^qcc(?::([\w]+))?$/.exec(check);
+  if (!m) return check;
+  const v = m[1] ?? 'gcc_ntox86_64';
+  return `case {file} in *.c|*.h) qcc -V${v} -c -o /dev/null -x c -I{dir} -I{root} {file};; *.cc|*.cpp|*.cxx|*.hpp|*.hh|*.hxx) q++ -V${v} -c -o /dev/null -x c++ -I{dir} -I{root} {file};; *) true;; esac`;
+}
+
 export const CHECK_LABEL =
   'Compile check here is host gcc syntax-only (-fsyntax-only -D__QNXNTO__), NOT a QNX build: it cannot know whether a QNX header or function exists. ' +
   'A qcc check will replace it; --check is pluggable.';
+
+export const QCC_LABEL =
+  'Compile check here is the QNX SDP compiler (qcc/q++ -c, compile only): it knows which QNX headers, macros and prototypes exist. It does not link and nothing was run on a QNX target.';
 
 const C_EXT = new Set(['.c', '.h']);
 const CXX_EXT = new Set(['.cc', '.cpp', '.cxx', '.hpp', '.hh', '.hxx']);
@@ -78,6 +89,7 @@ function applyPatch(diff: string, root: string): { ok: boolean; detail: string }
 }
 
 export interface FixOptions {
+  sdp?: import('./sdp.ts').SdpManifest;
   provider: string;
   check?: string;
   count?: number;
@@ -90,7 +102,9 @@ export function runFix(dir: string, o: FixOptions): FixResult {
   const root = resolve(dir);
   const work = o.keep ? resolve(o.keep) : mkdtempSync(join(tmpdir(), 'portdoctor-fix-'));
   cpSync(root, work, { recursive: true, filter: (s) => !/(^|\/)(\.git|node_modules)(\/|$)/.test(s.slice(root.length)) });
-  const scanOpts = { ignore: o.ignore };
+  const check = expandCheck(o.check);
+  o = { ...o, check };
+  const scanOpts = { ignore: o.ignore, sdp: o.sdp };
   const original = scanDir(work, scanOpts);
   let groups = startHere(groupFindings(original), 1000);
   if (o.rules?.length) groups = groups.filter((g) => o.rules!.includes(g.ruleId));
@@ -129,7 +143,7 @@ export function runFix(dir: string, o: FixOptions): FixResult {
     }
     const touched = [...new Set(patchPaths(r.unifiedDiff!))];
     const backups = new Map(touched.filter((p) => existsSync(join(work, p))).map((p) => [p, readFileSync(join(work, p))]));
-    const checkFiles = touched.filter((p) => cOrCxx(p) || o.check);
+    const checkFiles = touched.filter((p) => cOrCxx(p) || (o.check && !/^case \{file\} in/.test(o.check)));
     const baseline = checkFiles.map((p) => runCheck(o.check ?? null, work, p));
     const ap = applyPatch(r.unifiedDiff!, work);
     if (!ap.ok) {
@@ -156,7 +170,7 @@ export function runFix(dir: string, o: FixOptions): FixResult {
     current = scanDir(work, scanOpts);
     steps.push({ ...base, ...meta, status: 'applied', detail: 'applied', applyCheck: out.applyCheck, check: checkInfo, findingsAfter: current.stats.findings });
   }
-  return { root, workDir: work, before: original.stats, after: scanDir(work, scanOpts).stats, steps, checkLabel: CHECK_LABEL };
+  return { root, workDir: work, before: original.stats, after: scanDir(work, scanOpts).stats, steps, checkLabel: check && /\bqcc\b|\bq\+\+\b/.test(check) ? QCC_LABEL : CHECK_LABEL };
 }
 
 function cOrCxx(p: string): boolean {
@@ -231,6 +245,7 @@ export async function runFixCli(argv: string[]): Promise<number> {
   };
   const provider = take('--provider');
   const check = take('--check');
+  const sdpFile = take('--sdp-manifest');
   const count = Number(take('--count') ?? 3);
   const out = take('-o') ?? 'fix-report.html';
   const keep = take('--keep');
@@ -241,10 +256,10 @@ export async function runFixCli(argv: string[]): Promise<number> {
   const json = args.includes('--json');
   if (json) args.splice(args.indexOf('--json'), 1);
   const dir = args.shift();
-  if (!dir || !provider || args.length) throw new Error('usage: portdoctor fix <dir> --provider "<cmd>" [--check "<cmd>"] [--count N] [--rule ID] [--keep <dir>] [-o fix-report.html]');
+  if (!dir || !provider || args.length) throw new Error('usage: portdoctor fix <dir> --provider "<cmd>" [--check "<cmd>|qcc[:variant]"] [--sdp-manifest <file>] [--count N] [--rule ID] [--keep <dir>] [-o fix-report.html]');
   if (!existsSync(dir) || !statSync(dir).isDirectory()) throw new Error(`not a directory: ${dir}`);
   if (!Number.isInteger(count) || count < 1) throw new Error('--count must be a positive integer');
-  const r = runFix(dir, { provider, check, count, rules, ignore, keep });
+  const r = runFix(dir, { provider, check, count, rules, ignore, keep, sdp: sdpFile ? (await import('./sdp.ts')).loadManifest(sdpFile) : undefined });
   writeFileSync(out, fixHtml(r));
   process.stdout.write(json ? JSON.stringify(r, null, 2) + '\n' : fixText(r) + `report: ${out}\n`);
   if (r.steps.length && r.steps.every((s) => s.status === 'provider-failed')) return 3;

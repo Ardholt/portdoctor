@@ -608,5 +608,56 @@
         }
       ]
     }
+  },
+  {
+    "id": "QNX-BLD-LSOCKET",
+    "title": "Socket code without -lsocket",
+    "category": "build",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "make",
+      "cmake",
+      "autoconf"
+    ],
+    "scope": "any",
+    "effort": 10,
+    "project": {
+      "requireKind": "c",
+      "absent": "(?:^|[\\s\"'(;=,\\[])-lsocket(?![\\w-])|\\b(?:target_link_libraries|link_libraries)\\b[^\\n]*[ \\t(]socket[ \\t)\\n]|AC_(?:CHECK|SEARCH)_LIB\\s*\\(\\s*\\[?socket\\b|\\bsocket\\b[^\\n]*\\bLIBS\\b",
+      "reportOnKind": "make",
+      "reportFallback": [
+        "cmake",
+        "autoconf"
+      ],
+      "requireCode": "\\b(?:socket|bind|listen|connect|accept4?|getaddrinfo|getsockopt|setsockopt|sendto|recvfrom|sendmsg|recvmsg|socketpair|getifaddrs)\\s*\\("
+    },
+    "message": "The code calls socket APIs but no build file links -lsocket. On QNX 8.0 the socket functions are not in libc: with the default libraries socket(), bind(), listen(), accept(), connect(), getaddrinfo(), sendmsg(), getifaddrs() and others fail at link time with 'undefined reference' (SDP 8.0 build 141, measured with qcc on x86_64 and aarch64le). libsocket exists and fixes it.",
+    "remedy": "Add -lsocket to the link line on QNX (LDLIBS += -lsocket; in CMake target_link_libraries(<t> socket) under if(CMAKE_SYSTEM_NAME STREQUAL \"QNX\"); in autoconf AC_SEARCH_LIBS([socket], [socket])). It is harmless to link when the symbols are already in libc.",
+    "verify": "Verified on SDP 8.0 build 141: link without -lsocket gives 'undefined reference to socket'; with -lsocket it links. Not run on a target.",
+    "examples": {
+      "positive": [
+        {
+          "files": {
+            "a.c": "#include <sys/socket.h>\nint f(void){ return socket(2,1,0); }\n",
+            "Makefile": "LDLIBS = -lm\nall: a\n"
+          }
+        }
+      ],
+      "negative": [
+        {
+          "files": {
+            "a.c": "#include <sys/socket.h>\nint f(void){ return socket(2,1,0); }\n",
+            "Makefile": "LDLIBS = -lsocket\nall: a\n"
+          }
+        },
+        {
+          "files": {
+            "a.c": "int f(void){ return 1; }\n",
+            "Makefile": "LDLIBS = -lm\nall: a\n"
+          }
+        }
+      ]
+    }
   }
 ]

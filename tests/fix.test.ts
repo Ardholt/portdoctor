@@ -138,3 +138,19 @@ test('CLI fix exits 0 on full success and writes the report', { skip: !hasGcc &&
     rmSync(dirname(d), { recursive: true, force: true });
   }
 });
+
+test('a failing provider is reported with its stdout/stderr text and a hint, never an empty "provider exit 1:"', () => {
+  const d = demoCopy();
+  try {
+    const r = runFix(d, { provider: `sh -c 'echo "Not logged in - Please run /login"; exit 1'`, count: 1 });
+    assert.equal(r.steps[0].status, 'provider-failed');
+    assert.match(r.steps[0].detail, /exited with status 1: Not logged in/);
+    assert.match(r.steps[0].detail, /Hint: the model CLI is not logged in/);
+    const silent = runFix(d, { provider: 'sh -c "exit 1"', count: 1 });
+    assert.match(silent.steps[0].detail, /printed nothing/);
+    rmSync(r.workDir, { recursive: true, force: true });
+    rmSync(silent.workDir, { recursive: true, force: true });
+  } finally {
+    rmSync(join(d, '..'), { recursive: true, force: true });
+  }
+});

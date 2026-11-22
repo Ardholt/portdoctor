@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "prompt": "You are helping port a Linux/POSIX C/C++ project to QNX 8.0.\nA static scanner reported the finding below. Propose the smallest patch that resolves it.\n\nRule: QNX-API-SENDFILE (major, confidence verified-absent)\nProblem: Linux zero-copy file transfer calls. On SDP 8.0 build 141: splice, tee, vmsplice, copy_file_range and sendfile64 are not declared. sendfile() is declared in <sys/socket.h> with the BSD signature (7 arguments) but no SDP library exports it: linking fails (also with -lsocket). A same-named Linux call would not have compiled against that prototype anyway. [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: sendfile: declared (sys/socket.h:816 decl) but link fails with the default libraries, -lsocket and -lm: no SDP library exports it]\nSuggested direction: Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.\nScanner note: checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.\nLocation: src/net.c:788\n\nCode window (src/net.c, lines 773-803, line numbers are not part of the file):\n  773| int\n  774| Nsendfile(int fromfd, int tofd, const char *buf, size_t count)\n  775| {\n  776| #if defined(HAVE_SENDFILE)\n  777|     off_t offset;\n  778| #if defined(__FreeBSD__) || (defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6))\n  779|     off_t sent;\n  780| #endif\n  781|     register size_t nleft;\n  782|     register ssize_t r;\n  783| \n  784|     nleft = count;\n  785|     while (nleft > 0) {\n  786| \toffset = count - nleft;\n  787| #if defined(linux) || defined(__sun)\n  788| \tr = sendfile(tofd, fromfd, &offset, nleft);\n  789| \tif (r > 0)\n  790| \t    nleft -= r;\n  791| #elif defined(__FreeBSD__)\n  792| \tr = sendfile(fromfd, tofd, offset, nleft, NULL, &sent, 0);\n  793| \tnleft -= sent;\n  794| #elif defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6)\t/* OS X */\n  795| \tsent = nleft;\n  796| \tr = sendfile(fromfd, tofd, offset, &sent, NULL, 0);\n  797| \tnleft -= sent;\n  798| #else\n  799| \t/* Shouldn't happen. */\n  800| \tr = -1;\n  801| \terrno = ENOSYS;\n  802| #endif\n  803| \tif (r < 0) {\n\nRules for your answer:\n- Reply with ONE JSON object that matches the supplied JSON schema and nothing else.\n- unifiedDiff must be a unified diff with a/ b/ path prefixes relative to the project root, applicable with `git apply`.\n- Keep the Linux code path working (guard with #if defined(__QNXNTO__) or equivalent) unless the code is Linux-only by design.\n- Only use QNX APIs you can name from public documentation. Do NOT invent header contents, constants or function signatures.\n- List every QNX fact you relied on but could not verify in `assumptions` and `verifyAgainstSdp`.\n- If no safe patch exists, set unifiedDiff to \"\" and needsHuman to true.",
+  "schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "PortDoctorPatchProposal",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "unifiedDiff",
+      "explanation",
+      "assumptions",
+      "confidence",
+      "needsHuman"
+    ],
+    "properties": {
+      "unifiedDiff": {
+        "type": "string",
+        "description": "Unified diff, paths relative to the scan root (a/ b/ prefixes, apply with -p1). Empty string if no safe patch exists."
+      },
+      "explanation": {
+        "type": "string"
+      },
+      "assumptions": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "QNX facts the patch relies on that were not verified."
+      },
+      "verifyAgainstSdp": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "confidence": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      "needsHuman": {
+        "type": "boolean"
+      }
+    }
+  },
+  "finding": {
+    "ruleId": "QNX-API-SENDFILE",
+    "title": "sendfile/splice zero-copy calls",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "verified-absent",
+    "file": "src/net.c",
+    "line": 788,
+    "column": 6,
+    "match": "sendfile(",
+    "context": [
+      {
+        "n": 785,
+        "text": "    while (nleft > 0) {"
+      },
+      {
+        "n": 786,
+        "text": "\toffset = count - nleft;"
+      },
+      {
+        "n": 787,
+        "text": "#if defined(linux) || defined(__sun)"
+      },
+      {
+        "n": 788,
+        "text": "\tr = sendfile(tofd, fromfd, &offset, nleft);"
+      },
+      {
+        "n": 789,
+        "text": "\tif (r > 0)"
+      },
+      {
+        "n": 790,
+        "text": "\t    nleft -= r;"
+      },
+      {
+        "n": 791,
+        "text": "#elif defined(__FreeBSD__)"
+      }
+    ],
+    "message": "Linux zero-copy file transfer calls. On SDP 8.0 build 141: splice, tee, vmsplice, copy_file_range and sendfile64 are not declared. sendfile() is declared in <sys/socket.h> with the BSD signature (7 arguments) but no SDP library exports it: linking fails (also with -lsocket). A same-named Linux call would not have compiled against that prototype anyway. [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: sendfile: declared (sys/socket.h:816 decl) but link fails with the default libraries, -lsocket and -lm: no SDP library exports it]",
+    "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
+    "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+    "effort": 60,
+    "guard": "other",
+    "guards": [
+      "#if defined(HAVE_SENDFILE)",
+      "#if defined(linux) || defined(__sun)"
+    ],
+    "sdp": {
+      "verdict": "absent",
+      "items": [
+        {
+          "what": "sendfile",
+          "kind": "name",
+          "result": "declared-not-linkable",
+          "evidence": "sendfile: declared (sys/socket.h:816 decl) but link fails with the default libraries, -lsocket and -lm: no SDP library exports it"
+        }
+      ],
+      "build": "8.0.0.00141T202311271501L"
+    }
+  },
+  "window": {
+    "file": "src/net.c",
+    "startLine": 773,
+    "endLine": 803,
+    "text": "  773| int\n  774| Nsendfile(int fromfd, int tofd, const char *buf, size_t count)\n  775| {\n  776| #if defined(HAVE_SENDFILE)\n  777|     off_t offset;\n  778| #if defined(__FreeBSD__) || (defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6))\n  779|     off_t sent;\n  780| #endif\n  781|     register size_t nleft;\n  782|     register ssize_t r;\n  783| \n  784|     nleft = count;\n  785|     while (nleft > 0) {\n  786| \toffset = count - nleft;\n  787| #if defined(linux) || defined(__sun)\n  788| \tr = sendfile(tofd, fromfd, &offset, nleft);\n  789| \tif (r > 0)\n  790| \t    nleft -= r;\n  791| #elif defined(__FreeBSD__)\n  792| \tr = sendfile(fromfd, tofd, offset, nleft, NULL, &sent, 0);\n  793| \tnleft -= sent;\n  794| #elif defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6)\t/* OS X */\n  795| \tsent = nleft;\n  796| \tr = sendfile(fromfd, tofd, offset, &sent, NULL, 0);\n  797| \tnleft -= sent;\n  798| #else\n  799| \t/* Shouldn't happen. */\n  800| \tr = -1;\n  801| \terrno = ENOSYS;\n  802| #endif\n  803| \tif (r < 0) {"
+  }
+}

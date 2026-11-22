@@ -4,7 +4,7 @@ import { join, resolve, extname, dirname, basename } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { scanDir } from './scan.ts';
 import { groupFindings, startHere } from './group.ts';
-import { buildRequest, readWindow, evaluateResponse, parseProviderOutput, patchPaths } from './propose.ts';
+import { buildRequest, describeProviderFailure, readWindow, evaluateResponse, parseProviderOutput, patchPaths } from './propose.ts';
 import type { Finding, ScanResult } from './types.ts';
 
 export type CheckStatus = 'pass' | 'no-worse' | 'fail' | 'skipped';
@@ -124,7 +124,7 @@ export function runFix(dir: string, o: FixOptions): FixResult {
     const req = buildRequest(f, readWindow(work, f));
     const pr = spawnSync(o.provider, { shell: true, input: JSON.stringify(req), encoding: 'utf8', timeout: 300_000, maxBuffer: 16 << 20, env: { ...process.env, PD_ROOT: work } });
     if (pr.error || pr.status !== 0) {
-      steps.push({ ...base, status: 'provider-failed', detail: `provider ${pr.error?.message ?? 'exit ' + pr.status}: ${(pr.stderr ?? '').trim().slice(0, 600)}`, findingsAfter: current.stats.findings });
+      steps.push({ ...base, status: 'provider-failed', detail: describeProviderFailure(pr), findingsAfter: current.stats.findings });
       continue;
     }
     let resp;

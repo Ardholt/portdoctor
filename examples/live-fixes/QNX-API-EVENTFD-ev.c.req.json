@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "prompt": "You are helping port a Linux/POSIX C/C++ project to QNX 8.0.\nA static scanner reported the finding below. Propose the smallest patch that resolves it.\n\nRule: QNX-API-EVENTFD (major, confidence verified-absent)\nProblem: eventfd is a Linux file-descriptor wake-up primitive. It does not exist on QNX 8.0 (no <sys/eventfd.h>, no eventfd symbol, no EFD_* macro in SDP 8.0 build 141). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: eventfd: not declared in any user header of the SDP and not exported by any SDP library; probe: 'eventfd' undeclared (first use in this function)]\nSuggested direction: Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.\nScanner note: checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.\nLocation: ev.c:2390\n\nCode window (ev.c, lines 2375-2405, line numbers are not part of the file):\n 2375| static ANSIG signals [EV_NSIG - 1];\n 2376| \n 2377| /*****************************************************************************/\n 2378| \n 2379| #if EV_SIGNAL_ENABLE || EV_ASYNC_ENABLE\n 2380| \n 2381| static void noinline ecb_cold\n 2382| evpipe_init (EV_P)\n 2383| {\n 2384|   if (!ev_is_active (&pipe_w))\n 2385|     {\n 2386|       int fds [2];\n 2387| \n 2388| # if EV_USE_EVENTFD\n 2389|       fds [0] = -1;\n 2390|       fds [1] = eventfd (0, EFD_NONBLOCK | EFD_CLOEXEC);\n 2391|       if (fds [1] < 0 && errno == EINVAL)\n 2392|         fds [1] = eventfd (0, 0);\n 2393| \n 2394|       if (fds [1] < 0)\n 2395| # endif\n 2396|         {\n 2397|           while (pipe (fds))\n 2398|             ev_syserr (\"(libev) error creating signal/async pipe\");\n 2399| \n 2400|           fd_intern (fds [0]);\n 2401|         }\n 2402| \n 2403|       evpipe [0] = fds [0];\n 2404| \n 2405|       if (evpipe [1] < 0)\n\nRules for your answer:\n- Reply with ONE JSON object that matches the supplied JSON schema and nothing else.\n- unifiedDiff must be a unified diff with a/ b/ path prefixes relative to the project root, applicable with `git apply`.\n- Keep the Linux code path working (guard with #if defined(__QNXNTO__) or equivalent) unless the code is Linux-only by design.\n- Only use QNX APIs you can name from public documentation. Do NOT invent header contents, constants or function signatures.\n- List every QNX fact you relied on but could not verify in `assumptions` and `verifyAgainstSdp`.\n- If no safe patch exists, set unifiedDiff to \"\" and needsHuman to true.",
+  "schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "PortDoctorPatchProposal",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "unifiedDiff",
+      "explanation",
+      "assumptions",
+      "confidence",
+      "needsHuman"
+    ],
+    "properties": {
+      "unifiedDiff": {
+        "type": "string",
+        "description": "Unified diff, paths relative to the scan root (a/ b/ prefixes, apply with -p1). Empty string if no safe patch exists."
+      },
+      "explanation": {
+        "type": "string"
+      },
+      "assumptions": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "QNX facts the patch relies on that were not verified."
+      },
+      "verifyAgainstSdp": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "confidence": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      "needsHuman": {
+        "type": "boolean"
+      }
+    }
+  },
+  "finding": {
+    "ruleId": "QNX-API-EVENTFD",
+    "title": "eventfd",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "verified-absent",
+    "file": "ev.c",
+    "line": 2390,
+    "column": 17,
+    "match": "eventfd (",
+    "context": [
+      {
+        "n": 2387,
+        "text": ""
+      },
+      {
+        "n": 2388,
+        "text": "# if EV_USE_EVENTFD"
+      },
+      {
+        "n": 2389,
+        "text": "      fds [0] = -1;"
+      },
+      {
+        "n": 2390,
+        "text": "      fds [1] = eventfd (0, EFD_NONBLOCK | EFD_CLOEXEC);"
+      },
+      {
+        "n": 2391,
+        "text": "      if (fds [1] < 0 && errno == EINVAL)"
+      },
+      {
+        "n": 2392,
+        "text": "        fds [1] = eventfd (0, 0);"
+      },
+      {
+        "n": 2393,
+        "text": ""
+      }
+    ],
+    "message": "eventfd is a Linux file-descriptor wake-up primitive. It does not exist on QNX 8.0 (no <sys/eventfd.h>, no eventfd symbol, no EFD_* macro in SDP 8.0 build 141). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: eventfd: not declared in any user header of the SDP and not exported by any SDP library; probe: 'eventfd' undeclared (first use in this function)]",
+    "remedy": "Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.",
+    "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+    "effort": 45,
+    "guard": "other",
+    "guards": [
+      "#if EV_SIGNAL_ENABLE || EV_ASYNC_ENABLE",
+      "#if EV_USE_EVENTFD"
+    ],
+    "sdp": {
+      "verdict": "absent",
+      "items": [
+        {
+          "what": "eventfd",
+          "kind": "name",
+          "result": "absent",
+          "evidence": "eventfd: not declared in any user header of the SDP and not exported by any SDP library; probe: 'eventfd' undeclared (first use in this function)"
+        }
+      ],
+      "build": "8.0.0.00141T202311271501L"
+    }
+  },
+  "window": {
+    "file": "ev.c",
+    "startLine": 2375,
+    "endLine": 2405,
+    "text": " 2375| static ANSIG signals [EV_NSIG - 1];\n 2376| \n 2377| /*****************************************************************************/\n 2378| \n 2379| #if EV_SIGNAL_ENABLE || EV_ASYNC_ENABLE\n 2380| \n 2381| static void noinline ecb_cold\n 2382| evpipe_init (EV_P)\n 2383| {\n 2384|   if (!ev_is_active (&pipe_w))\n 2385|     {\n 2386|       int fds [2];\n 2387| \n 2388| # if EV_USE_EVENTFD\n 2389|       fds [0] = -1;\n 2390|       fds [1] = eventfd (0, EFD_NONBLOCK | EFD_CLOEXEC);\n 2391|       if (fds [1] < 0 && errno == EINVAL)\n 2392|         fds [1] = eventfd (0, 0);\n 2393| \n 2394|       if (fds [1] < 0)\n 2395| # endif\n 2396|         {\n 2397|           while (pipe (fds))\n 2398|             ev_syserr (\"(libev) error creating signal/async pipe\");\n 2399| \n 2400|           fd_intern (fds [0]);\n 2401|         }\n 2402| \n 2403|       evpipe [0] = fds [0];\n 2404| \n 2405|       if (evpipe [1] < 0)"
+  }
+}

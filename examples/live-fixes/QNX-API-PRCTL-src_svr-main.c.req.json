@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "prompt": "You are helping port a Linux/POSIX C/C++ project to QNX 8.0.\nA static scanner reported the finding below. Propose the smallest patch that resolves it.\n\nRule: QNX-API-PRCTL (major, confidence verified-absent)\nProblem: prctl is a Linux process-control multiplexer. It does not exist on QNX 8.0 (no <sys/prctl.h>, no prctl symbol, no PR_* macro in SDP 8.0 build 141). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: PR_SET_NAME: not declared in any user header of the SDP and not exported by any SDP library; probe: #error PR_SET_NAME not defined]\nSuggested direction: Map each option individually: PR_SET_NAME -> pthread_setname_np() (declared and exported in SDP 8.0 build 141; so is pthread_getname_np); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE/NO_NEW_PRIVS -> drop (no QNX analogue is known).\nScanner note: checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.\nLocation: src/svr-main.c:79\n\nCode window (src/svr-main.c, lines 64-94, line numbers are not part of the file):\n   64| \n   65| #if INETD_MODE\n   66| \t/* service program mode */\n   67| \tif (svr_opts.inetdmode) {\n   68| \t\tmain_inetd();\n   69| \t\t/* notreached */\n   70| \t}\n   71| #endif\n   72| \n   73| #if DROPBEAR_DO_REEXEC\n   74| \tif (svr_opts.reexec_childpipe >= 0) {\n   75| #ifdef PR_SET_NAME\n   76| \t\t/* Fix the \"Name:\" in /proc/pid/status, otherwise it's\n   77| \t\ta FD number from fexecve.\n   78| \t\tFailure doesn't really matter, it's mostly aesthetic */\n   79| \t\tprctl(PR_SET_NAME, basename(argv[0]), 0, 0);\n   80| #endif\n   81| \t\tmain_inetd();\n   82| \t\t/* notreached */\n   83| \t}\n   84| #endif\n   85| \n   86| #if NON_INETD_MODE\n   87| \tmain_noinetd(argc, argv, multipath);\n   88| \t/* notreached */\n   89| #endif\n   90| \n   91| \tdropbear_exit(\"Compiled without normal mode, can't run without -i\\n\");\n   92| \treturn -1;\n   93| }\n   94| #endif\n\nRules for your answer:\n- Reply with ONE JSON object that matches the supplied JSON schema and nothing else.\n- unifiedDiff must be a unified diff with a/ b/ path prefixes relative to the project root, applicable with `git apply`.\n- Keep the Linux code path working (guard with #if defined(__QNXNTO__) or equivalent) unless the code is Linux-only by design.\n- Only use QNX APIs you can name from public documentation. Do NOT invent header contents, constants or function signatures.\n- List every QNX fact you relied on but could not verify in `assumptions` and `verifyAgainstSdp`.\n- If no safe patch exists, set unifiedDiff to \"\" and needsHuman to true.",
+  "schema": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "PortDoctorPatchProposal",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "unifiedDiff",
+      "explanation",
+      "assumptions",
+      "confidence",
+      "needsHuman"
+    ],
+    "properties": {
+      "unifiedDiff": {
+        "type": "string",
+        "description": "Unified diff, paths relative to the scan root (a/ b/ prefixes, apply with -p1). Empty string if no safe patch exists."
+      },
+      "explanation": {
+        "type": "string"
+      },
+      "assumptions": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "QNX facts the patch relies on that were not verified."
+      },
+      "verifyAgainstSdp": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "confidence": {
+        "type": "string",
+        "enum": [
+          "low",
+          "medium",
+          "high"
+        ]
+      },
+      "needsHuman": {
+        "type": "boolean"
+      }
+    }
+  },
+  "finding": {
+    "ruleId": "QNX-API-PRCTL",
+    "title": "prctl",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "verified-absent",
+    "file": "src/svr-main.c",
+    "line": 79,
+    "column": 9,
+    "match": "PR_SET_NAME",
+    "context": [
+      {
+        "n": 76,
+        "text": "\t\t/* Fix the \"Name:\" in /proc/pid/status, otherwise it's"
+      },
+      {
+        "n": 77,
+        "text": "\t\ta FD number from fexecve."
+      },
+      {
+        "n": 78,
+        "text": "\t\tFailure doesn't really matter, it's mostly aesthetic */"
+      },
+      {
+        "n": 79,
+        "text": "\t\tprctl(PR_SET_NAME, basename(argv[0]), 0, 0);"
+      },
+      {
+        "n": 80,
+        "text": "#endif"
+      },
+      {
+        "n": 81,
+        "text": "\t\tmain_inetd();"
+      },
+      {
+        "n": 82,
+        "text": "\t\t/* notreached */"
+      }
+    ],
+    "message": "prctl is a Linux process-control multiplexer. It does not exist on QNX 8.0 (no <sys/prctl.h>, no prctl symbol, no PR_* macro in SDP 8.0 build 141). [verified on SDP 8.0.0.00141T202311271501L by compile/link probe, not run on target: PR_SET_NAME: not declared in any user header of the SDP and not exported by any SDP library; probe: #error PR_SET_NAME not defined]",
+    "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np() (declared and exported in SDP 8.0 build 141; so is pthread_getname_np); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE/NO_NEW_PRIVS -> drop (no QNX analogue is known).",
+    "verify": "checked against the installed SDP (header, symbol and qcc probes); not executed on a QNX target.",
+    "effort": 30,
+    "guard": "other",
+    "guards": [
+      "#if defined(DBMULTI_dropbear) || !DROPBEAR_MULTI",
+      "#if DROPBEAR_DO_REEXEC",
+      "#ifdef PR_SET_NAME"
+    ],
+    "sdp": {
+      "verdict": "absent",
+      "items": [
+        {
+          "what": "PR_SET_NAME",
+          "kind": "name",
+          "result": "absent",
+          "evidence": "PR_SET_NAME: not declared in any user header of the SDP and not exported by any SDP library; probe: #error PR_SET_NAME not defined"
+        }
+      ],
+      "build": "8.0.0.00141T202311271501L"
+    }
+  },
+  "window": {
+    "file": "src/svr-main.c",
+    "startLine": 64,
+    "endLine": 94,
+    "text": "   64| \n   65| #if INETD_MODE\n   66| \t/* service program mode */\n   67| \tif (svr_opts.inetdmode) {\n   68| \t\tmain_inetd();\n   69| \t\t/* notreached */\n   70| \t}\n   71| #endif\n   72| \n   73| #if DROPBEAR_DO_REEXEC\n   74| \tif (svr_opts.reexec_childpipe >= 0) {\n   75| #ifdef PR_SET_NAME\n   76| \t\t/* Fix the \"Name:\" in /proc/pid/status, otherwise it's\n   77| \t\ta FD number from fexecve.\n   78| \t\tFailure doesn't really matter, it's mostly aesthetic */\n   79| \t\tprctl(PR_SET_NAME, basename(argv[0]), 0, 0);\n   80| #endif\n   81| \t\tmain_inetd();\n   82| \t\t/* notreached */\n   83| \t}\n   84| #endif\n   85| \n   86| #if NON_INETD_MODE\n   87| \tmain_noinetd(argc, argv, multipath);\n   88| \t/* notreached */\n   89| #endif\n   90| \n   91| \tdropbear_exit(\"Compiled without normal mode, can't run without -i\\n\");\n   92| \treturn -1;\n   93| }\n   94| #endif"
+  }
+}

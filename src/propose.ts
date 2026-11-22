@@ -35,6 +35,17 @@ export interface ProposeRequest {
   window: { file: string; startLine: number; endLine: number; text: string };
 }
 
+/** One readable line for a failed provider process: both streams (some CLIs report errors on stdout) and a hint. */
+export function describeProviderFailure(pr: { error?: Error; status: number | null; stdout?: string | null; stderr?: string | null }): string {
+  const text = `${pr.stderr ?? ''} ${pr.stdout ?? ''}`.replace(/\s+/g, ' ').trim().slice(0, 600);
+  const head = pr.error ? `provider could not run (${pr.error.message})` : `provider exited with status ${pr.status}`;
+  let hint = '';
+  if (/not logged in|login|oauth|authenticat/i.test(text)) hint = ' Hint: the model CLI is not logged in; log in, or point --provider at another command (providers/replay.mjs replays recorded patches).';
+  else if (/rate|limit|refused|quota|overloaded/i.test(text)) hint = ' Hint: the model account is rate-limited or refused; retry later or use another account.';
+  else if (!text) hint = ' Hint: the provider printed nothing; run it by hand with a request on stdin to see why.';
+  return `${head}${text ? ': ' + text : ''}.${hint}`;
+}
+
 export function readWindow(root: string, f: Finding, radius = 15): ProposeRequest['window'] {
   const abs = resolve(root, f.file);
   const lines = readFileSync(abs, 'utf8').replace(/\r\n?/g, '\n').split('\n');
@@ -185,7 +196,7 @@ export async function runPropose(argv: string[]): Promise<number> {
   else if (provider) {
     const r = spawnSync(provider, { shell: true, input: JSON.stringify(req), encoding: 'utf8', timeout: 300_000, maxBuffer: 16 << 20 });
     if (r.error || r.status !== 0) {
-      process.stderr.write(`provider failed: ${r.error?.message ?? 'exit ' + r.status}\n${(r.stderr ?? '').slice(0, 2000)}\n`);
+      process.stderr.write(`provider failed: ${describeProviderFailure(r)}\n`);
       return 3;
     }
     try {

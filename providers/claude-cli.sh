@@ -22,4 +22,19 @@ let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
   process.stdout.write(r.prompt+"\n\nJSON schema for your reply:\n"+JSON.stringify(r.schema)+"\n\nReply with the JSON object only, no prose, no code fence.\n");
 });')
 [ -n "$PROMPT" ] || { echo "claude-cli.sh: empty request on stdin" >&2; exit 3; }
-printf '%s' "$PROMPT" | $CMD
+ERR=$(mktemp) || exit 3
+trap 'rm -f "$ERR"' EXIT
+OUT=$(printf '%s' "$PROMPT" | $CMD 2>"$ERR")
+RC=$?
+if [ "$RC" -ne 0 ]; then
+  # the claude CLI prints its login/rate-limit errors on stdout, so surface both streams
+  MSG=$(printf '%s %s' "$(cat "$ERR")" "$OUT" | tr '\n' ' ' | cut -c1-500)
+  echo "claude-cli.sh: '$CMD' exited with status $RC: ${MSG:-no output}" >&2
+  case "$MSG" in
+    *[Ll]ogin*|*[Aa]uthenticat*|*OAuth*|*"Not logged"*) echo "hint: the model CLI is not logged in; run '$BIN' interactively to log in, or set PD_LLM_CMD to another command that reads a prompt on stdin." >&2 ;;
+    *[Rr]ate*|*limit*|*REFUSED*|*quota*) echo "hint: the account behind '$BIN' is rate-limited or refused; retry later or set PD_LLM_CMD to another account/command." >&2 ;;
+    *) echo "hint: run the provider by hand to see the error: echo hello | $CMD" >&2 ;;
+  esac
+  exit "$RC"
+fi
+printf '%s\n' "$OUT"

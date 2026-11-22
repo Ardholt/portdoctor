@@ -2,7 +2,7 @@
   "tool": "portdoctor",
   "version": "0.3.0",
   "root": "iperf",
-  "disclaimer": "PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked 'guess' are unverified claims about QNX 8.0 and must be checked against the SDP.",
+  "disclaimer": "PortDoctor is a static, text-level scanner. Findings marked verified-present/verified-absent were decided against the installed QNX SDP 8.0 (build 8.0.0.00141T202311271501L) by header, symbol and qcc compile/link probes; nothing was run on a QNX target. All other findings keep their known/guess label: 'guess' is an unverified claim about QNX 8.0.",
   "stats": {
     "filesScanned": 48,
     "filesByKind": {

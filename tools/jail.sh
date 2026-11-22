@@ -1,3 +1,0 @@
-#!/bin/bash
-# run a command inside the QNX SDP jail with the SDP env sourced. usage: tools/jail.sh CMD...
-exec sudo -u sandbox user /usr/local/bin/sandbox wrapper -- bash -c 'cd $HOME/sdp && source qnxsdp-env.sh >/dev/null 2>&1; cd $HOME/work; exec "$@"' _ "$@"

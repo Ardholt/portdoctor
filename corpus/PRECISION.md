@@ -1,5 +1,32 @@
 # Precision of the scanner on the corpus (PD2)
 
+## PD4 held-out sample (40 findings), as measured
+
+**What this is.** 40 findings that are in neither the PD1 sample (30) nor the PD2 sample (60), drawn by `node corpus/sample40.mjs` (deterministic, stratified by project: libuv 14, dropbear 9, iperf 7, libev 7, cJSON 3;
+Lua and kilo have no findings left outside the earlier samples) from a fresh scan with the **CLI defaults** of this version: the bundled SDP manifest, and other-OS / vendored / test paths hidden.
+Each finding was read in its source lines and judged with the same verdict letters as below, by one reader: the assistant that wrote the tool, so it is **not an independent judge**. Every verdict and note is in `corpus/precision-sample-pd4.txt`.
+
+| verdict | n | share |
+|---|---|---|
+| TP (reachable, unguarded, plain concern) | 1 | 2.5% |
+| TPf (right, Linux-only source file) | 8 | 20% |
+| TPg (right, inside a Linux-only `#if` / feature macro configure would leave off on QNX) | 12 | 30% |
+| INFO (info rule fired as designed) | 14 | 35% |
+| OTHER (right on the text, irrelevant to a QNX port: optional developer option, test-only code, tolerant configure probe) | 5 | 12.5% |
+| FP (scanner wrong) | 0 | 0% |
+
+- Rule did what it says (TP+TPf+TPg+INFO): **35/40 = 87.5%** (95% Wilson interval about 74% to 95%). PD2 on its sample: 72%.
+- Rule bugs (FP): **0/40** (95% upper bound about 9%). PD2: 3/60 before its fixes; those rules were fixed after that sample.
+- Irrelevant though textually right (OTHER): **5/40 = 12.5%**. PD2: 23%.
+- Plain "ready to act on" (TP): **1/40 = 2.5%**. PD2: 4/60 = 7%. This number did not improve and is the one that matters for "what do I fix first": most real concerns still sit in a Linux-only file or behind a guard the build decides.
+- Not comparable as a trend: different sample sizes, a different (smaller, SDP-decided) finding set, and the sample is drawn after hiding. The OTHER improvement is mostly the hiding, not a better rule.
+
+**What is hidden by default** (`--show-all` includes it; the summary and HTML say the count): on the whole corpus, **101 of 488 findings = 20.7%** (libuv 90: 37 other-OS sources under `src/unix`, 53 under `test/`; cJSON 10 under `tests/unity`; dropbear 1 `makefile.mingw`).
+The hidden findings were **not** re-read: the claim is that the path names say "not the porter's work", which is a literal path match (a bridge until a judge replaces it, see `HIDE_RULES` in `src/scan.ts`). Bundled libraries with ordinary directory names (dropbear's `libtomcrypt`, `libtommath`) are not hidden.
+
+**Limits.** n=40 and one reader. The 5 OTHER and 1 TP calls are judgement calls (for example the `uname` Makefile line is TP because a QNX build needs a branch there, but a project that always builds with its own flags would not need it).
+Recall was not sampled here; PD3's builds found real QNX breaks the scan did not predict (dropbear `compat.h` redeclaring `htole64`, iperf's `portable_endian.h` including `<endian.h>`); the latter is now a rule (PD4).
+
 **What this is.** 60 findings, none of them among the 30 read in PD1, sampled deterministically (stratified by project,
 evenly spaced through each report) from the seven corpus reports, then each one read in its source line by one reader
 (`corpus/precision-sample.txt` holds every verdict with a note; `node corpus/precision.mjs` recomputes the tables below).

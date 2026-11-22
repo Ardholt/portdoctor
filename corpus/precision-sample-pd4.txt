@@ -1,0 +1,41 @@
+# n | project | file:line | rule | verdict | note      (verdicts: TP TPf TPg INFO OTHER FP; see PRECISION.md; one reader, the tool's author)
+1|libuv|src/unix/linux.c:406|API-SYSCALL|TPf|syscall(__NR_copy_file_range) in linux.c
+2|libuv|src/unix/linux.c:1319|API-EPOLL|TPf|epoll_event in linux.c
+3|libuv|src/unix/linux.c:1506|API-EPOLL|TPf|epoll_ctl in linux.c
+4|libuv|src/unix/linux.c:53|HDR-SYS-LINUX|TPf|<sys/sysinfo.h> in linux.c
+5|libuv|src/unix/linux.c:2327|PATH-SYS|TPf|/sys/fs/cgroup path in linux.c (guess part: QNX path)
+6|libuv|src/unix/thread.c:251|API-AFFINITY|TPg|pthread_getaffinity_np under UV__CPU_AFFINITY_SUPPORTED, which internal.h sets only for Linux/FreeBSD
+7|libuv|src/unix/linux.c:2129|API-SYSINFO|TPf|struct sysinfo in linux.c
+8|libuv|CMakeLists.txt:84|BLD-SANITIZE|OTHER|-fsanitize=memory inside an optional developer-sanitizer branch
+9|libuv|src/random.c:45|ADV-LINUX-IFDEF|INFO|__linux__ #elif, info as designed
+10|libuv|src/unix/core.c:2125|ADV-LINUX-IFDEF|INFO|#ifdef __linux__
+11|libuv|src/unix/internal.h:561|ADV-LINUX-IFDEF|INFO|#if defined(__linux__) ...
+12|libuv|src/unix/pipe.c:137|ADV-UNIX-SOCKET-IPC|INFO|AF_UNIX note
+13|libuv|src/unix/thread.c:47|ADV-LINUX-IFDEF|INFO|#if defined(__linux__)
+14|libuv|src/unix/udp.c:429|API-SOCKOPT-LINUX|INFO|SO_REUSEPORT exists on SDP; kept as info with caveat
+15|dropbear|src/dbrandom.c:279|PATH-PROC|TPg|/proc/net/netstat inside #ifdef __linux__
+16|dropbear|src/includes.h:179|HDR-LINUX-DIR|TPg|<linux/types.h> under HAVE_LINUX_PKT_SCHED_H, off when configure cannot find it
+17|dropbear|configure.ac:89|BLD-PIE|OTHER|configure link probe for -pie that tolerates failure
+18|dropbear|src/dbrandom.c:174|API-GETRANDOM|TPg|getrandom under HAVE_GETRANDOM
+19|dropbear|src/dbutil.c:53|ADV-LINUX-IFDEF|INFO|#ifdef __linux__
+20|dropbear|src/dbutil.c:753|ADV-LINUX-IFDEF|INFO|#if defined(__linux__) && SYS_clock_gettime
+21|dropbear|src/netio.c:281|ADV-UNIX-SOCKET-IPC|INFO|AF_UNIX note
+22|dropbear|src/netio.c:423|API-SOCKOPT-LINUX|INFO|TCP_FASTOPEN exists on SDP; kept as info
+23|dropbear|src/svr-streamfwd.c:152|ADV-UNIX-SOCKET-IPC|INFO|AF_UNIX note
+24|iperf|src/iperf.h:42|HDR-LINUX-DIR|TPg|<linux/tcp.h> under HAVE_LINUX_TCP_H
+25|iperf|src/iperf_api.c:5574|API-AFFINITY|TPg|sched_setaffinity under HAVE_SCHED_SETAFFINITY
+26|iperf|src/iperf_api.c:5629|API-AFFINITY|TPg|CPU_ZERO under HAVE_SCHED_SETAFFINITY
+27|iperf|src/main.c:99|API-AFFINITY|OTHER|sched_getaffinity under TEST_PROC_AFFINITY (test-only code)
+28|iperf|src/net.c:42|HDR-LINUX-DIR|TPg|<linux/udp.h> under HAVE_UDP_SEGMENT
+29|iperf|src/iperf_client_api.c:479|API-SOCKOPT-LINUX|TPg|TCP_USER_TIMEOUT under HAVE_TCP_USER_TIMEOUT
+30|iperf|src/net.c:332|API-SOCKOPT-LINUX|TPg|SO_BINDTODEVICE under HAVE_SO_BINDTODEVICE
+31|libev|ev_epoll.c:96|API-EPOLL|TPf|epoll_ctl in ev_epoll.c (backend file chosen by EV_USE_EPOLL)
+32|libev|ev_epoll.c:199|API-EPOLL|TPf|EPOLLIN in ev_epoll.c
+33|libev|ev_vars.h:103|API-EPOLL|TPg|epoll_event under EV_USE_EPOLL
+34|libev|ev.c:4057|API-SIGNALFD|TPg|signalfd under EV_USE_SIGNALFD
+35|libev|ev.c:303|ADV-LINUX-IFDEF|INFO|#if __linux ... default selection of EV_USE_EPOLL
+36|libev|ev.c:4212|API-INOTIFY|INFO|inotify exists on SDP (needs -lfsnotify); kept as info
+37|libev|ev.c:4342|API-INOTIFY|INFO|inotify_event; kept as info
+38|cJSON|Makefile:42|BLD-UNAME|TP|Makefile selects flags and library suffix by uname -s; on QNX it returns QNX and the Makefile needs a branch
+39|cJSON|CMakeLists.txt:70|BLD-SANITIZE|OTHER|-fsanitize list inside an optional sanitizer option
+40|cJSON|CMakeLists.txt:72|BLD-SANITIZE|OTHER|-fsanitize list inside an optional sanitizer option

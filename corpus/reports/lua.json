@@ -1,0 +1,247 @@
+{
+  "tool": "portdoctor",
+  "version": "0.1.0",
+  "root": "lua",
+  "disclaimer": "PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked 'guess' are unverified claims about QNX 8.0 and must be checked against the SDP.",
+  "stats": {
+    "filesScanned": 70,
+    "filesByKind": {
+      "c": 68,
+      "make": 2
+    },
+    "filesSkipped": 0,
+    "findings": 4,
+    "suppressedQnxBranch": 0,
+    "rules": 55,
+    "bySeverity": {
+      "blocker": 0,
+      "major": 0,
+      "minor": 3,
+      "info": 1
+    },
+    "effortMinutes": 40
+  },
+  "findings": [
+    {
+      "ruleId": "QNX-BLD-LDL",
+      "title": "Links -ldl",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "makefile",
+      "line": 80,
+      "column": 8,
+      "match": "-ldl",
+      "context": [
+        {
+          "n": 77,
+          "text": "# (For 32-bit, add option \"-m32\" to MYCFLAGS and MYLDFLAGS.)"
+        },
+        {
+          "n": 78,
+          "text": "MYCFLAGS= $(LOCAL) -std=c99 -DLUA_USE_LINUX"
+        },
+        {
+          "n": 79,
+          "text": "MYLDFLAGS= -Wl,-E"
+        },
+        {
+          "n": 80,
+          "text": "MYLIBS= -ldl"
+        },
+        {
+          "n": 81,
+          "text": ""
+        },
+        {
+          "n": 82,
+          "text": ""
+        },
+        {
+          "n": 83,
+          "text": "CC= gcc"
+        }
+      ],
+      "message": "dlopen/dlsym are believed to be in libc on QNX; a separate libdl may not exist (QNX is believed to ship a stub or none).",
+      "remedy": "Use ${CMAKE_DL_LIBS} in CMake (empty where unneeded), or conditionalise -ldl.",
+      "verify": "verify against SDP: check for libdl.",
+      "effort": 10,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "makefile",
+      "line": 83,
+      "column": 1,
+      "match": "CC= gcc",
+      "context": [
+        {
+          "n": 80,
+          "text": "MYLIBS= -ldl"
+        },
+        {
+          "n": 81,
+          "text": ""
+        },
+        {
+          "n": 82,
+          "text": ""
+        },
+        {
+          "n": 83,
+          "text": "CC= gcc"
+        },
+        {
+          "n": 84,
+          "text": "# (Optionally we can use -march=native -mno-avx512f.)"
+        },
+        {
+          "n": 85,
+          "text": "CFLAGS= -Wall -O2 $(MYCFLAGS) -fno-stack-protector -fno-common"
+        },
+        {
+          "n": 86,
+          "text": "AR= ar rc"
+        }
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "testes/libs/makefile",
+      "line": 5,
+      "column": 1,
+      "match": "CC = gcc",
+      "context": [
+        {
+          "n": 2,
+          "text": "# of the version being tested"
+        },
+        {
+          "n": 3,
+          "text": "LUA_DIR = ../../"
+        },
+        {
+          "n": 4,
+          "text": ""
+        },
+        {
+          "n": 5,
+          "text": "CC = gcc"
+        },
+        {
+          "n": 6,
+          "text": ""
+        },
+        {
+          "n": 7,
+          "text": "# compilation should generate Dynamic-Link Libraries"
+        },
+        {
+          "n": 8,
+          "text": "CFLAGS = -Wall -O2 -I$(LUA_DIR) -fPIC -shared"
+        }
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-FPIC",
+      "title": "-fPIC flag",
+      "category": "build",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "testes/libs/makefile",
+      "line": 8,
+      "column": 32,
+      "match": "-fPIC",
+      "context": [
+        {
+          "n": 5,
+          "text": "CC = gcc"
+        },
+        {
+          "n": 6,
+          "text": ""
+        },
+        {
+          "n": 7,
+          "text": "# compilation should generate Dynamic-Link Libraries"
+        },
+        {
+          "n": 8,
+          "text": "CFLAGS = -Wall -O2 -I$(LUA_DIR) -fPIC -shared"
+        },
+        {
+          "n": 9,
+          "text": ""
+        },
+        {
+          "n": 10,
+          "text": "# libraries used by the tests"
+        },
+        {
+          "n": 11,
+          "text": "all: lib1.so lib11.so lib2.so lib21.so lib2-v2.so"
+        }
+      ],
+      "message": "Expected to be fine (shared objects need position-independent code), listed so it is checked once on the real toolchain.",
+      "remedy": "Nothing to change unless qcc rejects it; for CMake prefer CMAKE_POSITION_INDEPENDENT_CODE.",
+      "verify": "verify against SDP.",
+      "effort": 0,
+      "guard": "none",
+      "guards": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "QNX-BLD-LDL",
+      "title": "Links -ldl",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "guess",
+      "remedy": "Use ${CMAKE_DL_LIBS} in CMake (empty where unneeded), or conditionalise -ldl.",
+      "verify": "verify against SDP: check for libdl.",
+      "message": "dlopen/dlsym are believed to be in libc on QNX; a separate libdl may not exist (QNX is believed to ship a stub or none)."
+    },
+    {
+      "id": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "refs": [
+        "QNX docs: qcc",
+        "QNX SDP: qnxsdp-env.sh"
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc."
+    },
+    {
+      "id": "QNX-BLD-FPIC",
+      "title": "-fPIC flag",
+      "category": "build",
+      "severity": "info",
+      "confidence": "guess",
+      "remedy": "Nothing to change unless qcc rejects it; for CMake prefer CMAKE_POSITION_INDEPENDENT_CODE.",
+      "verify": "verify against SDP.",
+      "message": "Expected to be fine (shared objects need position-independent code), listed so it is checked once on the real toolchain."
+    }
+  ]
+}

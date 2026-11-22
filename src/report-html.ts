@@ -10,6 +10,10 @@ export function fmtEffort(min: number): string {
   return h >= 16 ? `${h.toFixed(0)} h (~${(h / 8).toFixed(1)} person-days)` : `${h.toFixed(1)} h`;
 }
 
+export function effortHead(min: number): string {
+  return min < 60 ? `${Math.round(min)} min` : `${(min / 60).toFixed(min >= 6000 ? 0 : 1)} h`;
+}
+
 const SEV_GLYPH: Record<Severity, string> = { blocker: '■', major: '▲', minor: '●', info: '○' };
 const SEV_HELP: Record<Severity, string> = {
   blocker: 'Likely will not build or has no direct QNX equivalent',
@@ -113,7 +117,7 @@ function apply(){
  for(i=0;i<findings.length;i++){var f=findings[i],d=f.dataset,ok=true;
   if(!state.sev[d.sev])ok=false;
   if(ok&&state.conf!=='all'&&d.conf!==state.conf)ok=false;
-  if(ok&&state.dir!==null&&!(state.dir==='.'?d.file.indexOf('/')<0:(d.file.indexOf(state.dir+'/')===0)))ok=false;
+  if(ok&&state.dir!==null&&!(state.dir==='.'?d.file.indexOf('/')<0:(d.file===state.dir||d.file.indexOf(state.dir+'/')===0)))ok=false;
   if(ok&&!state.guard&&d.guard==='linux-only')ok=false;
   if(ok&&q&&d.text.indexOf(q)<0)ok=false;
   f.hidden=!ok;if(ok)vis++;}
@@ -187,8 +191,10 @@ ${f.verify ? `<p class="verify">⚠ ${esc(f.verify)}</p>` : ''}${guardNote}
 export function renderHtml(res: ScanResult): string {
   const s = res.stats;
   const dirStats = new Map<string, { n: number; effort: number; worst: number; bySev: Record<Severity, number> }>();
+  const nDirs = new Set(res.findings.map((f) => dirOf(f.file))).size;
+  const byFileTiles = nDirs < 4;
   for (const f of res.findings) {
-    const d = dirOf(f.file);
+    const d = byFileTiles ? f.file : dirOf(f.file);
     const e = dirStats.get(d) ?? { n: 0, effort: 0, worst: 9, bySev: { blocker: 0, major: 0, minor: 0, info: 0 } };
     e.n++;
     e.effort += f.effort;
@@ -197,13 +203,13 @@ export function renderHtml(res: ScanResult): string {
     dirStats.set(d, e);
   }
   const maxEffort = Math.max(1, ...[...dirStats.values()].map((d) => d.effort));
-  const tiles = [...dirStats.entries()].sort((a, b) => b[1].effort - a[1].effort || (a[0] < b[0] ? -1 : 1));
+  const tiles = [...dirStats.entries()].sort((a, b) => b[1].effort - a[1].effort || (a[0] < b[0] ? -1 : 1)).slice(0, byFileTiles ? 24 : 400);
   const heat = tiles.length
     ? `<ul class="heat">${tiles
         .map(([d, e]) => {
           const inten = Math.round(8 + (e.effort / maxEffort) * 47);
-          return `<li><button type="button" class="tile" style="--i:${inten}" data-dir="${esc(d)}" aria-pressed="false" aria-label="Directory ${esc(d)}: ${e.n} findings, ${esc(fmtEffort(e.effort))}. Press to filter.">
-<span class="d">${esc(d === '.' ? '(top level)' : d + '/')}</span><span class="m">${e.n} findings &middot; ${esc(fmtEffort(e.effort))}</span><span class="m">${e.bySev.blocker ? `■${e.bySev.blocker} ` : ''}${e.bySev.major ? `▲${e.bySev.major} ` : ''}${e.bySev.minor ? `●${e.bySev.minor} ` : ''}${e.bySev.info ? `○${e.bySev.info}` : ''}</span></button></li>`;
+          return `<li><button type="button" class="tile" style="--i:${inten}" data-dir="${esc(d)}" aria-pressed="false" aria-label="${byFileTiles ? 'File' : 'Directory'} ${esc(d)}: ${e.n} findings, ${esc(fmtEffort(e.effort))}. Press to filter.">
+<span class="d">${esc(byFileTiles ? d : d === '.' ? '(top level)' : d + '/')}</span><span class="m">${e.n} findings &middot; ${esc(fmtEffort(e.effort))}</span><span class="m">${e.bySev.blocker ? `■${e.bySev.blocker} ` : ''}${e.bySev.major ? `▲${e.bySev.major} ` : ''}${e.bySev.minor ? `●${e.bySev.minor} ` : ''}${e.bySev.info ? `○${e.bySev.info}` : ''}</span></button></li>`;
         })
         .join('')}</ul><p class="legend"><span>less effort</span><i></i><span>more effort (colour is relative to the busiest directory; counts and effort are in the text)</span></p>`
     : '<p class="empty show">No findings.</p>';
@@ -259,11 +265,11 @@ ${r.refs?.length ? `<p class="note">Documentation to read (names only, not fetch
 <h2>Summary</h2>
 <div class="cards" role="list">
 ${SEVERITIES.map((v) => `<div class="card sev-${v}" role="listitem"><div class="n">${s.bySeverity[v]}</div><div class="l"><span aria-hidden="true">${SEV_GLYPH[v]}</span> ${v}: ${esc(SEV_HELP[v])}</div></div>`).join('\n')}
-<div class="card" role="listitem"><div class="n">${esc(fmtEffort(s.effortMinutes))}</div><div class="l">estimated porting effort (heuristic)</div></div>
+<div class="card" role="listitem"><div class="n">${esc(effortHead(s.effortMinutes))}</div><div class="l">estimated porting effort (heuristic)${s.effortMinutes >= 960 ? `, about ${(s.effortMinutes / 480).toFixed(1)} person-days` : ''}</div></div>
 <div class="card" role="listitem"><div class="n">${confKnown}/${s.findings}</div><div class="l">findings from rules marked <em>known</em>; the rest are <em>guess</em></div></div>
 <div class="card" role="listitem"><div class="n">${s.suppressedQnxBranch}</div><div class="l">matches suppressed inside <code>#if __QNXNTO__</code> branches</div></div>
 </div>
-<h2>Where the work is</h2>
+<h2>Where the work is <span class="meta">(${byFileTiles ? 'by file, few directories' : 'by directory'}${byFileTiles && nDirs >= 1 && tiles.length === 24 ? ', top 24' : ''})</span></h2>
 ${heat}
 <h2 id="findings">Findings</h2>
 <div class="bar" role="search" aria-label="Filter findings">

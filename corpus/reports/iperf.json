@@ -1,0 +1,1926 @@
+{
+  "tool": "portdoctor",
+  "version": "0.1.0",
+  "root": "iperf",
+  "disclaimer": "PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked 'guess' are unverified claims about QNX 8.0 and must be checked against the SDP.",
+  "stats": {
+    "filesScanned": 48,
+    "filesByKind": {
+      "make": 4,
+      "autoconf": 1,
+      "c": 43
+    },
+    "filesSkipped": 0,
+    "findings": 38,
+    "suppressedQnxBranch": 0,
+    "rules": 55,
+    "bySeverity": {
+      "blocker": 6,
+      "major": 21,
+      "minor": 10,
+      "info": 1
+    },
+    "effortMinutes": 876
+  },
+  "findings": [
+    {
+      "ruleId": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "known",
+      "file": "src/flowlabel.h",
+      "line": 31,
+      "column": 1,
+      "match": "#include <linux/types.h>",
+      "context": [
+        {
+          "n": 28,
+          "text": "#define        __FLOW_LABEL_H"
+        },
+        {
+          "n": 29,
+          "text": ""
+        },
+        {
+          "n": 30,
+          "text": ""
+        },
+        {
+          "n": 31,
+          "text": "#include <linux/types.h>"
+        },
+        {
+          "n": 32,
+          "text": "#include <linux/version.h>"
+        },
+        {
+          "n": 33,
+          "text": ""
+        },
+        {
+          "n": 34,
+          "text": "#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0)"
+        }
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "effort": 60,
+      "guard": "other",
+      "guards": [
+        "#ifndef __FLOW_LABEL_H"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "known",
+      "file": "src/flowlabel.h",
+      "line": 32,
+      "column": 1,
+      "match": "#include <linux/version.h>",
+      "context": [
+        {
+          "n": 29,
+          "text": ""
+        },
+        {
+          "n": 30,
+          "text": ""
+        },
+        {
+          "n": 31,
+          "text": "#include <linux/types.h>"
+        },
+        {
+          "n": 32,
+          "text": "#include <linux/version.h>"
+        },
+        {
+          "n": 33,
+          "text": ""
+        },
+        {
+          "n": 34,
+          "text": "#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0)"
+        },
+        {
+          "n": 35,
+          "text": "#include <linux/in6.h>"
+        }
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "effort": 18,
+      "guard": "other",
+      "guards": [
+        "#ifndef __FLOW_LABEL_H"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "known",
+      "file": "src/flowlabel.h",
+      "line": 35,
+      "column": 1,
+      "match": "#include <linux/in6.h>",
+      "context": [
+        {
+          "n": 32,
+          "text": "#include <linux/version.h>"
+        },
+        {
+          "n": 33,
+          "text": ""
+        },
+        {
+          "n": 34,
+          "text": "#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0)"
+        },
+        {
+          "n": 35,
+          "text": "#include <linux/in6.h>"
+        },
+        {
+          "n": 36,
+          "text": "#else"
+        },
+        {
+          "n": 37,
+          "text": "#ifndef __ANDROID__"
+        },
+        {
+          "n": 38,
+          "text": "/*"
+        }
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "effort": 18,
+      "guard": "other",
+      "guards": [
+        "#ifndef __FLOW_LABEL_H",
+        "#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0)"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "known",
+      "file": "src/iperf.h",
+      "line": 42,
+      "column": 1,
+      "match": "#include <linux/tcp.h>",
+      "context": [
+        {
+          "n": 39,
+          "text": "# define _GNU_SOURCE"
+        },
+        {
+          "n": 40,
+          "text": "#endif"
+        },
+        {
+          "n": 41,
+          "text": "#ifdef HAVE_LINUX_TCP_H"
+        },
+        {
+          "n": 42,
+          "text": "#include <linux/tcp.h>"
+        },
+        {
+          "n": 43,
+          "text": "#else"
+        },
+        {
+          "n": 44,
+          "text": "#include <netinet/tcp.h>"
+        },
+        {
+          "n": 45,
+          "text": "#endif"
+        }
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "effort": 60,
+      "guard": "other",
+      "guards": [
+        "#ifndef __IPERF_H",
+        "#ifdef HAVE_LINUX_TCP_H"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "known",
+      "file": "src/iperf_udp.c",
+      "line": 44,
+      "column": 1,
+      "match": "#include <linux/udp.h>",
+      "context": [
+        {
+          "n": 41,
+          "text": "#include <sys/time.h>"
+        },
+        {
+          "n": 42,
+          "text": "#include <sys/select.h>"
+        },
+        {
+          "n": 43,
+          "text": "#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)"
+        },
+        {
+          "n": 44,
+          "text": "#include <linux/udp.h>"
+        },
+        {
+          "n": 45,
+          "text": "#endif"
+        },
+        {
+          "n": 46,
+          "text": ""
+        },
+        {
+          "n": 47,
+          "text": "#include \"iperf.h\""
+        }
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "effort": 60,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "known",
+      "file": "src/net.c",
+      "line": 42,
+      "column": 1,
+      "match": "#include <linux/udp.h>",
+      "context": [
+        {
+          "n": 39,
+          "text": "#include <fcntl.h>"
+        },
+        {
+          "n": 40,
+          "text": "#include <limits.h>"
+        },
+        {
+          "n": 41,
+          "text": "#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)"
+        },
+        {
+          "n": 42,
+          "text": "#include <linux/udp.h>"
+        },
+        {
+          "n": 43,
+          "text": "#endif"
+        },
+        {
+          "n": 44,
+          "text": ""
+        },
+        {
+          "n": 45,
+          "text": "#ifdef HAVE_SENDFILE"
+        }
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "effort": 60,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/iperf_api.c",
+      "line": 3449,
+      "column": 5,
+      "match": "CPU_ZERO(",
+      "context": [
+        {
+          "n": 3446,
+          "text": "    testp->server_affinity = -1;"
+        },
+        {
+          "n": 3447,
+          "text": "    TAILQ_INIT(&testp->xbind_addrs);"
+        },
+        {
+          "n": 3448,
+          "text": "#if defined(HAVE_CPUSET_SETAFFINITY)"
+        },
+        {
+          "n": 3449,
+          "text": "    CPU_ZERO(&testp->cpumask);"
+        },
+        {
+          "n": 3450,
+          "text": "#endif /* HAVE_CPUSET_SETAFFINITY */"
+        },
+        {
+          "n": 3451,
+          "text": "    testp->title = NULL;"
+        },
+        {
+          "n": 3452,
+          "text": "    testp->extra_data = NULL;"
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 45,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_CPUSET_SETAFFINITY)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/iperf_api.c",
+      "line": 3766,
+      "column": 5,
+      "match": "CPU_ZERO(",
+      "context": [
+        {
+          "n": 3763,
+          "text": "    test->duration = DURATION;"
+        },
+        {
+          "n": 3764,
+          "text": "    test->server_affinity = -1;"
+        },
+        {
+          "n": 3765,
+          "text": "#if defined(HAVE_CPUSET_SETAFFINITY)"
+        },
+        {
+          "n": 3766,
+          "text": "    CPU_ZERO(&test->cpumask);"
+        },
+        {
+          "n": 3767,
+          "text": "#endif /* HAVE_CPUSET_SETAFFINITY */"
+        },
+        {
+          "n": 3768,
+          "text": "    test->state = 0;"
+        },
+        {
+          "n": 3769,
+          "text": ""
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_CPUSET_SETAFFINITY)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/iperf_api.c",
+      "line": 5566,
+      "column": 5,
+      "match": "cpu_set_t",
+      "context": [
+        {
+          "n": 5563,
+          "text": "iperf_setaffinity(struct iperf_test *test, int affinity)"
+        },
+        {
+          "n": 5564,
+          "text": "{"
+        },
+        {
+          "n": 5565,
+          "text": "#if defined(HAVE_SCHED_SETAFFINITY)"
+        },
+        {
+          "n": 5566,
+          "text": "    cpu_set_t cpu_set;"
+        },
+        {
+          "n": 5567,
+          "text": ""
+        },
+        {
+          "n": 5568,
+          "text": "    if (affinity < 0 || affinity >= CPU_SETSIZE) {"
+        },
+        {
+          "n": 5569,
+          "text": "\ti_errno = IEAFFINITY;"
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_SCHED_SETAFFINITY)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/iperf_api.c",
+      "line": 5572,
+      "column": 5,
+      "match": "CPU_ZERO(",
+      "context": [
+        {
+          "n": 5569,
+          "text": "\ti_errno = IEAFFINITY;"
+        },
+        {
+          "n": 5570,
+          "text": "        return -1;"
+        },
+        {
+          "n": 5571,
+          "text": "    }"
+        },
+        {
+          "n": 5572,
+          "text": "    CPU_ZERO(&cpu_set);"
+        },
+        {
+          "n": 5573,
+          "text": "    CPU_SET(affinity, &cpu_set);"
+        },
+        {
+          "n": 5574,
+          "text": "    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {"
+        },
+        {
+          "n": 5575,
+          "text": "\ti_errno = IEAFFINITY;"
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_SCHED_SETAFFINITY)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/iperf_api.c",
+      "line": 5573,
+      "column": 5,
+      "match": "CPU_SET(",
+      "context": [
+        {
+          "n": 5570,
+          "text": "        return -1;"
+        },
+        {
+          "n": 5571,
+          "text": "    }"
+        },
+        {
+          "n": 5572,
+          "text": "    CPU_ZERO(&cpu_set);"
+        },
+        {
+          "n": 5573,
+          "text": "    CPU_SET(affinity, &cpu_set);"
+        },
+        {
+          "n": 5574,
+          "text": "    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {"
+        },
+        {
+          "n": 5575,
+          "text": "\ti_errno = IEAFFINITY;"
+        },
+        {
+          "n": 5576,
+          "text": "        return -1;"
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_SCHED_SETAFFINITY)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/iperf_api.c",
+      "line": 5574,
+      "column": 9,
+      "match": "sched_setaffinity",
+      "context": [
+        {
+          "n": 5571,
+          "text": "    }"
+        },
+        {
+          "n": 5572,
+          "text": "    CPU_ZERO(&cpu_set);"
+        },
+        {
+          "n": 5573,
+          "text": "    CPU_SET(affinity, &cpu_set);"
+        },
+        {
+          "n": 5574,
+          "text": "    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {"
+        },
+        {
+          "n": 5575,
+          "text": "\ti_errno = IEAFFINITY;"
+        },
+        {
+          "n": 5576,
+          "text": "        return -1;"
+        },
+        {
+          "n": 5577,
+          "text": "    }"
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_SCHED_SETAFFINITY)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/iperf_api.c",
+      "line": 5592,
+      "column": 5,
+      "match": "CPU_ZERO(",
+      "context": [
+        {
+          "n": 5589,
+          "text": "        return -1;"
+        },
+        {
+          "n": 5590,
+          "text": "    }"
+        },
+        {
+          "n": 5591,
+          "text": ""
+        },
+        {
+          "n": 5592,
+          "text": "    CPU_ZERO(&cpumask);"
+        },
+        {
+          "n": 5593,
+          "text": "    CPU_SET(affinity, &cpumask);"
+        },
+        {
+          "n": 5594,
+          "text": ""
+        },
+        {
+          "n": 5595,
+          "text": "    if(cpuset_setaffinity(CPU_LEVEL_WHICH,CPU_WHICH_PID, -1,"
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#elif defined(HAVE_CPUSET_SETAFFINITY)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/iperf_api.c",
+      "line": 5593,
+      "column": 5,
+      "match": "CPU_SET(",
+      "context": [
+        {
+          "n": 5590,
+          "text": "    }"
+        },
+        {
+          "n": 5591,
+          "text": ""
+        },
+        {
+          "n": 5592,
+          "text": "    CPU_ZERO(&cpumask);"
+        },
+        {
+          "n": 5593,
+          "text": "    CPU_SET(affinity, &cpumask);"
+        },
+        {
+          "n": 5594,
+          "text": ""
+        },
+        {
+          "n": 5595,
+          "text": "    if(cpuset_setaffinity(CPU_LEVEL_WHICH,CPU_WHICH_PID, -1,"
+        },
+        {
+          "n": 5596,
+          "text": "                          sizeof(cpuset_t), &cpumask) != 0) {"
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#elif defined(HAVE_CPUSET_SETAFFINITY)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/iperf_api.c",
+      "line": 5626,
+      "column": 5,
+      "match": "cpu_set_t",
+      "context": [
+        {
+          "n": 5623,
+          "text": "iperf_clearaffinity(struct iperf_test *test)"
+        },
+        {
+          "n": 5624,
+          "text": "{"
+        },
+        {
+          "n": 5625,
+          "text": "#if defined(HAVE_SCHED_SETAFFINITY)"
+        },
+        {
+          "n": 5626,
+          "text": "    cpu_set_t cpu_set;"
+        },
+        {
+          "n": 5627,
+          "text": "    int i;"
+        },
+        {
+          "n": 5628,
+          "text": ""
+        },
+        {
+          "n": 5629,
+          "text": "    CPU_ZERO(&cpu_set);"
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_SCHED_SETAFFINITY)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/iperf_api.c",
+      "line": 5629,
+      "column": 5,
+      "match": "CPU_ZERO(",
+      "context": [
+        {
+          "n": 5626,
+          "text": "    cpu_set_t cpu_set;"
+        },
+        {
+          "n": 5627,
+          "text": "    int i;"
+        },
+        {
+          "n": 5628,
+          "text": ""
+        },
+        {
+          "n": 5629,
+          "text": "    CPU_ZERO(&cpu_set);"
+        },
+        {
+          "n": 5630,
+          "text": "    for (i = 0; i < CPU_SETSIZE; ++i)"
+        },
+        {
+          "n": 5631,
+          "text": "\tCPU_SET(i, &cpu_set);"
+        },
+        {
+          "n": 5632,
+          "text": "    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {"
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_SCHED_SETAFFINITY)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/iperf_api.c",
+      "line": 5631,
+      "column": 2,
+      "match": "CPU_SET(",
+      "context": [
+        {
+          "n": 5628,
+          "text": ""
+        },
+        {
+          "n": 5629,
+          "text": "    CPU_ZERO(&cpu_set);"
+        },
+        {
+          "n": 5630,
+          "text": "    for (i = 0; i < CPU_SETSIZE; ++i)"
+        },
+        {
+          "n": 5631,
+          "text": "\tCPU_SET(i, &cpu_set);"
+        },
+        {
+          "n": 5632,
+          "text": "    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {"
+        },
+        {
+          "n": 5633,
+          "text": "\ti_errno = IEAFFINITY;"
+        },
+        {
+          "n": 5634,
+          "text": "        return -1;"
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_SCHED_SETAFFINITY)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/iperf_api.c",
+      "line": 5632,
+      "column": 9,
+      "match": "sched_setaffinity",
+      "context": [
+        {
+          "n": 5629,
+          "text": "    CPU_ZERO(&cpu_set);"
+        },
+        {
+          "n": 5630,
+          "text": "    for (i = 0; i < CPU_SETSIZE; ++i)"
+        },
+        {
+          "n": 5631,
+          "text": "\tCPU_SET(i, &cpu_set);"
+        },
+        {
+          "n": 5632,
+          "text": "    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0) {"
+        },
+        {
+          "n": 5633,
+          "text": "\ti_errno = IEAFFINITY;"
+        },
+        {
+          "n": 5634,
+          "text": "        return -1;"
+        },
+        {
+          "n": 5635,
+          "text": "    }"
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_SCHED_SETAFFINITY)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/main.c",
+      "line": 95,
+      "column": 5,
+      "match": "cpu_set_t",
+      "context": [
+        {
+          "n": 92,
+          "text": "    }"
+        },
+        {
+          "n": 93,
+          "text": ""
+        },
+        {
+          "n": 94,
+          "text": "    /* setting the affinity of the process  */"
+        },
+        {
+          "n": 95,
+          "text": "    cpu_set_t cpu_set;"
+        },
+        {
+          "n": 96,
+          "text": "    int affinity = -1;"
+        },
+        {
+          "n": 97,
+          "text": "    int ncores = 1;"
+        },
+        {
+          "n": 98,
+          "text": ""
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 45,
+      "guard": "other",
+      "guards": [
+        "#ifdef TEST_PROC_AFFINITY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/main.c",
+      "line": 99,
+      "column": 5,
+      "match": "sched_getaffinity",
+      "context": [
+        {
+          "n": 96,
+          "text": "    int affinity = -1;"
+        },
+        {
+          "n": 97,
+          "text": "    int ncores = 1;"
+        },
+        {
+          "n": 98,
+          "text": ""
+        },
+        {
+          "n": 99,
+          "text": "    sched_getaffinity(0, sizeof(cpu_set_t), &cpu_set);"
+        },
+        {
+          "n": 100,
+          "text": "    if (errno)"
+        },
+        {
+          "n": 101,
+          "text": "        perror(\"couldn't get affinity:\");"
+        },
+        {
+          "n": 102,
+          "text": ""
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#ifdef TEST_PROC_AFFINITY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/main.c",
+      "line": 106,
+      "column": 5,
+      "match": "CPU_ZERO(",
+      "context": [
+        {
+          "n": 103,
+          "text": "    if ((ncores = sysconf(_SC_NPROCESSORS_CONF)) <= 0)"
+        },
+        {
+          "n": 104,
+          "text": "        err(\"sysconf: couldn't get _SC_NPROCESSORS_CONF\");"
+        },
+        {
+          "n": 105,
+          "text": ""
+        },
+        {
+          "n": 106,
+          "text": "    CPU_ZERO(&cpu_set);"
+        },
+        {
+          "n": 107,
+          "text": "    CPU_SET(affinity, &cpu_set);"
+        },
+        {
+          "n": 108,
+          "text": "    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0)"
+        },
+        {
+          "n": 109,
+          "text": "        err(\"couldn't change CPU affinity\");"
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#ifdef TEST_PROC_AFFINITY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/main.c",
+      "line": 107,
+      "column": 5,
+      "match": "CPU_SET(",
+      "context": [
+        {
+          "n": 104,
+          "text": "        err(\"sysconf: couldn't get _SC_NPROCESSORS_CONF\");"
+        },
+        {
+          "n": 105,
+          "text": ""
+        },
+        {
+          "n": 106,
+          "text": "    CPU_ZERO(&cpu_set);"
+        },
+        {
+          "n": 107,
+          "text": "    CPU_SET(affinity, &cpu_set);"
+        },
+        {
+          "n": 108,
+          "text": "    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0)"
+        },
+        {
+          "n": 109,
+          "text": "        err(\"couldn't change CPU affinity\");"
+        },
+        {
+          "n": 110,
+          "text": "#endif"
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#ifdef TEST_PROC_AFFINITY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/main.c",
+      "line": 108,
+      "column": 9,
+      "match": "sched_setaffinity",
+      "context": [
+        {
+          "n": 105,
+          "text": ""
+        },
+        {
+          "n": 106,
+          "text": "    CPU_ZERO(&cpu_set);"
+        },
+        {
+          "n": 107,
+          "text": "    CPU_SET(affinity, &cpu_set);"
+        },
+        {
+          "n": 108,
+          "text": "    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set) != 0)"
+        },
+        {
+          "n": 109,
+          "text": "        err(\"couldn't change CPU affinity\");"
+        },
+        {
+          "n": 110,
+          "text": "#endif"
+        },
+        {
+          "n": 111,
+          "text": ""
+        }
+      ],
+      "message": "Linux affinity API.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#ifdef TEST_PROC_AFFINITY"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-SYS-LINUX",
+      "title": "Includes a Linux-specific <sys/...> header",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/net.c",
+      "line": 47,
+      "column": 1,
+      "match": "#include <sys/sendfile.h>",
+      "context": [
+        {
+          "n": 44,
+          "text": ""
+        },
+        {
+          "n": 45,
+          "text": "#ifdef HAVE_SENDFILE"
+        },
+        {
+          "n": 46,
+          "text": "#if defined(linux) || defined(__sun)"
+        },
+        {
+          "n": 47,
+          "text": "#include <sys/sendfile.h>"
+        },
+        {
+          "n": 48,
+          "text": "#else"
+        },
+        {
+          "n": 49,
+          "text": "#ifdef __FreeBSD__"
+        },
+        {
+          "n": 50,
+          "text": "#include <sys/uio.h>"
+        }
+      ],
+      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP.",
+      "remedy": "Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.",
+      "verify": "verify against SDP: grep $QNX_TARGET/usr/include for the header.",
+      "effort": 30,
+      "guard": "other",
+      "guards": [
+        "#ifdef HAVE_SENDFILE",
+        "#if defined(linux) || defined(__sun)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SENDFILE",
+      "title": "sendfile/splice zero-copy calls",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/net.c",
+      "line": 788,
+      "column": 6,
+      "match": "sendfile(",
+      "context": [
+        {
+          "n": 785,
+          "text": "    while (nleft > 0) {"
+        },
+        {
+          "n": 786,
+          "text": "\toffset = count - nleft;"
+        },
+        {
+          "n": 787,
+          "text": "#if defined(linux) || defined(__sun)"
+        },
+        {
+          "n": 788,
+          "text": "\tr = sendfile(tofd, fromfd, &offset, nleft);"
+        },
+        {
+          "n": 789,
+          "text": "\tif (r > 0)"
+        },
+        {
+          "n": 790,
+          "text": "\t    nleft -= r;"
+        },
+        {
+          "n": 791,
+          "text": "#elif defined(__FreeBSD__)"
+        }
+      ],
+      "message": "Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile.",
+      "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
+      "verify": "verify against SDP: some of these may exist with other semantics.",
+      "effort": 60,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_SENDFILE)",
+        "#if defined(linux) || defined(__sun)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SENDFILE",
+      "title": "sendfile/splice zero-copy calls",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/net.c",
+      "line": 792,
+      "column": 6,
+      "match": "sendfile(",
+      "context": [
+        {
+          "n": 789,
+          "text": "\tif (r > 0)"
+        },
+        {
+          "n": 790,
+          "text": "\t    nleft -= r;"
+        },
+        {
+          "n": 791,
+          "text": "#elif defined(__FreeBSD__)"
+        },
+        {
+          "n": 792,
+          "text": "\tr = sendfile(fromfd, tofd, offset, nleft, NULL, &sent, 0);"
+        },
+        {
+          "n": 793,
+          "text": "\tnleft -= sent;"
+        },
+        {
+          "n": 794,
+          "text": "#elif defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6)\t/* OS X */"
+        },
+        {
+          "n": 795,
+          "text": "\tsent = nleft;"
+        }
+      ],
+      "message": "Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile.",
+      "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
+      "verify": "verify against SDP: some of these may exist with other semantics.",
+      "effort": 18,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_SENDFILE)",
+        "#elif defined(__FreeBSD__)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SENDFILE",
+      "title": "sendfile/splice zero-copy calls",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/net.c",
+      "line": 796,
+      "column": 6,
+      "match": "sendfile(",
+      "context": [
+        {
+          "n": 793,
+          "text": "\tnleft -= sent;"
+        },
+        {
+          "n": 794,
+          "text": "#elif defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6)\t/* OS X */"
+        },
+        {
+          "n": 795,
+          "text": "\tsent = nleft;"
+        },
+        {
+          "n": 796,
+          "text": "\tr = sendfile(fromfd, tofd, offset, &sent, NULL, 0);"
+        },
+        {
+          "n": 797,
+          "text": "\tnleft -= sent;"
+        },
+        {
+          "n": 798,
+          "text": "#else"
+        },
+        {
+          "n": 799,
+          "text": "\t/* Shouldn't happen. */"
+        }
+      ],
+      "message": "Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile.",
+      "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
+      "verify": "verify against SDP: some of these may exist with other semantics.",
+      "effort": 18,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_SENDFILE)",
+        "#elif defined(__APPLE__) && defined(__MACH__) && defined(MAC_OS_X_VERSION_10_6)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/iperf.h",
+      "line": 112,
+      "column": 10,
+      "match": "TCP_INFO",
+      "context": [
+        {
+          "n": 109,
+          "text": ""
+        },
+        {
+          "n": 110,
+          "text": "    int omitted;"
+        },
+        {
+          "n": 111,
+          "text": "#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \\"
+        },
+        {
+          "n": 112,
+          "text": "\tdefined(TCP_INFO)"
+        },
+        {
+          "n": 113,
+          "text": "    struct tcp_info tcpInfo; /* getsockopt(TCP_INFO) for Linux, {Free,Net,Open}BSD */"
+        },
+        {
+          "n": 114,
+          "text": "#elif (defined(__APPLE__) && defined(__MACH__))  && defined(TCP_CONNECTION_INFO)"
+        },
+        {
+          "n": 115,
+          "text": "    struct tcp_connection_info tcpConnInfo;"
+        }
+      ],
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "effort": 20,
+      "guard": "other",
+      "guards": [
+        "#ifndef __IPERF_H",
+        "#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \\"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/iperf_client_api.c",
+      "line": 479,
+      "column": 53,
+      "match": "TCP_USER_TIMEOUT",
+      "context": [
+        {
+          "n": 476,
+          "text": ""
+        },
+        {
+          "n": 477,
+          "text": "#if defined(HAVE_TCP_USER_TIMEOUT)"
+        },
+        {
+          "n": 478,
+          "text": "    if ((opt = test->settings->snd_timeout)) {"
+        },
+        {
+          "n": 479,
+          "text": "        if (setsockopt(test->ctrl_sck, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {"
+        },
+        {
+          "n": 480,
+          "text": "            i_errno = IESETUSERTIMEOUT;"
+        },
+        {
+          "n": 481,
+          "text": "            return -1;"
+        },
+        {
+          "n": 482,
+          "text": "        }"
+        }
+      ],
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "effort": 20,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_TCP_USER_TIMEOUT)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/iperf_server_api.c",
+      "line": 180,
+      "column": 44,
+      "match": "TCP_USER_TIMEOUT",
+      "context": [
+        {
+          "n": 177,
+          "text": "#if defined(HAVE_TCP_USER_TIMEOUT)"
+        },
+        {
+          "n": 178,
+          "text": "        int opt;"
+        },
+        {
+          "n": 179,
+          "text": "        if ((opt = test->settings->snd_timeout)) {"
+        },
+        {
+          "n": 180,
+          "text": "            if (setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {"
+        },
+        {
+          "n": 181,
+          "text": "                i_errno = IESETUSERTIMEOUT;"
+        },
+        {
+          "n": 182,
+          "text": "                goto error_handling;"
+        },
+        {
+          "n": 183,
+          "text": "            }"
+        }
+      ],
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "effort": 20,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_TCP_USER_TIMEOUT)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/iperf_server_api.c",
+      "line": 802,
+      "column": 60,
+      "match": "TCP_USER_TIMEOUT",
+      "context": [
+        {
+          "n": 799,
+          "text": "\t\t    if (test->protocol->id == Ptcp) {"
+        },
+        {
+          "n": 800,
+          "text": "                        int opt;"
+        },
+        {
+          "n": 801,
+          "text": "                        if ((opt = test->settings->snd_timeout)) {"
+        },
+        {
+          "n": 802,
+          "text": "                            if (setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {"
+        },
+        {
+          "n": 803,
+          "text": "                                saved_errno = errno;"
+        },
+        {
+          "n": 804,
+          "text": "                                close(s);"
+        },
+        {
+          "n": 805,
+          "text": "                                cleanup_server(test);"
+        }
+      ],
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "effort": 6,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_TCP_USER_TIMEOUT)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/iperf_tcp.c",
+      "line": 458,
+      "column": 40,
+      "match": "TCP_USER_TIMEOUT",
+      "context": [
+        {
+          "n": 455,
+          "text": "    }"
+        },
+        {
+          "n": 456,
+          "text": "#if defined(HAVE_TCP_USER_TIMEOUT)"
+        },
+        {
+          "n": 457,
+          "text": "    if ((opt = test->settings->snd_timeout)) {"
+        },
+        {
+          "n": 458,
+          "text": "        if (setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &opt, sizeof(opt)) < 0) {"
+        },
+        {
+          "n": 459,
+          "text": "\t    saved_errno = errno;"
+        },
+        {
+          "n": 460,
+          "text": "\t    close(s);"
+        },
+        {
+          "n": 461,
+          "text": "\t    freeaddrinfo(server_res);"
+        }
+      ],
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "effort": 20,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_TCP_USER_TIMEOUT)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/net.c",
+      "line": 136,
+      "column": 38,
+      "match": "SO_BINDTODEVICE",
+      "context": [
+        {
+          "n": 133,
+          "text": "bind_to_device(int s, int domain, const char *bind_dev)"
+        },
+        {
+          "n": 134,
+          "text": "{"
+        },
+        {
+          "n": 135,
+          "text": "#if defined(HAVE_SO_BINDTODEVICE)"
+        },
+        {
+          "n": 136,
+          "text": "    return setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, bind_dev, IFNAMSIZ);"
+        },
+        {
+          "n": 137,
+          "text": "#elif defined(HAVE_IP_BOUND_IF)"
+        },
+        {
+          "n": 138,
+          "text": "    int opt;"
+        },
+        {
+          "n": 139,
+          "text": "    switch (domain) {"
+        }
+      ],
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "effort": 20,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_SO_BINDTODEVICE)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/net.c",
+      "line": 332,
+      "column": 39,
+      "match": "SO_BINDTODEVICE",
+      "context": [
+        {
+          "n": 329,
+          "text": ""
+        },
+        {
+          "n": 330,
+          "text": "    if (bind_dev) {"
+        },
+        {
+          "n": 331,
+          "text": "#if defined(HAVE_SO_BINDTODEVICE)"
+        },
+        {
+          "n": 332,
+          "text": "        if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,"
+        },
+        {
+          "n": 333,
+          "text": "                       bind_dev, IFNAMSIZ) < 0)"
+        },
+        {
+          "n": 334,
+          "text": "#endif // HAVE_SO_BINDTODEVICE"
+        },
+        {
+          "n": 335,
+          "text": "        {"
+        }
+      ],
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "effort": 6,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_SO_BINDTODEVICE)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/tcp_info.c",
+      "line": 64,
+      "column": 13,
+      "match": "TCP_INFO",
+      "context": [
+        {
+          "n": 61,
+          "text": "has_tcpinfo(void)"
+        },
+        {
+          "n": 62,
+          "text": "{"
+        },
+        {
+          "n": 63,
+          "text": "#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) \\"
+        },
+        {
+          "n": 64,
+          "text": "\t&& defined(TCP_INFO)"
+        },
+        {
+          "n": 65,
+          "text": "    return 1;"
+        },
+        {
+          "n": 66,
+          "text": "#elif (defined(__APPLE__) && defined(__MACH__)) && defined(TCP_CONNECTION_INFO)"
+        },
+        {
+          "n": 67,
+          "text": "    return 1;"
+        }
+      ],
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "effort": 20,
+      "guard": "other",
+      "guards": [
+        "#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) \\"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/tcp_info.c",
+      "line": 102,
+      "column": 10,
+      "match": "TCP_INFO",
+      "context": [
+        {
+          "n": 99,
+          "text": "save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)"
+        },
+        {
+          "n": 100,
+          "text": "{"
+        },
+        {
+          "n": 101,
+          "text": "#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \\"
+        },
+        {
+          "n": 102,
+          "text": "\tdefined(TCP_INFO)"
+        },
+        {
+          "n": 103,
+          "text": "    socklen_t tcp_info_length = sizeof(struct tcp_info);"
+        },
+        {
+          "n": 104,
+          "text": ""
+        },
+        {
+          "n": 105,
+          "text": "    if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&irp->tcpInfo, &tcp_info_length) < 0)"
+        }
+      ],
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "effort": 6,
+      "guard": "other",
+      "guards": [
+        "#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \\"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/tcp_info.c",
+      "line": 105,
+      "column": 45,
+      "match": "TCP_INFO",
+      "context": [
+        {
+          "n": 102,
+          "text": "\tdefined(TCP_INFO)"
+        },
+        {
+          "n": 103,
+          "text": "    socklen_t tcp_info_length = sizeof(struct tcp_info);"
+        },
+        {
+          "n": 104,
+          "text": ""
+        },
+        {
+          "n": 105,
+          "text": "    if (getsockopt(sp->socket, IPPROTO_TCP, TCP_INFO, (void *)&irp->tcpInfo, &tcp_info_length) < 0)"
+        },
+        {
+          "n": 106,
+          "text": "\tiperf_err(sp->test, \"getsockopt - %s\", strerror(errno));"
+        },
+        {
+          "n": 107,
+          "text": ""
+        },
+        {
+          "n": 108,
+          "text": "    if (sp->test->debug) {"
+        }
+      ],
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "effort": 6,
+      "guard": "other",
+      "guards": [
+        "#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) && \\"
+      ]
+    },
+    {
+      "ruleId": "QNX-BLD-AUTOCONF-HOST",
+      "title": "Autotools project with no QNX host support",
+      "category": "build",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "configure.ac",
+      "line": 1,
+      "column": 1,
+      "match": "(project-level)",
+      "context": [],
+      "message": "No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet.",
+      "remedy": "Refresh config.sub/config.guess (autoreconf -fi or copy from a current automake), then configure with --host=<cpu>-unknown-nto-qnx<version> and CC set to qcc.",
+      "verify": "verify against SDP: exact host triplet format for 8.0.",
+      "effort": 30,
+      "guard": "none",
+      "guards": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "QNX-BLD-AUTOCONF-HOST",
+      "title": "Autotools project with no QNX host support",
+      "category": "build",
+      "severity": "info",
+      "confidence": "guess",
+      "remedy": "Refresh config.sub/config.guess (autoreconf -fi or copy from a current automake), then configure with --host=<cpu>-unknown-nto-qnx<version> and CC set to qcc.",
+      "verify": "verify against SDP: exact host triplet format for 8.0.",
+      "message": "No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet."
+    },
+    {
+      "id": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "known",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "refs": [
+        "QNX SDP 8.0 System Architecture: a QNX target does not use the Linux kernel"
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them."
+    },
+    {
+      "id": "QNX-HDR-SYS-LINUX",
+      "title": "Includes a Linux-specific <sys/...> header",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.",
+      "verify": "verify against SDP: grep $QNX_TARGET/usr/include for the header.",
+      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP."
+    },
+    {
+      "id": "QNX-API-SENDFILE",
+      "title": "sendfile/splice zero-copy calls",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
+      "verify": "verify against SDP: some of these may exist with other semantics.",
+      "message": "Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile."
+    },
+    {
+      "id": "QNX-API-AFFINITY",
+      "title": "CPU affinity (sched_setaffinity & friends)",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "verify": "verify against SDP: ThreadCtl runmask argument layout.",
+      "refs": [
+        "QNX docs: ThreadCtl()"
+      ],
+      "message": "Linux affinity API."
+    },
+    {
+      "id": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning)."
+    }
+  ]
+}

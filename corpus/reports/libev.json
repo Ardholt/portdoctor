@@ -1,0 +1,2762 @@
+{
+  "tool": "portdoctor",
+  "version": "0.1.0",
+  "root": "libev",
+  "disclaimer": "PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked 'guess' are unverified claims about QNX 8.0 and must be checked against the SDP.",
+  "stats": {
+    "filesScanned": 15,
+    "filesByKind": {
+      "make": 1,
+      "autoconf": 1,
+      "c": 13
+    },
+    "filesSkipped": 0,
+    "findings": 55,
+    "suppressedQnxBranch": 0,
+    "rules": 55,
+    "bySeverity": {
+      "blocker": 33,
+      "major": 14,
+      "minor": 0,
+      "info": 8
+    },
+    "effortMinutes": 2253
+  },
+  "findings": [
+    {
+      "ruleId": "QNX-API-SYSCALL",
+      "title": "Raw Linux syscall()",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 389,
+      "column": 33,
+      "match": "syscall (",
+      "context": [
+        {
+          "n": 386,
+          "text": "#if EV_USE_CLOCK_SYSCALL"
+        },
+        {
+          "n": 387,
+          "text": "# include <sys/syscall.h>"
+        },
+        {
+          "n": 388,
+          "text": "# ifdef SYS_clock_gettime"
+        },
+        {
+          "n": 389,
+          "text": "#  define clock_gettime(id, ts) syscall (SYS_clock_gettime, (id), (ts))"
+        },
+        {
+          "n": 390,
+          "text": "#  undef EV_USE_MONOTONIC"
+        },
+        {
+          "n": 391,
+          "text": "#  define EV_USE_MONOTONIC 1"
+        },
+        {
+          "n": 392,
+          "text": "# else"
+        }
+      ],
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.",
+      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
+      "verify": "verify against SDP.",
+      "effort": 120,
+      "guard": "other",
+      "guards": [
+        "#if EV_USE_CLOCK_SYSCALL",
+        "#ifdef SYS_clock_gettime"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-INOTIFY",
+      "title": "inotify file watching",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4207,
+      "column": 38,
+      "match": "struct inotify_event",
+      "context": [
+        {
+          "n": 4204,
+          "text": "#if EV_USE_INOTIFY"
+        },
+        {
+          "n": 4205,
+          "text": ""
+        },
+        {
+          "n": 4206,
+          "text": "/* the * 2 is to allow for alignment padding, which for some reason is >> 8 */"
+        },
+        {
+          "n": 4207,
+          "text": "# define EV_INOTIFY_BUFSIZE (sizeof (struct inotify_event) * 2 + NAME_MAX)"
+        },
+        {
+          "n": 4208,
+          "text": ""
+        },
+        {
+          "n": 4209,
+          "text": "static void noinline"
+        },
+        {
+          "n": 4210,
+          "text": "infy_add (EV_P_ ev_stat *w)"
+        }
+      ],
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
+      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
+      "effort": 180,
+      "guard": "other",
+      "guards": [
+        "#if EV_STAT_ENABLE",
+        "#if EV_USE_INOTIFY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-INOTIFY",
+      "title": "inotify file watching",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4212,
+      "column": 11,
+      "match": "inotify_add_watch (",
+      "context": [
+        {
+          "n": 4209,
+          "text": "static void noinline"
+        },
+        {
+          "n": 4210,
+          "text": "infy_add (EV_P_ ev_stat *w)"
+        },
+        {
+          "n": 4211,
+          "text": "{"
+        },
+        {
+          "n": 4212,
+          "text": "  w->wd = inotify_add_watch (fs_fd, w->path,"
+        },
+        {
+          "n": 4213,
+          "text": "                             IN_ATTRIB | IN_DELETE_SELF | IN_MOVE_SELF | IN_MODIFY"
+        },
+        {
+          "n": 4214,
+          "text": "                             | IN_CREATE | IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO"
+        },
+        {
+          "n": 4215,
+          "text": "                             | IN_DONT_FOLLOW | IN_MASK_ADD);"
+        }
+      ],
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
+      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
+      "effort": 54,
+      "guard": "other",
+      "guards": [
+        "#if EV_STAT_ENABLE",
+        "#if EV_USE_INOTIFY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-INOTIFY",
+      "title": "inotify file watching",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4213,
+      "column": 74,
+      "match": "IN_MODIFY",
+      "context": [
+        {
+          "n": 4210,
+          "text": "infy_add (EV_P_ ev_stat *w)"
+        },
+        {
+          "n": 4211,
+          "text": "{"
+        },
+        {
+          "n": 4212,
+          "text": "  w->wd = inotify_add_watch (fs_fd, w->path,"
+        },
+        {
+          "n": 4213,
+          "text": "                             IN_ATTRIB | IN_DELETE_SELF | IN_MOVE_SELF | IN_MODIFY"
+        },
+        {
+          "n": 4214,
+          "text": "                             | IN_CREATE | IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO"
+        },
+        {
+          "n": 4215,
+          "text": "                             | IN_DONT_FOLLOW | IN_MASK_ADD);"
+        },
+        {
+          "n": 4216,
+          "text": ""
+        }
+      ],
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
+      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
+      "effort": 54,
+      "guard": "other",
+      "guards": [
+        "#if EV_STAT_ENABLE",
+        "#if EV_USE_INOTIFY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-INOTIFY",
+      "title": "inotify file watching",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4214,
+      "column": 32,
+      "match": "IN_CREATE",
+      "context": [
+        {
+          "n": 4211,
+          "text": "{"
+        },
+        {
+          "n": 4212,
+          "text": "  w->wd = inotify_add_watch (fs_fd, w->path,"
+        },
+        {
+          "n": 4213,
+          "text": "                             IN_ATTRIB | IN_DELETE_SELF | IN_MOVE_SELF | IN_MODIFY"
+        },
+        {
+          "n": 4214,
+          "text": "                             | IN_CREATE | IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO"
+        },
+        {
+          "n": 4215,
+          "text": "                             | IN_DONT_FOLLOW | IN_MASK_ADD);"
+        },
+        {
+          "n": 4216,
+          "text": ""
+        },
+        {
+          "n": 4217,
+          "text": "  if (w->wd >= 0)"
+        }
+      ],
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
+      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
+      "effort": 54,
+      "guard": "other",
+      "guards": [
+        "#if EV_STAT_ENABLE",
+        "#if EV_USE_INOTIFY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-INOTIFY",
+      "title": "inotify file watching",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4260,
+      "column": 57,
+      "match": "IN_CREATE",
+      "context": [
+        {
+          "n": 4257,
+          "text": "          do"
+        },
+        {
+          "n": 4258,
+          "text": "            {"
+        },
+        {
+          "n": 4259,
+          "text": "              int mask = IN_MASK_ADD | IN_DELETE_SELF | IN_MOVE_SELF"
+        },
+        {
+          "n": 4260,
+          "text": "                       | (errno == EACCES ? IN_ATTRIB : IN_CREATE | IN_MOVED_TO);"
+        },
+        {
+          "n": 4261,
+          "text": ""
+        },
+        {
+          "n": 4262,
+          "text": "              char *pend = strrchr (path, '/');"
+        },
+        {
+          "n": 4263,
+          "text": ""
+        }
+      ],
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
+      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
+      "effort": 54,
+      "guard": "other",
+      "guards": [
+        "#if EV_STAT_ENABLE",
+        "#if EV_USE_INOTIFY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-INOTIFY",
+      "title": "inotify file watching",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4268,
+      "column": 23,
+      "match": "inotify_add_watch (",
+      "context": [
+        {
+          "n": 4265,
+          "text": "                break;"
+        },
+        {
+          "n": 4266,
+          "text": ""
+        },
+        {
+          "n": 4267,
+          "text": "              *pend = 0;"
+        },
+        {
+          "n": 4268,
+          "text": "              w->wd = inotify_add_watch (fs_fd, path, mask);"
+        },
+        {
+          "n": 4269,
+          "text": "            }"
+        },
+        {
+          "n": 4270,
+          "text": "          while (w->wd < 0 && (errno == ENOENT || errno == EACCES));"
+        },
+        {
+          "n": 4271,
+          "text": "        }"
+        }
+      ],
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
+      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
+      "effort": 54,
+      "guard": "other",
+      "guards": [
+        "#if EV_STAT_ENABLE",
+        "#if EV_USE_INOTIFY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-INOTIFY",
+      "title": "inotify file watching",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4297,
+      "column": 3,
+      "match": "inotify_rm_watch (",
+      "context": [
+        {
+          "n": 4294,
+          "text": "  wlist_del (&fs_hash [slot].head, (WL)w);"
+        },
+        {
+          "n": 4295,
+          "text": ""
+        },
+        {
+          "n": 4296,
+          "text": "  /* remove this watcher, if others are watching it, they will rearm */"
+        },
+        {
+          "n": 4297,
+          "text": "  inotify_rm_watch (fs_fd, wd);"
+        },
+        {
+          "n": 4298,
+          "text": "}"
+        },
+        {
+          "n": 4299,
+          "text": ""
+        },
+        {
+          "n": 4300,
+          "text": "static void noinline"
+        }
+      ],
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
+      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
+      "effort": 54,
+      "guard": "other",
+      "guards": [
+        "#if EV_STAT_ENABLE",
+        "#if EV_USE_INOTIFY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-INOTIFY",
+      "title": "inotify file watching",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4301,
+      "column": 34,
+      "match": "struct inotify_event",
+      "context": [
+        {
+          "n": 4298,
+          "text": "}"
+        },
+        {
+          "n": 4299,
+          "text": ""
+        },
+        {
+          "n": 4300,
+          "text": "static void noinline"
+        },
+        {
+          "n": 4301,
+          "text": "infy_wd (EV_P_ int slot, int wd, struct inotify_event *ev)"
+        },
+        {
+          "n": 4302,
+          "text": "{"
+        },
+        {
+          "n": 4303,
+          "text": "  if (slot < 0)"
+        },
+        {
+          "n": 4304,
+          "text": "    /* overflow, need to check for all hash slots */"
+        }
+      ],
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
+      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
+      "effort": 54,
+      "guard": "other",
+      "guards": [
+        "#if EV_STAT_ENABLE",
+        "#if EV_USE_INOTIFY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-INOTIFY",
+      "title": "inotify file watching",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4340,
+      "column": 7,
+      "match": "struct inotify_event",
+      "context": [
+        {
+          "n": 4337,
+          "text": ""
+        },
+        {
+          "n": 4338,
+          "text": "  for (ofs = 0; ofs < len; )"
+        },
+        {
+          "n": 4339,
+          "text": "    {"
+        },
+        {
+          "n": 4340,
+          "text": "      struct inotify_event *ev = (struct inotify_event *)(buf + ofs);"
+        },
+        {
+          "n": 4341,
+          "text": "      infy_wd (EV_A_ ev->wd, ev->wd, ev);"
+        },
+        {
+          "n": 4342,
+          "text": "      ofs += sizeof (struct inotify_event) + ev->len;"
+        },
+        {
+          "n": 4343,
+          "text": "    }"
+        }
+      ],
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
+      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
+      "effort": 54,
+      "guard": "other",
+      "guards": [
+        "#if EV_STAT_ENABLE",
+        "#if EV_USE_INOTIFY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-INOTIFY",
+      "title": "inotify file watching",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4342,
+      "column": 22,
+      "match": "struct inotify_event",
+      "context": [
+        {
+          "n": 4339,
+          "text": "    {"
+        },
+        {
+          "n": 4340,
+          "text": "      struct inotify_event *ev = (struct inotify_event *)(buf + ofs);"
+        },
+        {
+          "n": 4341,
+          "text": "      infy_wd (EV_A_ ev->wd, ev->wd, ev);"
+        },
+        {
+          "n": 4342,
+          "text": "      ofs += sizeof (struct inotify_event) + ev->len;"
+        },
+        {
+          "n": 4343,
+          "text": "    }"
+        },
+        {
+          "n": 4344,
+          "text": "}"
+        },
+        {
+          "n": 4345,
+          "text": ""
+        }
+      ],
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
+      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
+      "effort": 54,
+      "guard": "other",
+      "guards": [
+        "#if EV_STAT_ENABLE",
+        "#if EV_USE_INOTIFY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-INOTIFY",
+      "title": "inotify file watching",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4362,
+      "column": 12,
+      "match": "inotify_init1 (",
+      "context": [
+        {
+          "n": 4359,
+          "text": "infy_newfd (void)"
+        },
+        {
+          "n": 4360,
+          "text": "{"
+        },
+        {
+          "n": 4361,
+          "text": "#if defined IN_CLOEXEC && defined IN_NONBLOCK"
+        },
+        {
+          "n": 4362,
+          "text": "  int fd = inotify_init1 (IN_CLOEXEC | IN_NONBLOCK);"
+        },
+        {
+          "n": 4363,
+          "text": "  if (fd >= 0)"
+        },
+        {
+          "n": 4364,
+          "text": "    return fd;"
+        },
+        {
+          "n": 4365,
+          "text": "#endif"
+        }
+      ],
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
+      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
+      "effort": 54,
+      "guard": "other",
+      "guards": [
+        "#if EV_STAT_ENABLE",
+        "#if EV_USE_INOTIFY",
+        "#if defined IN_CLOEXEC && defined IN_NONBLOCK"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-INOTIFY",
+      "title": "inotify file watching",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4366,
+      "column": 10,
+      "match": "inotify_init (",
+      "context": [
+        {
+          "n": 4363,
+          "text": "  if (fd >= 0)"
+        },
+        {
+          "n": 4364,
+          "text": "    return fd;"
+        },
+        {
+          "n": 4365,
+          "text": "#endif"
+        },
+        {
+          "n": 4366,
+          "text": "  return inotify_init ();"
+        },
+        {
+          "n": 4367,
+          "text": "}"
+        },
+        {
+          "n": 4368,
+          "text": ""
+        },
+        {
+          "n": 4369,
+          "text": "inline_size void"
+        }
+      ],
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
+      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
+      "effort": 54,
+      "guard": "other",
+      "guards": [
+        "#if EV_STAT_ENABLE",
+        "#if EV_USE_INOTIFY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 73,
+      "column": 3,
+      "match": "struct epoll_event",
+      "context": [
+        {
+          "n": 70,
+          "text": "static void"
+        },
+        {
+          "n": 71,
+          "text": "epoll_modify (EV_P_ int fd, int oev, int nev)"
+        },
+        {
+          "n": 72,
+          "text": "{"
+        },
+        {
+          "n": 73,
+          "text": "  struct epoll_event ev;"
+        },
+        {
+          "n": 74,
+          "text": "  unsigned char oldmask;"
+        },
+        {
+          "n": 75,
+          "text": ""
+        },
+        {
+          "n": 76,
+          "text": "  /*"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 120,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 93,
+      "column": 35,
+      "match": "EPOLLIN",
+      "context": [
+        {
+          "n": 90,
+          "text": "  /* store the generation counter in the upper 32 bits, the fd in the lower 32 bits */"
+        },
+        {
+          "n": 91,
+          "text": "  ev.data.u64 = (uint64_t)(uint32_t)fd"
+        },
+        {
+          "n": 92,
+          "text": "              | ((uint64_t)(uint32_t)++anfds [fd].egen << 32);"
+        },
+        {
+          "n": 93,
+          "text": "  ev.events   = (nev & EV_READ  ? EPOLLIN  : 0)"
+        },
+        {
+          "n": 94,
+          "text": "              | (nev & EV_WRITE ? EPOLLOUT : 0);"
+        },
+        {
+          "n": 95,
+          "text": ""
+        },
+        {
+          "n": 96,
+          "text": "  if (expect_true (!epoll_ctl (backend_fd, oev && oldmask != nev ? EPOLL_CTL_MOD : EPOLL_CTL_ADD, fd, &ev)))"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 94,
+      "column": 35,
+      "match": "EPOLLOUT",
+      "context": [
+        {
+          "n": 91,
+          "text": "  ev.data.u64 = (uint64_t)(uint32_t)fd"
+        },
+        {
+          "n": 92,
+          "text": "              | ((uint64_t)(uint32_t)++anfds [fd].egen << 32);"
+        },
+        {
+          "n": 93,
+          "text": "  ev.events   = (nev & EV_READ  ? EPOLLIN  : 0)"
+        },
+        {
+          "n": 94,
+          "text": "              | (nev & EV_WRITE ? EPOLLOUT : 0);"
+        },
+        {
+          "n": 95,
+          "text": ""
+        },
+        {
+          "n": 96,
+          "text": "  if (expect_true (!epoll_ctl (backend_fd, oev && oldmask != nev ? EPOLL_CTL_MOD : EPOLL_CTL_ADD, fd, &ev)))"
+        },
+        {
+          "n": 97,
+          "text": "    return;"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 96,
+      "column": 21,
+      "match": "epoll_ctl (",
+      "context": [
+        {
+          "n": 93,
+          "text": "  ev.events   = (nev & EV_READ  ? EPOLLIN  : 0)"
+        },
+        {
+          "n": 94,
+          "text": "              | (nev & EV_WRITE ? EPOLLOUT : 0);"
+        },
+        {
+          "n": 95,
+          "text": ""
+        },
+        {
+          "n": 96,
+          "text": "  if (expect_true (!epoll_ctl (backend_fd, oev && oldmask != nev ? EPOLL_CTL_MOD : EPOLL_CTL_ADD, fd, &ev)))"
+        },
+        {
+          "n": 97,
+          "text": "    return;"
+        },
+        {
+          "n": 98,
+          "text": ""
+        },
+        {
+          "n": 99,
+          "text": "  if (expect_true (errno == ENOENT))"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 105,
+      "column": 12,
+      "match": "epoll_ctl (",
+      "context": [
+        {
+          "n": 102,
+          "text": "      if (!nev)"
+        },
+        {
+          "n": 103,
+          "text": "        goto dec_egen;"
+        },
+        {
+          "n": 104,
+          "text": ""
+        },
+        {
+          "n": 105,
+          "text": "      if (!epoll_ctl (backend_fd, EPOLL_CTL_ADD, fd, &ev))"
+        },
+        {
+          "n": 106,
+          "text": "        return;"
+        },
+        {
+          "n": 107,
+          "text": "    }"
+        },
+        {
+          "n": 108,
+          "text": "  else if (expect_true (errno == EEXIST))"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 115,
+      "column": 12,
+      "match": "epoll_ctl (",
+      "context": [
+        {
+          "n": 112,
+          "text": "      if (oldmask == nev)"
+        },
+        {
+          "n": 113,
+          "text": "        goto dec_egen;"
+        },
+        {
+          "n": 114,
+          "text": ""
+        },
+        {
+          "n": 115,
+          "text": "      if (!epoll_ctl (backend_fd, EPOLL_CTL_MOD, fd, &ev))"
+        },
+        {
+          "n": 116,
+          "text": "        return;"
+        },
+        {
+          "n": 117,
+          "text": "    }"
+        },
+        {
+          "n": 118,
+          "text": "  else if (expect_true (errno == EPERM))"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 153,
+      "column": 14,
+      "match": "epoll_wait (",
+      "context": [
+        {
+          "n": 150,
+          "text": "  /* epoll wait times cannot be larger than (LONG_MAX - 999UL) / HZ msecs, which is below */"
+        },
+        {
+          "n": 151,
+          "text": "  /* the default libev max wait time, however. */"
+        },
+        {
+          "n": 152,
+          "text": "  EV_RELEASE_CB;"
+        },
+        {
+          "n": 153,
+          "text": "  eventcnt = epoll_wait (backend_fd, epoll_events, epoll_eventmax, timeout * 1e3);"
+        },
+        {
+          "n": 154,
+          "text": "  EV_ACQUIRE_CB;"
+        },
+        {
+          "n": 155,
+          "text": ""
+        },
+        {
+          "n": 156,
+          "text": "  if (expect_false (eventcnt < 0))"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 166,
+      "column": 7,
+      "match": "struct epoll_event",
+      "context": [
+        {
+          "n": 163,
+          "text": ""
+        },
+        {
+          "n": 164,
+          "text": "  for (i = 0; i < eventcnt; ++i)"
+        },
+        {
+          "n": 165,
+          "text": "    {"
+        },
+        {
+          "n": 166,
+          "text": "      struct epoll_event *ev = epoll_events + i;"
+        },
+        {
+          "n": 167,
+          "text": ""
+        },
+        {
+          "n": 168,
+          "text": "      int fd = (uint32_t)ev->data.u64; /* mask out the lower 32 bits */"
+        },
+        {
+          "n": 169,
+          "text": "      int want = anfds [fd].events;"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 170,
+      "column": 33,
+      "match": "EPOLLOUT",
+      "context": [
+        {
+          "n": 167,
+          "text": ""
+        },
+        {
+          "n": 168,
+          "text": "      int fd = (uint32_t)ev->data.u64; /* mask out the lower 32 bits */"
+        },
+        {
+          "n": 169,
+          "text": "      int want = anfds [fd].events;"
+        },
+        {
+          "n": 170,
+          "text": "      int got  = (ev->events & (EPOLLOUT | EPOLLERR | EPOLLHUP) ? EV_WRITE : 0)"
+        },
+        {
+          "n": 171,
+          "text": "               | (ev->events & (EPOLLIN  | EPOLLERR | EPOLLHUP) ? EV_READ  : 0);"
+        },
+        {
+          "n": 172,
+          "text": ""
+        },
+        {
+          "n": 173,
+          "text": "      /*"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 171,
+      "column": 33,
+      "match": "EPOLLIN",
+      "context": [
+        {
+          "n": 168,
+          "text": "      int fd = (uint32_t)ev->data.u64; /* mask out the lower 32 bits */"
+        },
+        {
+          "n": 169,
+          "text": "      int want = anfds [fd].events;"
+        },
+        {
+          "n": 170,
+          "text": "      int got  = (ev->events & (EPOLLOUT | EPOLLERR | EPOLLHUP) ? EV_WRITE : 0)"
+        },
+        {
+          "n": 171,
+          "text": "               | (ev->events & (EPOLLIN  | EPOLLERR | EPOLLHUP) ? EV_READ  : 0);"
+        },
+        {
+          "n": 172,
+          "text": ""
+        },
+        {
+          "n": 173,
+          "text": "      /*"
+        },
+        {
+          "n": 174,
+          "text": "       * check for spurious notification."
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 199,
+      "column": 43,
+      "match": "EPOLLIN",
+      "context": [
+        {
+          "n": 196,
+          "text": "           * partially here, when epoll_ctl returns an error (== a child has the fd"
+        },
+        {
+          "n": 197,
+          "text": "           * but we closed it)."
+        },
+        {
+          "n": 198,
+          "text": "           */"
+        },
+        {
+          "n": 199,
+          "text": "          ev->events = (want & EV_READ  ? EPOLLIN  : 0)"
+        },
+        {
+          "n": 200,
+          "text": "                     | (want & EV_WRITE ? EPOLLOUT : 0);"
+        },
+        {
+          "n": 201,
+          "text": ""
+        },
+        {
+          "n": 202,
+          "text": "          /* pre-2.6.9 kernels require a non-null pointer with EPOLL_CTL_DEL, */"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 200,
+      "column": 43,
+      "match": "EPOLLOUT",
+      "context": [
+        {
+          "n": 197,
+          "text": "           * but we closed it)."
+        },
+        {
+          "n": 198,
+          "text": "           */"
+        },
+        {
+          "n": 199,
+          "text": "          ev->events = (want & EV_READ  ? EPOLLIN  : 0)"
+        },
+        {
+          "n": 200,
+          "text": "                     | (want & EV_WRITE ? EPOLLOUT : 0);"
+        },
+        {
+          "n": 201,
+          "text": ""
+        },
+        {
+          "n": 202,
+          "text": "          /* pre-2.6.9 kernels require a non-null pointer with EPOLL_CTL_DEL, */"
+        },
+        {
+          "n": 203,
+          "text": "          /* which is fortunately easy to do for us. */"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 204,
+      "column": 15,
+      "match": "epoll_ctl (",
+      "context": [
+        {
+          "n": 201,
+          "text": ""
+        },
+        {
+          "n": 202,
+          "text": "          /* pre-2.6.9 kernels require a non-null pointer with EPOLL_CTL_DEL, */"
+        },
+        {
+          "n": 203,
+          "text": "          /* which is fortunately easy to do for us. */"
+        },
+        {
+          "n": 204,
+          "text": "          if (epoll_ctl (backend_fd, want ? EPOLL_CTL_MOD : EPOLL_CTL_DEL, fd, ev))"
+        },
+        {
+          "n": 205,
+          "text": "            {"
+        },
+        {
+          "n": 206,
+          "text": "              postfork |= 2; /* an error occurred, recreate kernel state */"
+        },
+        {
+          "n": 207,
+          "text": "              continue;"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 218,
+      "column": 48,
+      "match": "struct epoll_event",
+      "context": [
+        {
+          "n": 215,
+          "text": "  if (expect_false (eventcnt == epoll_eventmax))"
+        },
+        {
+          "n": 216,
+          "text": "    {"
+        },
+        {
+          "n": 217,
+          "text": "      ev_free (epoll_events);"
+        },
+        {
+          "n": 218,
+          "text": "      epoll_eventmax = array_nextsize (sizeof (struct epoll_event), epoll_eventmax, epoll_eventmax + 1);"
+        },
+        {
+          "n": 219,
+          "text": "      epoll_events = (struct epoll_event *)ev_malloc (sizeof (struct epoll_event) * epoll_eventmax);"
+        },
+        {
+          "n": 220,
+          "text": "    }"
+        },
+        {
+          "n": 221,
+          "text": ""
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 219,
+      "column": 23,
+      "match": "struct epoll_event",
+      "context": [
+        {
+          "n": 216,
+          "text": "    {"
+        },
+        {
+          "n": 217,
+          "text": "      ev_free (epoll_events);"
+        },
+        {
+          "n": 218,
+          "text": "      epoll_eventmax = array_nextsize (sizeof (struct epoll_event), epoll_eventmax, epoll_eventmax + 1);"
+        },
+        {
+          "n": 219,
+          "text": "      epoll_events = (struct epoll_event *)ev_malloc (sizeof (struct epoll_event) * epoll_eventmax);"
+        },
+        {
+          "n": 220,
+          "text": "    }"
+        },
+        {
+          "n": 221,
+          "text": ""
+        },
+        {
+          "n": 222,
+          "text": "  /* now synthesize events for all fds where epoll fails, while select works... */"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 242,
+      "column": 16,
+      "match": "epoll_create1 (",
+      "context": [
+        {
+          "n": 239,
+          "text": "epoll_init (EV_P_ int flags)"
+        },
+        {
+          "n": 240,
+          "text": "{"
+        },
+        {
+          "n": 241,
+          "text": "#ifdef EPOLL_CLOEXEC"
+        },
+        {
+          "n": 242,
+          "text": "  backend_fd = epoll_create1 (EPOLL_CLOEXEC);"
+        },
+        {
+          "n": 243,
+          "text": ""
+        },
+        {
+          "n": 244,
+          "text": "  if (backend_fd < 0 && (errno == EINVAL || errno == ENOSYS))"
+        },
+        {
+          "n": 245,
+          "text": "#endif"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "other",
+      "guards": [
+        "#ifdef EPOLL_CLOEXEC"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 246,
+      "column": 18,
+      "match": "epoll_create (",
+      "context": [
+        {
+          "n": 243,
+          "text": ""
+        },
+        {
+          "n": 244,
+          "text": "  if (backend_fd < 0 && (errno == EINVAL || errno == ENOSYS))"
+        },
+        {
+          "n": 245,
+          "text": "#endif"
+        },
+        {
+          "n": 246,
+          "text": "    backend_fd = epoll_create (256);"
+        },
+        {
+          "n": 247,
+          "text": ""
+        },
+        {
+          "n": 248,
+          "text": "  if (backend_fd < 0)"
+        },
+        {
+          "n": 249,
+          "text": "    return 0;"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 258,
+      "column": 19,
+      "match": "struct epoll_event",
+      "context": [
+        {
+          "n": 255,
+          "text": "  backend_poll    = epoll_poll;"
+        },
+        {
+          "n": 256,
+          "text": ""
+        },
+        {
+          "n": 257,
+          "text": "  epoll_eventmax = 64; /* initial number of events receivable per poll */"
+        },
+        {
+          "n": 258,
+          "text": "  epoll_events = (struct epoll_event *)ev_malloc (sizeof (struct epoll_event) * epoll_eventmax);"
+        },
+        {
+          "n": 259,
+          "text": ""
+        },
+        {
+          "n": 260,
+          "text": "  return EVBACKEND_EPOLL;"
+        },
+        {
+          "n": 261,
+          "text": "}"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 275,
+      "column": 24,
+      "match": "epoll_create (",
+      "context": [
+        {
+          "n": 272,
+          "text": "{"
+        },
+        {
+          "n": 273,
+          "text": "  close (backend_fd);"
+        },
+        {
+          "n": 274,
+          "text": ""
+        },
+        {
+          "n": 275,
+          "text": "  while ((backend_fd = epoll_create (256)) < 0)"
+        },
+        {
+          "n": 276,
+          "text": "    ev_syserr (\"(libev) epoll_create\");"
+        },
+        {
+          "n": 277,
+          "text": ""
+        },
+        {
+          "n": 278,
+          "text": "  fcntl (backend_fd, F_SETFD, FD_CLOEXEC);"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 36,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "ev_vars.h",
+      "line": 103,
+      "column": 6,
+      "match": "struct epoll_event",
+      "context": [
+        {
+          "n": 100,
+          "text": "#endif"
+        },
+        {
+          "n": 101,
+          "text": ""
+        },
+        {
+          "n": 102,
+          "text": "#if EV_USE_EPOLL || EV_GENWRAP"
+        },
+        {
+          "n": 103,
+          "text": "VARx(struct epoll_event *, epoll_events)"
+        },
+        {
+          "n": 104,
+          "text": "VARx(int, epoll_eventmax)"
+        },
+        {
+          "n": 105,
+          "text": "VARx(int *, epoll_eperms)"
+        },
+        {
+          "n": 106,
+          "text": "VARx(int, epoll_epermcnt)"
+        }
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "effort": 120,
+      "guard": "other",
+      "guards": [
+        "#if EV_USE_EPOLL || EV_GENWRAP"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-SYS-LINUX",
+      "title": "Includes a Linux-specific <sys/...> header",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 424,
+      "column": 1,
+      "match": "# include <sys/inotify.h>",
+      "context": [
+        {
+          "n": 421,
+          "text": ""
+        },
+        {
+          "n": 422,
+          "text": "#if EV_USE_INOTIFY"
+        },
+        {
+          "n": 423,
+          "text": "# include <sys/statfs.h>"
+        },
+        {
+          "n": 424,
+          "text": "# include <sys/inotify.h>"
+        },
+        {
+          "n": 425,
+          "text": "/* some very old inotify.h headers don't have IN_DONT_FOLLOW */"
+        },
+        {
+          "n": 426,
+          "text": "# ifndef IN_DONT_FOLLOW"
+        },
+        {
+          "n": 427,
+          "text": "#  undef EV_USE_INOTIFY"
+        }
+      ],
+      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP.",
+      "remedy": "Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.",
+      "verify": "verify against SDP: grep $QNX_TARGET/usr/include for the header.",
+      "effort": 30,
+      "guard": "other",
+      "guards": [
+        "#if EV_USE_INOTIFY"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-EVENTFD",
+      "title": "eventfd",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 436,
+      "column": 11,
+      "match": "EFD_NONBLOCK",
+      "context": [
+        {
+          "n": 433,
+          "text": "/* our minimum requirement is glibc 2.7 which has the stub, but not the header */"
+        },
+        {
+          "n": 434,
+          "text": "# include <stdint.h>"
+        },
+        {
+          "n": 435,
+          "text": "# ifndef EFD_NONBLOCK"
+        },
+        {
+          "n": 436,
+          "text": "#  define EFD_NONBLOCK O_NONBLOCK"
+        },
+        {
+          "n": 437,
+          "text": "# endif"
+        },
+        {
+          "n": 438,
+          "text": "# ifndef EFD_CLOEXEC"
+        },
+        {
+          "n": 439,
+          "text": "#  ifdef O_CLOEXEC"
+        }
+      ],
+      "message": "eventfd is a Linux file-descriptor wake-up primitive.",
+      "remedy": "Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.",
+      "verify": "verify against SDP whether eventfd is provided in 8.0.",
+      "effort": 45,
+      "guard": "other",
+      "guards": [
+        "#if EV_USE_EVENTFD",
+        "#ifndef EFD_NONBLOCK"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-EVENTFD",
+      "title": "eventfd",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 440,
+      "column": 12,
+      "match": "EFD_CLOEXEC",
+      "context": [
+        {
+          "n": 437,
+          "text": "# endif"
+        },
+        {
+          "n": 438,
+          "text": "# ifndef EFD_CLOEXEC"
+        },
+        {
+          "n": 439,
+          "text": "#  ifdef O_CLOEXEC"
+        },
+        {
+          "n": 440,
+          "text": "#   define EFD_CLOEXEC O_CLOEXEC"
+        },
+        {
+          "n": 441,
+          "text": "#  else"
+        },
+        {
+          "n": 442,
+          "text": "#   define EFD_CLOEXEC 02000000"
+        },
+        {
+          "n": 443,
+          "text": "#  endif"
+        }
+      ],
+      "message": "eventfd is a Linux file-descriptor wake-up primitive.",
+      "remedy": "Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.",
+      "verify": "verify against SDP whether eventfd is provided in 8.0.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#if EV_USE_EVENTFD",
+        "#ifndef EFD_CLOEXEC",
+        "#ifdef O_CLOEXEC"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-EVENTFD",
+      "title": "eventfd",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 442,
+      "column": 12,
+      "match": "EFD_CLOEXEC",
+      "context": [
+        {
+          "n": 439,
+          "text": "#  ifdef O_CLOEXEC"
+        },
+        {
+          "n": 440,
+          "text": "#   define EFD_CLOEXEC O_CLOEXEC"
+        },
+        {
+          "n": 441,
+          "text": "#  else"
+        },
+        {
+          "n": 442,
+          "text": "#   define EFD_CLOEXEC 02000000"
+        },
+        {
+          "n": 443,
+          "text": "#  endif"
+        },
+        {
+          "n": 444,
+          "text": "# endif"
+        },
+        {
+          "n": 445,
+          "text": "EV_CPP(extern \"C\") int (eventfd) (unsigned int initval, int flags);"
+        }
+      ],
+      "message": "eventfd is a Linux file-descriptor wake-up primitive.",
+      "remedy": "Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.",
+      "verify": "verify against SDP whether eventfd is provided in 8.0.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#if EV_USE_EVENTFD",
+        "#ifndef EFD_CLOEXEC",
+        "#ifdef O_CLOEXEC (#else)"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SIGNALFD",
+      "title": "signalfd",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 461,
+      "column": 25,
+      "match": "signalfd (",
+      "context": [
+        {
+          "n": 458,
+          "text": "#   define SFD_CLOEXEC 02000000"
+        },
+        {
+          "n": 459,
+          "text": "#  endif"
+        },
+        {
+          "n": 460,
+          "text": "# endif"
+        },
+        {
+          "n": 461,
+          "text": "EV_CPP (extern \"C\") int signalfd (int fd, const sigset_t *mask, int flags);"
+        },
+        {
+          "n": 462,
+          "text": ""
+        },
+        {
+          "n": 463,
+          "text": "struct signalfd_siginfo"
+        },
+        {
+          "n": 464,
+          "text": "{"
+        }
+      ],
+      "message": "signalfd turns signals into a readable fd; Linux-only.",
+      "remedy": "Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse.",
+      "verify": "verify against SDP.",
+      "effort": 90,
+      "guard": "other",
+      "guards": [
+        "#if EV_USE_SIGNALFD"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SIGNALFD",
+      "title": "signalfd",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 463,
+      "column": 1,
+      "match": "struct signalfd_siginfo",
+      "context": [
+        {
+          "n": 460,
+          "text": "# endif"
+        },
+        {
+          "n": 461,
+          "text": "EV_CPP (extern \"C\") int signalfd (int fd, const sigset_t *mask, int flags);"
+        },
+        {
+          "n": 462,
+          "text": ""
+        },
+        {
+          "n": 463,
+          "text": "struct signalfd_siginfo"
+        },
+        {
+          "n": 464,
+          "text": "{"
+        },
+        {
+          "n": 465,
+          "text": "  uint32_t ssi_signo;"
+        },
+        {
+          "n": 466,
+          "text": "  char pad[128 - sizeof (uint32_t)];"
+        }
+      ],
+      "message": "signalfd turns signals into a readable fd; Linux-only.",
+      "remedy": "Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse.",
+      "verify": "verify against SDP.",
+      "effort": 27,
+      "guard": "other",
+      "guards": [
+        "#if EV_USE_SIGNALFD"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-EVENTFD",
+      "title": "eventfd",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 2390,
+      "column": 17,
+      "match": "eventfd (",
+      "context": [
+        {
+          "n": 2387,
+          "text": ""
+        },
+        {
+          "n": 2388,
+          "text": "# if EV_USE_EVENTFD"
+        },
+        {
+          "n": 2389,
+          "text": "      fds [0] = -1;"
+        },
+        {
+          "n": 2390,
+          "text": "      fds [1] = eventfd (0, EFD_NONBLOCK | EFD_CLOEXEC);"
+        },
+        {
+          "n": 2391,
+          "text": "      if (fds [1] < 0 && errno == EINVAL)"
+        },
+        {
+          "n": 2392,
+          "text": "        fds [1] = eventfd (0, 0);"
+        },
+        {
+          "n": 2393,
+          "text": ""
+        }
+      ],
+      "message": "eventfd is a Linux file-descriptor wake-up primitive.",
+      "remedy": "Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.",
+      "verify": "verify against SDP whether eventfd is provided in 8.0.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#if EV_SIGNAL_ENABLE || EV_ASYNC_ENABLE",
+        "#if EV_USE_EVENTFD"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-EVENTFD",
+      "title": "eventfd",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 2392,
+      "column": 19,
+      "match": "eventfd (",
+      "context": [
+        {
+          "n": 2389,
+          "text": "      fds [0] = -1;"
+        },
+        {
+          "n": 2390,
+          "text": "      fds [1] = eventfd (0, EFD_NONBLOCK | EFD_CLOEXEC);"
+        },
+        {
+          "n": 2391,
+          "text": "      if (fds [1] < 0 && errno == EINVAL)"
+        },
+        {
+          "n": 2392,
+          "text": "        fds [1] = eventfd (0, 0);"
+        },
+        {
+          "n": 2393,
+          "text": ""
+        },
+        {
+          "n": 2394,
+          "text": "      if (fds [1] < 0)"
+        },
+        {
+          "n": 2395,
+          "text": "# endif"
+        }
+      ],
+      "message": "eventfd is a Linux file-descriptor wake-up primitive.",
+      "remedy": "Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.",
+      "verify": "verify against SDP whether eventfd is provided in 8.0.",
+      "effort": 14,
+      "guard": "other",
+      "guards": [
+        "#if EV_SIGNAL_ENABLE || EV_ASYNC_ENABLE",
+        "#if EV_USE_EVENTFD"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SIGNALFD",
+      "title": "signalfd",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 2598,
+      "column": 3,
+      "match": "struct signalfd_siginfo",
+      "context": [
+        {
+          "n": 2595,
+          "text": "static void"
+        },
+        {
+          "n": 2596,
+          "text": "sigfdcb (EV_P_ ev_io *iow, int revents)"
+        },
+        {
+          "n": 2597,
+          "text": "{"
+        },
+        {
+          "n": 2598,
+          "text": "  struct signalfd_siginfo si[2], *sip; /* these structs are big */"
+        },
+        {
+          "n": 2599,
+          "text": ""
+        },
+        {
+          "n": 2600,
+          "text": "  for (;;)"
+        },
+        {
+          "n": 2601,
+          "text": "    {"
+        }
+      ],
+      "message": "signalfd turns signals into a readable fd; Linux-only.",
+      "remedy": "Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse.",
+      "verify": "verify against SDP.",
+      "effort": 27,
+      "guard": "other",
+      "guards": [
+        "#if EV_SIGNAL_ENABLE || EV_ASYNC_ENABLE",
+        "#if EV_USE_SIGNALFD"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SIGNALFD",
+      "title": "signalfd",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4055,
+      "column": 15,
+      "match": "signalfd (",
+      "context": [
+        {
+          "n": 4052,
+          "text": "#if EV_USE_SIGNALFD"
+        },
+        {
+          "n": 4053,
+          "text": "  if (sigfd == -2)"
+        },
+        {
+          "n": 4054,
+          "text": "    {"
+        },
+        {
+          "n": 4055,
+          "text": "      sigfd = signalfd (-1, &sigfd_set, SFD_NONBLOCK | SFD_CLOEXEC);"
+        },
+        {
+          "n": 4056,
+          "text": "      if (sigfd < 0 && errno == EINVAL)"
+        },
+        {
+          "n": 4057,
+          "text": "        sigfd = signalfd (-1, &sigfd_set, 0); /* retry without flags */"
+        },
+        {
+          "n": 4058,
+          "text": ""
+        }
+      ],
+      "message": "signalfd turns signals into a readable fd; Linux-only.",
+      "remedy": "Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse.",
+      "verify": "verify against SDP.",
+      "effort": 27,
+      "guard": "other",
+      "guards": [
+        "#if EV_SIGNAL_ENABLE",
+        "#if EV_USE_SIGNALFD"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SIGNALFD",
+      "title": "signalfd",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4057,
+      "column": 17,
+      "match": "signalfd (",
+      "context": [
+        {
+          "n": 4054,
+          "text": "    {"
+        },
+        {
+          "n": 4055,
+          "text": "      sigfd = signalfd (-1, &sigfd_set, SFD_NONBLOCK | SFD_CLOEXEC);"
+        },
+        {
+          "n": 4056,
+          "text": "      if (sigfd < 0 && errno == EINVAL)"
+        },
+        {
+          "n": 4057,
+          "text": "        sigfd = signalfd (-1, &sigfd_set, 0); /* retry without flags */"
+        },
+        {
+          "n": 4058,
+          "text": ""
+        },
+        {
+          "n": 4059,
+          "text": "      if (sigfd >= 0)"
+        },
+        {
+          "n": 4060,
+          "text": "        {"
+        }
+      ],
+      "message": "signalfd turns signals into a readable fd; Linux-only.",
+      "remedy": "Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse.",
+      "verify": "verify against SDP.",
+      "effort": 27,
+      "guard": "other",
+      "guards": [
+        "#if EV_SIGNAL_ENABLE",
+        "#if EV_USE_SIGNALFD"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SIGNALFD",
+      "title": "signalfd",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4078,
+      "column": 7,
+      "match": "signalfd (",
+      "context": [
+        {
+          "n": 4075,
+          "text": "      sigaddset (&sigfd_set, w->signum);"
+        },
+        {
+          "n": 4076,
+          "text": "      sigprocmask (SIG_BLOCK, &sigfd_set, 0);"
+        },
+        {
+          "n": 4077,
+          "text": ""
+        },
+        {
+          "n": 4078,
+          "text": "      signalfd (sigfd, &sigfd_set, 0);"
+        },
+        {
+          "n": 4079,
+          "text": "    }"
+        },
+        {
+          "n": 4080,
+          "text": "#endif"
+        },
+        {
+          "n": 4081,
+          "text": ""
+        }
+      ],
+      "message": "signalfd turns signals into a readable fd; Linux-only.",
+      "remedy": "Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse.",
+      "verify": "verify against SDP.",
+      "effort": 27,
+      "guard": "other",
+      "guards": [
+        "#if EV_SIGNAL_ENABLE",
+        "#if EV_USE_SIGNALFD"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SIGNALFD",
+      "title": "signalfd",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "ev.c",
+      "line": 4142,
+      "column": 11,
+      "match": "signalfd (",
+      "context": [
+        {
+          "n": 4139,
+          "text": "          sigaddset (&ss, w->signum);"
+        },
+        {
+          "n": 4140,
+          "text": "          sigdelset (&sigfd_set, w->signum);"
+        },
+        {
+          "n": 4141,
+          "text": ""
+        },
+        {
+          "n": 4142,
+          "text": "          signalfd (sigfd, &sigfd_set, 0);"
+        },
+        {
+          "n": 4143,
+          "text": "          sigprocmask (SIG_UNBLOCK, &ss, 0);"
+        },
+        {
+          "n": 4144,
+          "text": "        }"
+        },
+        {
+          "n": 4145,
+          "text": "      else"
+        }
+      ],
+      "message": "signalfd turns signals into a readable fd; Linux-only.",
+      "remedy": "Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse.",
+      "verify": "verify against SDP.",
+      "effort": 27,
+      "guard": "other",
+      "guards": [
+        "#if EV_SIGNAL_ENABLE",
+        "#if EV_USE_SIGNALFD"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-SYS-LINUX",
+      "title": "Includes a Linux-specific <sys/...> header",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "ev_epoll.c",
+      "line": 66,
+      "column": 1,
+      "match": "#include <sys/epoll.h>",
+      "context": [
+        {
+          "n": 63,
+          "text": " * file descriptors."
+        },
+        {
+          "n": 64,
+          "text": " */"
+        },
+        {
+          "n": 65,
+          "text": ""
+        },
+        {
+          "n": 66,
+          "text": "#include <sys/epoll.h>"
+        },
+        {
+          "n": 67,
+          "text": ""
+        },
+        {
+          "n": 68,
+          "text": "#define EV_EMASK_EPERM 0x80"
+        },
+        {
+          "n": 69,
+          "text": ""
+        }
+      ],
+      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP.",
+      "remedy": "Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.",
+      "verify": "verify against SDP: grep $QNX_TARGET/usr/include for the header.",
+      "effort": 30,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-AUTOCONF-HOST",
+      "title": "Autotools project with no QNX host support",
+      "category": "build",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "configure.ac",
+      "line": 1,
+      "column": 1,
+      "match": "(project-level)",
+      "context": [],
+      "message": "No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet.",
+      "remedy": "Refresh config.sub/config.guess (autoreconf -fi or copy from a current automake), then configure with --host=<cpu>-unknown-nto-qnx<version> and CC set to qcc.",
+      "verify": "verify against SDP: exact host triplet format for 8.0.",
+      "effort": 30,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "file": "ev.c",
+      "line": 254,
+      "column": 1,
+      "match": "# if __linux",
+      "context": [
+        {
+          "n": 251,
+          "text": "#endif"
+        },
+        {
+          "n": 252,
+          "text": ""
+        },
+        {
+          "n": 253,
+          "text": "#ifndef EV_USE_CLOCK_SYSCALL"
+        },
+        {
+          "n": 254,
+          "text": "# if __linux && __GLIBC__ == 2 && __GLIBC_MINOR__ < 17"
+        },
+        {
+          "n": 255,
+          "text": "#  define EV_USE_CLOCK_SYSCALL EV_FEATURE_OS"
+        },
+        {
+          "n": 256,
+          "text": "# else"
+        },
+        {
+          "n": 257,
+          "text": "#  define EV_USE_CLOCK_SYSCALL 0"
+        }
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "effort": 10,
+      "guard": "other",
+      "guards": [
+        "#ifndef EV_USE_CLOCK_SYSCALL"
+      ]
+    },
+    {
+      "ruleId": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "file": "ev.c",
+      "line": 303,
+      "column": 1,
+      "match": "# if __linux",
+      "context": [
+        {
+          "n": 300,
+          "text": "#endif"
+        },
+        {
+          "n": 301,
+          "text": ""
+        },
+        {
+          "n": 302,
+          "text": "#ifndef EV_USE_EPOLL"
+        },
+        {
+          "n": 303,
+          "text": "# if __linux && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 4))"
+        },
+        {
+          "n": 304,
+          "text": "#  define EV_USE_EPOLL EV_FEATURE_BACKENDS"
+        },
+        {
+          "n": 305,
+          "text": "# else"
+        },
+        {
+          "n": 306,
+          "text": "#  define EV_USE_EPOLL 0"
+        }
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "effort": 3,
+      "guard": "other",
+      "guards": [
+        "#ifndef EV_USE_EPOLL"
+      ]
+    },
+    {
+      "ruleId": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "file": "ev.c",
+      "line": 319,
+      "column": 1,
+      "match": "# if __linux",
+      "context": [
+        {
+          "n": 316,
+          "text": "#endif"
+        },
+        {
+          "n": 317,
+          "text": ""
+        },
+        {
+          "n": 318,
+          "text": "#ifndef EV_USE_INOTIFY"
+        },
+        {
+          "n": 319,
+          "text": "# if __linux && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 4))"
+        },
+        {
+          "n": 320,
+          "text": "#  define EV_USE_INOTIFY EV_FEATURE_OS"
+        },
+        {
+          "n": 321,
+          "text": "# else"
+        },
+        {
+          "n": 322,
+          "text": "#  define EV_USE_INOTIFY 0"
+        }
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "effort": 3,
+      "guard": "other",
+      "guards": [
+        "#ifndef EV_USE_INOTIFY"
+      ]
+    },
+    {
+      "ruleId": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "file": "ev.c",
+      "line": 335,
+      "column": 1,
+      "match": "# if __linux",
+      "context": [
+        {
+          "n": 332,
+          "text": "#endif"
+        },
+        {
+          "n": 333,
+          "text": ""
+        },
+        {
+          "n": 334,
+          "text": "#ifndef EV_USE_EVENTFD"
+        },
+        {
+          "n": 335,
+          "text": "# if __linux && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 7))"
+        },
+        {
+          "n": 336,
+          "text": "#  define EV_USE_EVENTFD EV_FEATURE_OS"
+        },
+        {
+          "n": 337,
+          "text": "# else"
+        },
+        {
+          "n": 338,
+          "text": "#  define EV_USE_EVENTFD 0"
+        }
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "effort": 3,
+      "guard": "other",
+      "guards": [
+        "#ifndef EV_USE_EVENTFD"
+      ]
+    },
+    {
+      "ruleId": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "file": "ev.c",
+      "line": 343,
+      "column": 1,
+      "match": "# if __linux",
+      "context": [
+        {
+          "n": 340,
+          "text": "#endif"
+        },
+        {
+          "n": 341,
+          "text": ""
+        },
+        {
+          "n": 342,
+          "text": "#ifndef EV_USE_SIGNALFD"
+        },
+        {
+          "n": 343,
+          "text": "# if __linux && (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 7))"
+        },
+        {
+          "n": 344,
+          "text": "#  define EV_USE_SIGNALFD EV_FEATURE_OS"
+        },
+        {
+          "n": 345,
+          "text": "# else"
+        },
+        {
+          "n": 346,
+          "text": "#  define EV_USE_SIGNALFD 0"
+        }
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "effort": 3,
+      "guard": "other",
+      "guards": [
+        "#ifndef EV_USE_SIGNALFD"
+      ]
+    },
+    {
+      "ruleId": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "file": "ev.c",
+      "line": 1627,
+      "column": 1,
+      "match": "#ifdef __linux",
+      "context": [
+        {
+          "n": 1624,
+          "text": ""
+        },
+        {
+          "n": 1625,
+          "text": "/*****************************************************************************/"
+        },
+        {
+          "n": 1626,
+          "text": ""
+        },
+        {
+          "n": 1627,
+          "text": "#ifdef __linux"
+        },
+        {
+          "n": 1628,
+          "text": "# include <sys/utsname.h>"
+        },
+        {
+          "n": 1629,
+          "text": "#endif"
+        },
+        {
+          "n": 1630,
+          "text": ""
+        }
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "effort": 3,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "file": "ev.c",
+      "line": 1634,
+      "column": 1,
+      "match": "#ifdef __linux",
+      "context": [
+        {
+          "n": 1631,
+          "text": "static unsigned int noinline ecb_cold"
+        },
+        {
+          "n": 1632,
+          "text": "ev_linux_version (void)"
+        },
+        {
+          "n": 1633,
+          "text": "{"
+        },
+        {
+          "n": 1634,
+          "text": "#ifdef __linux"
+        },
+        {
+          "n": 1635,
+          "text": "  unsigned int v = 0;"
+        },
+        {
+          "n": 1636,
+          "text": "  struct utsname buf;"
+        },
+        {
+          "n": 1637,
+          "text": "  int i;"
+        }
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "effort": 3,
+      "guard": "none",
+      "guards": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "QNX-BLD-AUTOCONF-HOST",
+      "title": "Autotools project with no QNX host support",
+      "category": "build",
+      "severity": "info",
+      "confidence": "guess",
+      "remedy": "Refresh config.sub/config.guess (autoreconf -fi or copy from a current automake), then configure with --host=<cpu>-unknown-nto-qnx<version> and CC set to qcc.",
+      "verify": "verify against SDP: exact host triplet format for 8.0.",
+      "message": "No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet."
+    },
+    {
+      "id": "QNX-HDR-SYS-LINUX",
+      "title": "Includes a Linux-specific <sys/...> header",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.",
+      "verify": "verify against SDP: grep $QNX_TARGET/usr/include for the header.",
+      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP."
+    },
+    {
+      "id": "QNX-API-EPOLL",
+      "title": "epoll event loop",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
+      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "refs": [
+        "QNX docs: ionotify()",
+        "QNX docs: SIGEV_PULSE_INIT()"
+      ],
+      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it."
+    },
+    {
+      "id": "QNX-API-INOTIFY",
+      "title": "inotify file watching",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool."
+    },
+    {
+      "id": "QNX-API-EVENTFD",
+      "title": "eventfd",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Use a pipe() or socketpair() pair when the consumer needs a pollable fd; use a pulse (MsgSendPulse / SIGEV_PULSE) when the consumer already sits in MsgReceive.",
+      "verify": "verify against SDP whether eventfd is provided in 8.0.",
+      "refs": [
+        "QNX docs: MsgSendPulse()"
+      ],
+      "message": "eventfd is a Linux file-descriptor wake-up primitive."
+    },
+    {
+      "id": "QNX-API-SIGNALFD",
+      "title": "signalfd",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Block the signals and consume them in a dedicated thread with sigwaitinfo(), forwarding to the event loop by pipe or pulse.",
+      "verify": "verify against SDP.",
+      "refs": [
+        "POSIX: sigwaitinfo()"
+      ],
+      "message": "signalfd turns signals into a readable fd; Linux-only."
+    },
+    {
+      "id": "QNX-API-SYSCALL",
+      "title": "Raw Linux syscall()",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
+      "verify": "verify against SDP.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX."
+    },
+    {
+      "id": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "refs": [
+        "QNX docs: Predefined macros (__QNX__, __QNXNTO__)"
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__)."
+    }
+  ]
+}

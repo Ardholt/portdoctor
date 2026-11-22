@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PortDoctor report: iperf</title>
+<meta name="color-scheme" content="light dark">
+<style>
+:root{--bg:#f4f6f9;--surface:#ffffff;--surface2:#eef1f6;--text:#14181f;--muted:#566071;--border:#d5dae3;--accent:#0a58c9;--heat:#d9480f;
+--blocker:#a8200f;--blocker-bg:#fde6e3;--major:#9a3f00;--major-bg:#fdecd3;--minor:#17559e;--minor-bg:#e1eefc;--info:#41495a;--info-bg:#e9ecf1;--hl:#fff3bf;--code:#f6f8fa;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1218;--surface:#161b23;--surface2:#1d2430;--text:#e7eaf0;--muted:#9aa4b5;--border:#2b3342;--accent:#79afff;--heat:#ff7a3d;
+--blocker:#ff9a8f;--blocker-bg:#3d1a17;--major:#ffbb6b;--major-bg:#3b2a12;--minor:#86bcff;--minor-bg:#14283f;--info:#b2bac8;--info-bg:#232b37;--hl:#4a3f10;--code:#10151c;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#0e1218;--surface:#161b23;--surface2:#1d2430;--text:#e7eaf0;--muted:#9aa4b5;--border:#2b3342;--accent:#79afff;--heat:#ff7a3d;
+--blocker:#ff9a8f;--blocker-bg:#3d1a17;--major:#ffbb6b;--major-bg:#3b2a12;--minor:#86bcff;--minor-bg:#14283f;--info:#b2bac8;--info-bg:#232b37;--hl:#4a3f10;--code:#10151c;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:9rem}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:4px}
+.skip{position:absolute;left:-999px;top:0;background:var(--accent);color:#fff;padding:.5rem 1rem;z-index:50}
+.skip:focus{left:0}
+header.top{padding:1.5rem clamp(1rem,4vw,3rem) 1rem;border-bottom:1px solid var(--border);background:var(--surface)}
+header.top h1{margin:0;font-size:1.6rem;letter-spacing:-.01em}
+header.top h1 span{color:var(--muted);font-weight:400}
+.sub{color:var(--muted);margin:.25rem 0 0}
+.banner{margin:1rem 0 0;padding:.7rem 1rem;border-left:4px solid var(--major);background:var(--major-bg);color:var(--text);border-radius:6px;font-size:.92rem}
+main{padding:1.25rem clamp(1rem,4vw,3rem) 4rem;max-width:1200px;margin:0 auto}
+h2{font-size:1.15rem;margin:2rem 0 .75rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem}
+.card .n{font-size:1.8rem;font-weight:700;line-height:1.1}
+.card .l{color:var(--muted);font-size:.85rem}
+.card.sev-blocker .n{color:var(--blocker)}.card.sev-major .n{color:var(--major)}.card.sev-minor .n{color:var(--minor)}.card.sev-info .n{color:var(--info)}
+.heat{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:.5rem;padding:0;margin:0;list-style:none}
+.tile{width:100%;text-align:left;font:inherit;color:var(--text);cursor:pointer;border:1px solid var(--border);border-radius:8px;padding:.55rem .7rem;
+ background:color-mix(in srgb,var(--heat) calc(var(--i) * 1%),var(--surface));min-height:4.2rem;display:block}
+.tile:hover{border-color:var(--heat)}
+.tile[aria-pressed=true]{outline:3px solid var(--accent);outline-offset:1px}
+.tile .d{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;word-break:break-all;display:block}
+.tile .m{font-size:.8rem;color:var(--text);opacity:.85;display:block;margin-top:.2rem}
+.legend{display:flex;gap:.6rem;align-items:center;color:var(--muted);font-size:.82rem;margin:.5rem 0 0}
+.legend i{display:inline-block;width:5rem;height:.6rem;border-radius:3px;border:1px solid var(--border);background:linear-gradient(90deg,var(--surface),color-mix(in srgb,var(--heat) 55%,var(--surface)))}
+.bar{position:sticky;top:0;z-index:20;background:var(--bg);padding:.7rem 0;border-bottom:1px solid var(--border);display:none;gap:.5rem;flex-wrap:wrap;align-items:center}
+.js .bar{display:flex}
+.bar input[type=search],.bar select{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:.4rem .6rem}
+.bar input[type=search]{min-width:15rem;flex:1}
+.chip,.btn{font:inherit;cursor:pointer;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:.3rem .8rem}
+.btn{border-radius:8px}
+.chip[aria-pressed=true]{background:var(--surface2);border-color:var(--accent);font-weight:600}
+.chip[aria-pressed=false]{opacity:.65}
+#count{color:var(--muted);font-size:.88rem;margin-left:auto}
+details.file{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin:.6rem 0}
+details.file>summary{cursor:pointer;padding:.65rem .9rem;list-style:none;display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+details.file>summary::-webkit-details-marker{display:none}
+details.file>summary::before{content:"\25B8";color:var(--muted)}
+details.file[open]>summary::before{content:"\25BE"}
+.path{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.9rem;word-break:break-all}
+.meta{color:var(--muted);font-size:.82rem}
+.finding{border-top:1px solid var(--border);padding:.8rem .9rem}
+.finding:focus{outline:3px solid var(--accent);outline-offset:-3px}
+.finding h3{margin:0 0 .3rem;font-size:1rem;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.badge{font-size:.74rem;font-weight:700;border-radius:5px;padding:.05rem .45rem;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.b-blocker{color:var(--blocker);background:var(--blocker-bg)}.b-major{color:var(--major);background:var(--major-bg)}
+.b-minor{color:var(--minor);background:var(--minor-bg)}.b-info{color:var(--info);background:var(--info-bg)}
+.b-guess{color:var(--major);border:1px dashed var(--major);text-transform:none}
+.b-known{color:var(--muted);border:1px solid var(--border);text-transform:none}
+.loc{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;color:var(--muted)}
+pre.code{margin:.5rem 0;padding:.4rem 0;background:var(--code);border:1px solid var(--border);border-radius:8px;overflow:auto;font:.82rem/1.45 ui-monospace,Menlo,Consolas,monospace}
+pre.code .ln{display:block;padding:0 .8rem;white-space:pre}
+pre.code .ln b{display:inline-block;width:3.2em;color:var(--muted);font-weight:400;user-select:none}
+pre.code .hit{background:var(--hl);box-shadow:inset 3px 0 0 var(--major)}
+.remedy{margin:.4rem 0;padding:.5rem .75rem;border-left:3px solid var(--accent);background:var(--surface2);border-radius:0 6px 6px 0}
+.remedy strong{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.verify{color:var(--major);font-size:.88rem;margin:.3rem 0}
+.note{color:var(--muted);font-size:.85rem}
+section.rule{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem;margin:.6rem 0}
+section.rule h3{margin:0 0 .3rem;font-size:1rem}
+section.rule:target{outline:3px solid var(--accent)}
+.empty{padding:2rem;text-align:center;color:var(--muted)}
+.js .empty{display:none}.js .empty.show{display:block}
+dialog{border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);max-width:30rem}
+dialog::backdrop{background:#0008}
+kbd{font:.8rem ui-monospace,Menlo,monospace;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:0 .35rem}
+footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media print{.bar,.skip,#themebtn,#helpbtn{display:none!important}details.file>*{display:block!important}}
+@media (prefers-reduced-motion:no-preference){.tile,.chip{transition:border-color .15s,background .15s}}
+</style></head>
+<body>
+<a class="skip" href="#findings">Skip to findings</a>
+<header class="top">
+<h1>PortDoctor <span>QNX 8.0 porting report for</span> iperf</h1>
+<p class="sub">portdoctor 0.1.0 &middot; 48 files scanned (4 make, 1 autoconf, 43 c) &middot; 55 rules</p>
+<p class="banner" role="note"><strong>Static analysis only.</strong> PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked &#39;guess&#39; are unverified claims about QNX 8.0 and must be checked against the SDP. Effort figures are rule-based heuristics, not measurements.</p>
+<p style="margin:.7rem 0 0"><button class="btn" id="themebtn" type="button" aria-label="Toggle light and dark theme">Theme (t)</button> <button class="btn" id="helpbtn" type="button">Keyboard shortcuts (?)</button></p>
+</header>
+<main id="main">
+<h2>Summary</h2>
+<div class="cards" role="list">
+<div class="card sev-blocker" role="listitem"><div class="n">6</div><div class="l"><span aria-hidden="true">■</span> blocker: Likely will not build or has no direct QNX equivalent</div></div>
+<div class="card sev-major" role="listitem"><div class="n">21</div><div class="l"><span aria-hidden="true">▲</span> major: Needs a semantic change to port</div></div>
+<div class="card sev-minor" role="listitem"><div class="n">10</div><div class="l"><span aria-hidden="true">●</span> minor: Small mechanical change</div></div>
+<div class="card sev-info" role="listitem"><div class="n">1</div><div class="l"><span aria-hidden="true">○</span> info: Worth checking, probably fine</div></div>
+<div class="card" role="listitem"><div class="n">14.6 h</div><div class="l">estimated porting effort (heuristic)</div></div>
+<div class="card" role="listitem"><div class="n">6/38</div><div class="l">findings from rules marked <em>known</em>; the rest are <em>guess</em></div></div>
+<div class="card" role="listitem"><div class="n">0</div><div class="l">matches suppressed inside <code>#if __QNXNTO__</code> branches</div></div>
+</div>
+<h2>Where the work is <span class="meta">(by file, few directories)</span></h2>
+<ul class="heat"><li><button type="button" class="tile" style="--i:55" data-dir="src/net.c" aria-pressed="false" aria-label="File src/net.c: 7 findings, 3.5 h. Press to filter.">
+<span class="d">src/net.c</span><span class="m">7 findings &middot; 3.5 h</span><span class="m">■1 ▲4 ●2 </span></button></li><li><button type="button" class="tile" style="--i:52" data-dir="src/iperf_api.c" aria-pressed="false" aria-label="File src/iperf_api.c: 12 findings, 3.3 h. Press to filter.">
+<span class="d">src/iperf_api.c</span><span class="m">12 findings &middot; 3.3 h</span><span class="m">▲12 </span></button></li><li><button type="button" class="tile" style="--i:30" data-dir="src/main.c" aria-pressed="false" aria-label="File src/main.c: 5 findings, 1.7 h. Press to filter.">
+<span class="d">src/main.c</span><span class="m">5 findings &middot; 1.7 h</span><span class="m">▲5 </span></button></li><li><button type="button" class="tile" style="--i:29" data-dir="src/flowlabel.h" aria-pressed="false" aria-label="File src/flowlabel.h: 3 findings, 1.6 h. Press to filter.">
+<span class="d">src/flowlabel.h</span><span class="m">3 findings &middot; 1.6 h</span><span class="m">■3 </span></button></li><li><button type="button" class="tile" style="--i:26" data-dir="src/iperf.h" aria-pressed="false" aria-label="File src/iperf.h: 2 findings, 1.3 h. Press to filter.">
+<span class="d">src/iperf.h</span><span class="m">2 findings &middot; 1.3 h</span><span class="m">■1 ●1 </span></button></li><li><button type="button" class="tile" style="--i:21" data-dir="src/iperf_udp.c" aria-pressed="false" aria-label="File src/iperf_udp.c: 1 findings, 1.0 h. Press to filter.">
+<span class="d">src/iperf_udp.c</span><span class="m">1 findings &middot; 1.0 h</span><span class="m">■1 </span></button></li><li><button type="button" class="tile" style="--i:15" data-dir="src/tcp_info.c" aria-pressed="false" aria-label="File src/tcp_info.c: 3 findings, 32 min. Press to filter.">
+<span class="d">src/tcp_info.c</span><span class="m">3 findings &middot; 32 min</span><span class="m">●3 </span></button></li><li><button type="button" class="tile" style="--i:15" data-dir="configure.ac" aria-pressed="false" aria-label="File configure.ac: 1 findings, 30 min. Press to filter.">
+<span class="d">configure.ac</span><span class="m">1 findings &middot; 30 min</span><span class="m">○1</span></button></li><li><button type="button" class="tile" style="--i:14" data-dir="src/iperf_server_api.c" aria-pressed="false" aria-label="File src/iperf_server_api.c: 2 findings, 26 min. Press to filter.">
+<span class="d">src/iperf_server_api.c</span><span class="m">2 findings &middot; 26 min</span><span class="m">●2 </span></button></li><li><button type="button" class="tile" style="--i:12" data-dir="src/iperf_client_api.c" aria-pressed="false" aria-label="File src/iperf_client_api.c: 1 findings, 20 min. Press to filter.">
+<span class="d">src/iperf_client_api.c</span><span class="m">1 findings &middot; 20 min</span><span class="m">●1 </span></button></li><li><button type="button" class="tile" style="--i:12" data-dir="src/iperf_tcp.c" aria-pressed="false" aria-label="File src/iperf_tcp.c: 1 findings, 20 min. Press to filter.">
+<span class="d">src/iperf_tcp.c</span><span class="m">1 findings &middot; 20 min</span><span class="m">●1 </span></button></li></ul><p class="legend"><span>less effort</span><i></i><span>more effort (colour is relative to the busiest directory; counts and effort are in the text)</span></p>
+<h2 id="findings">Findings</h2>
+<div class="bar" role="search" aria-label="Filter findings">
+<input id="q" type="search" placeholder="Search file, rule, text ( / )" aria-label="Search findings">
+<button type="button" class="chip" data-sevbtn="blocker" aria-pressed="true" title="Toggle blocker (1)"><span aria-hidden="true">■</span> blocker <span class="sr">toggle</span>(6)</button>
+<button type="button" class="chip" data-sevbtn="major" aria-pressed="true" title="Toggle major (2)"><span aria-hidden="true">▲</span> major <span class="sr">toggle</span>(21)</button>
+<button type="button" class="chip" data-sevbtn="minor" aria-pressed="true" title="Toggle minor (3)"><span aria-hidden="true">●</span> minor <span class="sr">toggle</span>(10)</button>
+<button type="button" class="chip" data-sevbtn="info" aria-pressed="true" title="Toggle info (4)"><span aria-hidden="true">○</span> info <span class="sr">toggle</span>(1)</button>
+<label class="note">Confidence <select id="conf" aria-label="Confidence filter"><option value="all">all</option><option value="known">known</option><option value="guess">guess</option></select></label>
+<label class="note"><input type="checkbox" id="guard" checked> include Linux-guarded</label>
+<button class="btn" id="expand" type="button">Collapse all</button>
+<button class="btn" id="clear" type="button">Reset filters</button>
+<span id="count" role="status" aria-live="polite">38 findings</span>
+</div>
+<details class="file" open><summary><span class="path">src/net.c</span>
+<span class="meta"><span class="vis">7</span>/7 findings &middot; 3.5 h</span></summary>
+<article class="finding" id="f-5" tabindex="-1" data-sev="blocker" data-conf="known" data-file="src/net.c" data-guard="other" data-text="qnx-hdr-linux-dir includes a linux kernel header src/net.c #include &lt;linux/udp.h&gt; &lt;linux/...&gt; and &lt;asm/...&gt; are linux kernel uapi headers; qnx is not linux and its sdp does not provide them." aria-labelledby="f-5-t">
+<h3 id="f-5-t"><span class="badge b-blocker" title="Likely will not build or has no direct QNX equivalent"><span aria-hidden="true">■</span> blocker</span>
+<span>Includes a Linux kernel header</span>
+<span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
+<span class="loc">src/net.c:42</span></h3>
+<p>&lt;linux/...&gt; and &lt;asm/...&gt; are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.</p><pre class="code" tabindex="0" aria-label="Code context for src/net.c line 42"><span class="ln"><b>39</b>#include &lt;fcntl.h&gt;</span><span class="ln"><b>40</b>#include &lt;limits.h&gt;</span><span class="ln"><b>41</b>#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)</span><span class="ln hit"><b>42</b>#include &lt;linux/udp.h&gt;</span><span class="ln"><b>43</b>#endif</span><span class="ln"><b>44</b> </span><span class="ln"><b>45</b>#ifdef HAVE_SENDFILE</span></pre>
+<div class="remedy"><strong>Remedy</strong>Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead. <a href="#rule-QNX-HDR-LINUX-DIR">Rule QNX-HDR-LINUX-DIR</a></div>
+<p class="note">Inside conditional(s): <code>#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 1.0 h (heuristic)</p>
+</article>
+<article class="finding" id="f-23" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/net.c" data-guard="other" data-text="qnx-hdr-sys-linux includes a linux-specific &lt;sys/...&gt; header src/net.c #include &lt;sys/sendfile.h&gt; this glibc/linux &lt;sys/...&gt; header is believed to be absent from the qnx 8.0 sdp." aria-labelledby="f-23-t">
+<h3 id="f-23-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>Includes a Linux-specific &lt;sys/...&gt; header</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/net.c:47</span></h3>
+<p>This glibc/Linux &lt;sys/...&gt; header is believed to be absent from the QNX 8.0 SDP.</p><pre class="code" tabindex="0" aria-label="Code context for src/net.c line 47"><span class="ln"><b>44</b> </span><span class="ln"><b>45</b>#ifdef HAVE_SENDFILE</span><span class="ln"><b>46</b>#if defined(linux) || defined(__sun)</span><span class="ln hit"><b>47</b>#include &lt;sys/sendfile.h&gt;</span><span class="ln"><b>48</b>#else</span><span class="ln"><b>49</b>#ifdef __FreeBSD__</span><span class="ln"><b>50</b>#include &lt;sys/uio.h&gt;</span></pre>
+<div class="remedy"><strong>Remedy</strong>Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch. <a href="#rule-QNX-HDR-SYS-LINUX">Rule QNX-HDR-SYS-LINUX</a></div>
+<p class="verify">⚠ verify against SDP: grep $QNX_TARGET/usr/include for the header.</p><p class="note">Inside conditional(s): <code>#ifdef HAVE_SENDFILE &gt; #if defined(linux) || defined(__sun)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 30 min (heuristic)</p>
+</article>
+<article class="finding" id="f-24" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/net.c" data-guard="other" data-text="qnx-api-sendfile sendfile/splice zero-copy calls src/net.c sendfile( linux zero-copy file transfer calls; signatures also differ between linux and bsd sendfile." aria-labelledby="f-24-t">
+<h3 id="f-24-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>sendfile/splice zero-copy calls</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/net.c:788</span></h3>
+<p>Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile.</p><pre class="code" tabindex="0" aria-label="Code context for src/net.c line 788"><span class="ln"><b>785</b>    while (nleft &gt; 0) {</span><span class="ln"><b>786</b>	offset = count - nleft;</span><span class="ln"><b>787</b>#if defined(linux) || defined(__sun)</span><span class="ln hit"><b>788</b>	r = sendfile(tofd, fromfd, &amp;offset, nleft);</span><span class="ln"><b>789</b>	if (r &gt; 0)</span><span class="ln"><b>790</b>	    nleft -= r;</span><span class="ln"><b>791</b>#elif defined(__FreeBSD__)</span></pre>
+<div class="remedy"><strong>Remedy</strong>Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it. <a href="#rule-QNX-API-SENDFILE">Rule QNX-API-SENDFILE</a></div>
+<p class="verify">⚠ verify against SDP: some of these may exist with other semantics.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_SENDFILE) &gt; #if defined(linux) || defined(__sun)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 1.0 h (heuristic)</p>
+</article>
+<article class="finding" id="f-25" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/net.c" data-guard="other" data-text="qnx-api-sendfile sendfile/splice zero-copy calls src/net.c sendfile( linux zero-copy file transfer calls; signatures also differ between linux and bsd sendfile." aria-labelledby="f-25-t">
+<h3 id="f-25-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>sendfile/splice zero-copy calls</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/net.c:792</span></h3>
+<p>Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile.</p><pre class="code" tabindex="0" aria-label="Code context for src/net.c line 792"><span class="ln"><b>789</b>	if (r &gt; 0)</span><span class="ln"><b>790</b>	    nleft -= r;</span><span class="ln"><b>791</b>#elif defined(__FreeBSD__)</span><span class="ln hit"><b>792</b>	r = sendfile(fromfd, tofd, offset, nleft, NULL, &amp;sent, 0);</span><span class="ln"><b>793</b>	nleft -= sent;</span><span class="ln"><b>794</b>#elif defined(__APPLE__) &amp;&amp; defined(__MACH__) &amp;&amp; defined(MAC_OS_X_VERSION_10_6)	/* OS X */</span><span class="ln"><b>795</b>	sent = nleft;</span></pre>
+<div class="remedy"><strong>Remedy</strong>Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it. <a href="#rule-QNX-API-SENDFILE">Rule QNX-API-SENDFILE</a></div>
+<p class="verify">⚠ verify against SDP: some of these may exist with other semantics.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_SENDFILE) &gt; #elif defined(__FreeBSD__)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 18 min (heuristic)</p>
+</article>
+<article class="finding" id="f-26" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/net.c" data-guard="other" data-text="qnx-api-sendfile sendfile/splice zero-copy calls src/net.c sendfile( linux zero-copy file transfer calls; signatures also differ between linux and bsd sendfile." aria-labelledby="f-26-t">
+<h3 id="f-26-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>sendfile/splice zero-copy calls</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/net.c:796</span></h3>
+<p>Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile.</p><pre class="code" tabindex="0" aria-label="Code context for src/net.c line 796"><span class="ln"><b>793</b>	nleft -= sent;</span><span class="ln"><b>794</b>#elif defined(__APPLE__) &amp;&amp; defined(__MACH__) &amp;&amp; defined(MAC_OS_X_VERSION_10_6)	/* OS X */</span><span class="ln"><b>795</b>	sent = nleft;</span><span class="ln hit"><b>796</b>	r = sendfile(fromfd, tofd, offset, &amp;sent, NULL, 0);</span><span class="ln"><b>797</b>	nleft -= sent;</span><span class="ln"><b>798</b>#else</span><span class="ln"><b>799</b>	/* Shouldn&#39;t happen. */</span></pre>
+<div class="remedy"><strong>Remedy</strong>Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it. <a href="#rule-QNX-API-SENDFILE">Rule QNX-API-SENDFILE</a></div>
+<p class="verify">⚠ verify against SDP: some of these may exist with other semantics.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_SENDFILE) &gt; #elif defined(__APPLE__) &amp;&amp; defined(__MACH__) &amp;&amp; defined(MAC_OS_X_VERSION_10_6)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 18 min (heuristic)</p>
+</article>
+<article class="finding" id="f-32" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/net.c" data-guard="other" data-text="qnx-api-sockopt-linux linux-specific socket options src/net.c so_bindtodevice socket options that are linux extensions (some exist on bsd stacks with different meaning)." aria-labelledby="f-32-t">
+<h3 id="f-32-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
+<span>Linux-specific socket options</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/net.c:136</span></h3>
+<p>Socket options that are Linux extensions (some exist on BSD stacks with different meaning).</p><pre class="code" tabindex="0" aria-label="Code context for src/net.c line 136"><span class="ln"><b>133</b>bind_to_device(int s, int domain, const char *bind_dev)</span><span class="ln"><b>134</b>{</span><span class="ln"><b>135</b>#if defined(HAVE_SO_BINDTODEVICE)</span><span class="ln hit"><b>136</b>    return setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, bind_dev, IFNAMSIZ);</span><span class="ln"><b>137</b>#elif defined(HAVE_IP_BOUND_IF)</span><span class="ln"><b>138</b>    int opt;</span><span class="ln"><b>139</b>    switch (domain) {</span></pre>
+<div class="remedy"><strong>Remedy</strong>Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant. <a href="#rule-QNX-API-SOCKOPT-LINUX">Rule QNX-API-SOCKOPT-LINUX</a></div>
+<p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_SO_BINDTODEVICE)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 20 min (heuristic)</p>
+</article>
+<article class="finding" id="f-33" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/net.c" data-guard="other" data-text="qnx-api-sockopt-linux linux-specific socket options src/net.c so_bindtodevice socket options that are linux extensions (some exist on bsd stacks with different meaning)." aria-labelledby="f-33-t">
+<h3 id="f-33-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
+<span>Linux-specific socket options</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/net.c:332</span></h3>
+<p>Socket options that are Linux extensions (some exist on BSD stacks with different meaning).</p><pre class="code" tabindex="0" aria-label="Code context for src/net.c line 332"><span class="ln"><b>329</b> </span><span class="ln"><b>330</b>    if (bind_dev) {</span><span class="ln"><b>331</b>#if defined(HAVE_SO_BINDTODEVICE)</span><span class="ln hit"><b>332</b>        if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE,</span><span class="ln"><b>333</b>                       bind_dev, IFNAMSIZ) &lt; 0)</span><span class="ln"><b>334</b>#endif // HAVE_SO_BINDTODEVICE</span><span class="ln"><b>335</b>        {</span></pre>
+<div class="remedy"><strong>Remedy</strong>Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant. <a href="#rule-QNX-API-SOCKOPT-LINUX">Rule QNX-API-SOCKOPT-LINUX</a></div>
+<p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_SO_BINDTODEVICE)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 6 min (heuristic)</p>
+</article></details>
+<details class="file" open><summary><span class="path">src/iperf_api.c</span>
+<span class="meta"><span class="vis">12</span>/12 findings &middot; 3.3 h</span></summary>
+<article class="finding" id="f-6" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/iperf_api.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/iperf_api.c cpu_zero( linux affinity api." aria-labelledby="f-6-t">
+<h3 id="f-6-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_api.c:3449</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_api.c line 3449"><span class="ln"><b>3446</b>    testp-&gt;server_affinity = -1;</span><span class="ln"><b>3447</b>    TAILQ_INIT(&amp;testp-&gt;xbind_addrs);</span><span class="ln"><b>3448</b>#if defined(HAVE_CPUSET_SETAFFINITY)</span><span class="ln hit"><b>3449</b>    CPU_ZERO(&amp;testp-&gt;cpumask);</span><span class="ln"><b>3450</b>#endif /* HAVE_CPUSET_SETAFFINITY */</span><span class="ln"><b>3451</b>    testp-&gt;title = NULL;</span><span class="ln"><b>3452</b>    testp-&gt;extra_data = NULL;</span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_CPUSET_SETAFFINITY)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 45 min (heuristic)</p>
+</article>
+<article class="finding" id="f-7" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/iperf_api.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/iperf_api.c cpu_zero( linux affinity api." aria-labelledby="f-7-t">
+<h3 id="f-7-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_api.c:3766</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_api.c line 3766"><span class="ln"><b>3763</b>    test-&gt;duration = DURATION;</span><span class="ln"><b>3764</b>    test-&gt;server_affinity = -1;</span><span class="ln"><b>3765</b>#if defined(HAVE_CPUSET_SETAFFINITY)</span><span class="ln hit"><b>3766</b>    CPU_ZERO(&amp;test-&gt;cpumask);</span><span class="ln"><b>3767</b>#endif /* HAVE_CPUSET_SETAFFINITY */</span><span class="ln"><b>3768</b>    test-&gt;state = 0;</span><span class="ln"><b>3769</b> </span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_CPUSET_SETAFFINITY)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article>
+<article class="finding" id="f-8" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/iperf_api.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/iperf_api.c cpu_set_t linux affinity api." aria-labelledby="f-8-t">
+<h3 id="f-8-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_api.c:5566</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_api.c line 5566"><span class="ln"><b>5563</b>iperf_setaffinity(struct iperf_test *test, int affinity)</span><span class="ln"><b>5564</b>{</span><span class="ln"><b>5565</b>#if defined(HAVE_SCHED_SETAFFINITY)</span><span class="ln hit"><b>5566</b>    cpu_set_t cpu_set;</span><span class="ln"><b>5567</b> </span><span class="ln"><b>5568</b>    if (affinity &lt; 0 || affinity &gt;= CPU_SETSIZE) {</span><span class="ln"><b>5569</b>	i_errno = IEAFFINITY;</span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_SCHED_SETAFFINITY)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article>
+<article class="finding" id="f-9" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/iperf_api.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/iperf_api.c cpu_zero( linux affinity api." aria-labelledby="f-9-t">
+<h3 id="f-9-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_api.c:5572</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_api.c line 5572"><span class="ln"><b>5569</b>	i_errno = IEAFFINITY;</span><span class="ln"><b>5570</b>        return -1;</span><span class="ln"><b>5571</b>    }</span><span class="ln hit"><b>5572</b>    CPU_ZERO(&amp;cpu_set);</span><span class="ln"><b>5573</b>    CPU_SET(affinity, &amp;cpu_set);</span><span class="ln"><b>5574</b>    if (sched_setaffinity(0, sizeof(cpu_set_t), &amp;cpu_set) != 0) {</span><span class="ln"><b>5575</b>	i_errno = IEAFFINITY;</span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_SCHED_SETAFFINITY)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article>
+<article class="finding" id="f-10" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/iperf_api.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/iperf_api.c cpu_set( linux affinity api." aria-labelledby="f-10-t">
+<h3 id="f-10-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_api.c:5573</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_api.c line 5573"><span class="ln"><b>5570</b>        return -1;</span><span class="ln"><b>5571</b>    }</span><span class="ln"><b>5572</b>    CPU_ZERO(&amp;cpu_set);</span><span class="ln hit"><b>5573</b>    CPU_SET(affinity, &amp;cpu_set);</span><span class="ln"><b>5574</b>    if (sched_setaffinity(0, sizeof(cpu_set_t), &amp;cpu_set) != 0) {</span><span class="ln"><b>5575</b>	i_errno = IEAFFINITY;</span><span class="ln"><b>5576</b>        return -1;</span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_SCHED_SETAFFINITY)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article>
+<article class="finding" id="f-11" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/iperf_api.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/iperf_api.c sched_setaffinity linux affinity api." aria-labelledby="f-11-t">
+<h3 id="f-11-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_api.c:5574</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_api.c line 5574"><span class="ln"><b>5571</b>    }</span><span class="ln"><b>5572</b>    CPU_ZERO(&amp;cpu_set);</span><span class="ln"><b>5573</b>    CPU_SET(affinity, &amp;cpu_set);</span><span class="ln hit"><b>5574</b>    if (sched_setaffinity(0, sizeof(cpu_set_t), &amp;cpu_set) != 0) {</span><span class="ln"><b>5575</b>	i_errno = IEAFFINITY;</span><span class="ln"><b>5576</b>        return -1;</span><span class="ln"><b>5577</b>    }</span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_SCHED_SETAFFINITY)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article>
+<article class="finding" id="f-12" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/iperf_api.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/iperf_api.c cpu_zero( linux affinity api." aria-labelledby="f-12-t">
+<h3 id="f-12-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_api.c:5592</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_api.c line 5592"><span class="ln"><b>5589</b>        return -1;</span><span class="ln"><b>5590</b>    }</span><span class="ln"><b>5591</b> </span><span class="ln hit"><b>5592</b>    CPU_ZERO(&amp;cpumask);</span><span class="ln"><b>5593</b>    CPU_SET(affinity, &amp;cpumask);</span><span class="ln"><b>5594</b> </span><span class="ln"><b>5595</b>    if(cpuset_setaffinity(CPU_LEVEL_WHICH,CPU_WHICH_PID, -1,</span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#elif defined(HAVE_CPUSET_SETAFFINITY)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article>
+<article class="finding" id="f-13" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/iperf_api.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/iperf_api.c cpu_set( linux affinity api." aria-labelledby="f-13-t">
+<h3 id="f-13-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_api.c:5593</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_api.c line 5593"><span class="ln"><b>5590</b>    }</span><span class="ln"><b>5591</b> </span><span class="ln"><b>5592</b>    CPU_ZERO(&amp;cpumask);</span><span class="ln hit"><b>5593</b>    CPU_SET(affinity, &amp;cpumask);</span><span class="ln"><b>5594</b> </span><span class="ln"><b>5595</b>    if(cpuset_setaffinity(CPU_LEVEL_WHICH,CPU_WHICH_PID, -1,</span><span class="ln"><b>5596</b>                          sizeof(cpuset_t), &amp;cpumask) != 0) {</span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#elif defined(HAVE_CPUSET_SETAFFINITY)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article>
+<article class="finding" id="f-14" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/iperf_api.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/iperf_api.c cpu_set_t linux affinity api." aria-labelledby="f-14-t">
+<h3 id="f-14-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_api.c:5626</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_api.c line 5626"><span class="ln"><b>5623</b>iperf_clearaffinity(struct iperf_test *test)</span><span class="ln"><b>5624</b>{</span><span class="ln"><b>5625</b>#if defined(HAVE_SCHED_SETAFFINITY)</span><span class="ln hit"><b>5626</b>    cpu_set_t cpu_set;</span><span class="ln"><b>5627</b>    int i;</span><span class="ln"><b>5628</b> </span><span class="ln"><b>5629</b>    CPU_ZERO(&amp;cpu_set);</span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_SCHED_SETAFFINITY)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article>
+<article class="finding" id="f-15" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/iperf_api.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/iperf_api.c cpu_zero( linux affinity api." aria-labelledby="f-15-t">
+<h3 id="f-15-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_api.c:5629</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_api.c line 5629"><span class="ln"><b>5626</b>    cpu_set_t cpu_set;</span><span class="ln"><b>5627</b>    int i;</span><span class="ln"><b>5628</b> </span><span class="ln hit"><b>5629</b>    CPU_ZERO(&amp;cpu_set);</span><span class="ln"><b>5630</b>    for (i = 0; i &lt; CPU_SETSIZE; ++i)</span><span class="ln"><b>5631</b>	CPU_SET(i, &amp;cpu_set);</span><span class="ln"><b>5632</b>    if (sched_setaffinity(0, sizeof(cpu_set_t), &amp;cpu_set) != 0) {</span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_SCHED_SETAFFINITY)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article>
+<article class="finding" id="f-16" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/iperf_api.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/iperf_api.c cpu_set( linux affinity api." aria-labelledby="f-16-t">
+<h3 id="f-16-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_api.c:5631</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_api.c line 5631"><span class="ln"><b>5628</b> </span><span class="ln"><b>5629</b>    CPU_ZERO(&amp;cpu_set);</span><span class="ln"><b>5630</b>    for (i = 0; i &lt; CPU_SETSIZE; ++i)</span><span class="ln hit"><b>5631</b>	CPU_SET(i, &amp;cpu_set);</span><span class="ln"><b>5632</b>    if (sched_setaffinity(0, sizeof(cpu_set_t), &amp;cpu_set) != 0) {</span><span class="ln"><b>5633</b>	i_errno = IEAFFINITY;</span><span class="ln"><b>5634</b>        return -1;</span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_SCHED_SETAFFINITY)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article>
+<article class="finding" id="f-17" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/iperf_api.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/iperf_api.c sched_setaffinity linux affinity api." aria-labelledby="f-17-t">
+<h3 id="f-17-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_api.c:5632</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_api.c line 5632"><span class="ln"><b>5629</b>    CPU_ZERO(&amp;cpu_set);</span><span class="ln"><b>5630</b>    for (i = 0; i &lt; CPU_SETSIZE; ++i)</span><span class="ln"><b>5631</b>	CPU_SET(i, &amp;cpu_set);</span><span class="ln hit"><b>5632</b>    if (sched_setaffinity(0, sizeof(cpu_set_t), &amp;cpu_set) != 0) {</span><span class="ln"><b>5633</b>	i_errno = IEAFFINITY;</span><span class="ln"><b>5634</b>        return -1;</span><span class="ln"><b>5635</b>    }</span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_SCHED_SETAFFINITY)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article></details>
+<details class="file" open><summary><span class="path">src/main.c</span>
+<span class="meta"><span class="vis">5</span>/5 findings &middot; 1.7 h</span></summary>
+<article class="finding" id="f-18" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/main.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/main.c cpu_set_t linux affinity api." aria-labelledby="f-18-t">
+<h3 id="f-18-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/main.c:95</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/main.c line 95"><span class="ln"><b>92</b>    }</span><span class="ln"><b>93</b> </span><span class="ln"><b>94</b>    /* setting the affinity of the process  */</span><span class="ln hit"><b>95</b>    cpu_set_t cpu_set;</span><span class="ln"><b>96</b>    int affinity = -1;</span><span class="ln"><b>97</b>    int ncores = 1;</span><span class="ln"><b>98</b> </span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#ifdef TEST_PROC_AFFINITY</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 45 min (heuristic)</p>
+</article>
+<article class="finding" id="f-19" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/main.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/main.c sched_getaffinity linux affinity api." aria-labelledby="f-19-t">
+<h3 id="f-19-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/main.c:99</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/main.c line 99"><span class="ln"><b>96</b>    int affinity = -1;</span><span class="ln"><b>97</b>    int ncores = 1;</span><span class="ln"><b>98</b> </span><span class="ln hit"><b>99</b>    sched_getaffinity(0, sizeof(cpu_set_t), &amp;cpu_set);</span><span class="ln"><b>100</b>    if (errno)</span><span class="ln"><b>101</b>        perror(&quot;couldn&#39;t get affinity:&quot;);</span><span class="ln"><b>102</b> </span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#ifdef TEST_PROC_AFFINITY</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article>
+<article class="finding" id="f-20" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/main.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/main.c cpu_zero( linux affinity api." aria-labelledby="f-20-t">
+<h3 id="f-20-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/main.c:106</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/main.c line 106"><span class="ln"><b>103</b>    if ((ncores = sysconf(_SC_NPROCESSORS_CONF)) &lt;= 0)</span><span class="ln"><b>104</b>        err(&quot;sysconf: couldn&#39;t get _SC_NPROCESSORS_CONF&quot;);</span><span class="ln"><b>105</b> </span><span class="ln hit"><b>106</b>    CPU_ZERO(&amp;cpu_set);</span><span class="ln"><b>107</b>    CPU_SET(affinity, &amp;cpu_set);</span><span class="ln"><b>108</b>    if (sched_setaffinity(0, sizeof(cpu_set_t), &amp;cpu_set) != 0)</span><span class="ln"><b>109</b>        err(&quot;couldn&#39;t change CPU affinity&quot;);</span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#ifdef TEST_PROC_AFFINITY</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article>
+<article class="finding" id="f-21" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/main.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/main.c cpu_set( linux affinity api." aria-labelledby="f-21-t">
+<h3 id="f-21-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/main.c:107</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/main.c line 107"><span class="ln"><b>104</b>        err(&quot;sysconf: couldn&#39;t get _SC_NPROCESSORS_CONF&quot;);</span><span class="ln"><b>105</b> </span><span class="ln"><b>106</b>    CPU_ZERO(&amp;cpu_set);</span><span class="ln hit"><b>107</b>    CPU_SET(affinity, &amp;cpu_set);</span><span class="ln"><b>108</b>    if (sched_setaffinity(0, sizeof(cpu_set_t), &amp;cpu_set) != 0)</span><span class="ln"><b>109</b>        err(&quot;couldn&#39;t change CPU affinity&quot;);</span><span class="ln"><b>110</b>#endif</span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#ifdef TEST_PROC_AFFINITY</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article>
+<article class="finding" id="f-22" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/main.c" data-guard="other" data-text="qnx-api-affinity cpu affinity (sched_setaffinity &amp; friends) src/main.c sched_setaffinity linux affinity api." aria-labelledby="f-22-t">
+<h3 id="f-22-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>CPU affinity (sched_setaffinity &amp; friends)</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/main.c:108</span></h3>
+<p>Linux affinity API.</p><pre class="code" tabindex="0" aria-label="Code context for src/main.c line 108"><span class="ln"><b>105</b> </span><span class="ln"><b>106</b>    CPU_ZERO(&amp;cpu_set);</span><span class="ln"><b>107</b>    CPU_SET(affinity, &amp;cpu_set);</span><span class="ln hit"><b>108</b>    if (sched_setaffinity(0, sizeof(cpu_set_t), &amp;cpu_set) != 0)</span><span class="ln"><b>109</b>        err(&quot;couldn&#39;t change CPU affinity&quot;);</span><span class="ln"><b>110</b>#endif</span><span class="ln"><b>111</b> </span></pre>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices. <a href="#rule-QNX-API-AFFINITY">Rule QNX-API-AFFINITY</a></div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p><p class="note">Inside conditional(s): <code>#ifdef TEST_PROC_AFFINITY</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 14 min (heuristic)</p>
+</article></details>
+<details class="file" open><summary><span class="path">src/flowlabel.h</span>
+<span class="meta"><span class="vis">3</span>/3 findings &middot; 1.6 h</span></summary>
+<article class="finding" id="f-0" tabindex="-1" data-sev="blocker" data-conf="known" data-file="src/flowlabel.h" data-guard="other" data-text="qnx-hdr-linux-dir includes a linux kernel header src/flowlabel.h #include &lt;linux/types.h&gt; &lt;linux/...&gt; and &lt;asm/...&gt; are linux kernel uapi headers; qnx is not linux and its sdp does not provide them." aria-labelledby="f-0-t">
+<h3 id="f-0-t"><span class="badge b-blocker" title="Likely will not build or has no direct QNX equivalent"><span aria-hidden="true">■</span> blocker</span>
+<span>Includes a Linux kernel header</span>
+<span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
+<span class="loc">src/flowlabel.h:31</span></h3>
+<p>&lt;linux/...&gt; and &lt;asm/...&gt; are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.</p><pre class="code" tabindex="0" aria-label="Code context for src/flowlabel.h line 31"><span class="ln"><b>28</b>#define        __FLOW_LABEL_H</span><span class="ln"><b>29</b> </span><span class="ln"><b>30</b> </span><span class="ln hit"><b>31</b>#include &lt;linux/types.h&gt;</span><span class="ln"><b>32</b>#include &lt;linux/version.h&gt;</span><span class="ln"><b>33</b> </span><span class="ln"><b>34</b>#if LINUX_VERSION_CODE &gt;= KERNEL_VERSION(3,7,0)</span></pre>
+<div class="remedy"><strong>Remedy</strong>Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead. <a href="#rule-QNX-HDR-LINUX-DIR">Rule QNX-HDR-LINUX-DIR</a></div>
+<p class="note">Inside conditional(s): <code>#ifndef __FLOW_LABEL_H</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 1.0 h (heuristic)</p>
+</article>
+<article class="finding" id="f-1" tabindex="-1" data-sev="blocker" data-conf="known" data-file="src/flowlabel.h" data-guard="other" data-text="qnx-hdr-linux-dir includes a linux kernel header src/flowlabel.h #include &lt;linux/version.h&gt; &lt;linux/...&gt; and &lt;asm/...&gt; are linux kernel uapi headers; qnx is not linux and its sdp does not provide them." aria-labelledby="f-1-t">
+<h3 id="f-1-t"><span class="badge b-blocker" title="Likely will not build or has no direct QNX equivalent"><span aria-hidden="true">■</span> blocker</span>
+<span>Includes a Linux kernel header</span>
+<span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
+<span class="loc">src/flowlabel.h:32</span></h3>
+<p>&lt;linux/...&gt; and &lt;asm/...&gt; are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.</p><pre class="code" tabindex="0" aria-label="Code context for src/flowlabel.h line 32"><span class="ln"><b>29</b> </span><span class="ln"><b>30</b> </span><span class="ln"><b>31</b>#include &lt;linux/types.h&gt;</span><span class="ln hit"><b>32</b>#include &lt;linux/version.h&gt;</span><span class="ln"><b>33</b> </span><span class="ln"><b>34</b>#if LINUX_VERSION_CODE &gt;= KERNEL_VERSION(3,7,0)</span><span class="ln"><b>35</b>#include &lt;linux/in6.h&gt;</span></pre>
+<div class="remedy"><strong>Remedy</strong>Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead. <a href="#rule-QNX-HDR-LINUX-DIR">Rule QNX-HDR-LINUX-DIR</a></div>
+<p class="note">Inside conditional(s): <code>#ifndef __FLOW_LABEL_H</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 18 min (heuristic)</p>
+</article>
+<article class="finding" id="f-2" tabindex="-1" data-sev="blocker" data-conf="known" data-file="src/flowlabel.h" data-guard="other" data-text="qnx-hdr-linux-dir includes a linux kernel header src/flowlabel.h #include &lt;linux/in6.h&gt; &lt;linux/...&gt; and &lt;asm/...&gt; are linux kernel uapi headers; qnx is not linux and its sdp does not provide them." aria-labelledby="f-2-t">
+<h3 id="f-2-t"><span class="badge b-blocker" title="Likely will not build or has no direct QNX equivalent"><span aria-hidden="true">■</span> blocker</span>
+<span>Includes a Linux kernel header</span>
+<span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
+<span class="loc">src/flowlabel.h:35</span></h3>
+<p>&lt;linux/...&gt; and &lt;asm/...&gt; are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.</p><pre class="code" tabindex="0" aria-label="Code context for src/flowlabel.h line 35"><span class="ln"><b>32</b>#include &lt;linux/version.h&gt;</span><span class="ln"><b>33</b> </span><span class="ln"><b>34</b>#if LINUX_VERSION_CODE &gt;= KERNEL_VERSION(3,7,0)</span><span class="ln hit"><b>35</b>#include &lt;linux/in6.h&gt;</span><span class="ln"><b>36</b>#else</span><span class="ln"><b>37</b>#ifndef __ANDROID__</span><span class="ln"><b>38</b>/*</span></pre>
+<div class="remedy"><strong>Remedy</strong>Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead. <a href="#rule-QNX-HDR-LINUX-DIR">Rule QNX-HDR-LINUX-DIR</a></div>
+<p class="note">Inside conditional(s): <code>#ifndef __FLOW_LABEL_H &gt; #if LINUX_VERSION_CODE &gt;= KERNEL_VERSION(3,7,0)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 18 min (heuristic)</p>
+</article></details>
+<details class="file" open><summary><span class="path">src/iperf.h</span>
+<span class="meta"><span class="vis">2</span>/2 findings &middot; 1.3 h</span></summary>
+<article class="finding" id="f-3" tabindex="-1" data-sev="blocker" data-conf="known" data-file="src/iperf.h" data-guard="other" data-text="qnx-hdr-linux-dir includes a linux kernel header src/iperf.h #include &lt;linux/tcp.h&gt; &lt;linux/...&gt; and &lt;asm/...&gt; are linux kernel uapi headers; qnx is not linux and its sdp does not provide them." aria-labelledby="f-3-t">
+<h3 id="f-3-t"><span class="badge b-blocker" title="Likely will not build or has no direct QNX equivalent"><span aria-hidden="true">■</span> blocker</span>
+<span>Includes a Linux kernel header</span>
+<span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
+<span class="loc">src/iperf.h:42</span></h3>
+<p>&lt;linux/...&gt; and &lt;asm/...&gt; are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf.h line 42"><span class="ln"><b>39</b># define _GNU_SOURCE</span><span class="ln"><b>40</b>#endif</span><span class="ln"><b>41</b>#ifdef HAVE_LINUX_TCP_H</span><span class="ln hit"><b>42</b>#include &lt;linux/tcp.h&gt;</span><span class="ln"><b>43</b>#else</span><span class="ln"><b>44</b>#include &lt;netinet/tcp.h&gt;</span><span class="ln"><b>45</b>#endif</span></pre>
+<div class="remedy"><strong>Remedy</strong>Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead. <a href="#rule-QNX-HDR-LINUX-DIR">Rule QNX-HDR-LINUX-DIR</a></div>
+<p class="note">Inside conditional(s): <code>#ifndef __IPERF_H &gt; #ifdef HAVE_LINUX_TCP_H</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 1.0 h (heuristic)</p>
+</article>
+<article class="finding" id="f-27" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/iperf.h" data-guard="other" data-text="qnx-api-sockopt-linux linux-specific socket options src/iperf.h tcp_info socket options that are linux extensions (some exist on bsd stacks with different meaning)." aria-labelledby="f-27-t">
+<h3 id="f-27-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
+<span>Linux-specific socket options</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf.h:112</span></h3>
+<p>Socket options that are Linux extensions (some exist on BSD stacks with different meaning).</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf.h line 112"><span class="ln"><b>109</b> </span><span class="ln"><b>110</b>    int omitted;</span><span class="ln"><b>111</b>#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) &amp;&amp; \</span><span class="ln hit"><b>112</b>	defined(TCP_INFO)</span><span class="ln"><b>113</b>    struct tcp_info tcpInfo; /* getsockopt(TCP_INFO) for Linux, {Free,Net,Open}BSD */</span><span class="ln"><b>114</b>#elif (defined(__APPLE__) &amp;&amp; defined(__MACH__))  &amp;&amp; defined(TCP_CONNECTION_INFO)</span><span class="ln"><b>115</b>    struct tcp_connection_info tcpConnInfo;</span></pre>
+<div class="remedy"><strong>Remedy</strong>Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant. <a href="#rule-QNX-API-SOCKOPT-LINUX">Rule QNX-API-SOCKOPT-LINUX</a></div>
+<p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#ifndef __IPERF_H &gt; #if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) &amp;&amp; \</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 20 min (heuristic)</p>
+</article></details>
+<details class="file" open><summary><span class="path">src/iperf_udp.c</span>
+<span class="meta"><span class="vis">1</span>/1 findings &middot; 1.0 h</span></summary>
+<article class="finding" id="f-4" tabindex="-1" data-sev="blocker" data-conf="known" data-file="src/iperf_udp.c" data-guard="other" data-text="qnx-hdr-linux-dir includes a linux kernel header src/iperf_udp.c #include &lt;linux/udp.h&gt; &lt;linux/...&gt; and &lt;asm/...&gt; are linux kernel uapi headers; qnx is not linux and its sdp does not provide them." aria-labelledby="f-4-t">
+<h3 id="f-4-t"><span class="badge b-blocker" title="Likely will not build or has no direct QNX equivalent"><span aria-hidden="true">■</span> blocker</span>
+<span>Includes a Linux kernel header</span>
+<span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
+<span class="loc">src/iperf_udp.c:44</span></h3>
+<p>&lt;linux/...&gt; and &lt;asm/...&gt; are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_udp.c line 44"><span class="ln"><b>41</b>#include &lt;sys/time.h&gt;</span><span class="ln"><b>42</b>#include &lt;sys/select.h&gt;</span><span class="ln"><b>43</b>#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)</span><span class="ln hit"><b>44</b>#include &lt;linux/udp.h&gt;</span><span class="ln"><b>45</b>#endif</span><span class="ln"><b>46</b> </span><span class="ln"><b>47</b>#include &quot;iperf.h&quot;</span></pre>
+<div class="remedy"><strong>Remedy</strong>Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead. <a href="#rule-QNX-HDR-LINUX-DIR">Rule QNX-HDR-LINUX-DIR</a></div>
+<p class="note">Inside conditional(s): <code>#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 1.0 h (heuristic)</p>
+</article></details>
+<details class="file" open><summary><span class="path">src/tcp_info.c</span>
+<span class="meta"><span class="vis">3</span>/3 findings &middot; 32 min</span></summary>
+<article class="finding" id="f-34" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/tcp_info.c" data-guard="other" data-text="qnx-api-sockopt-linux linux-specific socket options src/tcp_info.c tcp_info socket options that are linux extensions (some exist on bsd stacks with different meaning)." aria-labelledby="f-34-t">
+<h3 id="f-34-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
+<span>Linux-specific socket options</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/tcp_info.c:64</span></h3>
+<p>Socket options that are Linux extensions (some exist on BSD stacks with different meaning).</p><pre class="code" tabindex="0" aria-label="Code context for src/tcp_info.c line 64"><span class="ln"><b>61</b>has_tcpinfo(void)</span><span class="ln"><b>62</b>{</span><span class="ln"><b>63</b>#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) \</span><span class="ln hit"><b>64</b>	&amp;&amp; defined(TCP_INFO)</span><span class="ln"><b>65</b>    return 1;</span><span class="ln"><b>66</b>#elif (defined(__APPLE__) &amp;&amp; defined(__MACH__)) &amp;&amp; defined(TCP_CONNECTION_INFO)</span><span class="ln"><b>67</b>    return 1;</span></pre>
+<div class="remedy"><strong>Remedy</strong>Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant. <a href="#rule-QNX-API-SOCKOPT-LINUX">Rule QNX-API-SOCKOPT-LINUX</a></div>
+<p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) \</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 20 min (heuristic)</p>
+</article>
+<article class="finding" id="f-35" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/tcp_info.c" data-guard="other" data-text="qnx-api-sockopt-linux linux-specific socket options src/tcp_info.c tcp_info socket options that are linux extensions (some exist on bsd stacks with different meaning)." aria-labelledby="f-35-t">
+<h3 id="f-35-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
+<span>Linux-specific socket options</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/tcp_info.c:102</span></h3>
+<p>Socket options that are Linux extensions (some exist on BSD stacks with different meaning).</p><pre class="code" tabindex="0" aria-label="Code context for src/tcp_info.c line 102"><span class="ln"><b>99</b>save_tcpinfo(struct iperf_stream *sp, struct iperf_interval_results *irp)</span><span class="ln"><b>100</b>{</span><span class="ln"><b>101</b>#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) &amp;&amp; \</span><span class="ln hit"><b>102</b>	defined(TCP_INFO)</span><span class="ln"><b>103</b>    socklen_t tcp_info_length = sizeof(struct tcp_info);</span><span class="ln"><b>104</b> </span><span class="ln"><b>105</b>    if (getsockopt(sp-&gt;socket, IPPROTO_TCP, TCP_INFO, (void *)&amp;irp-&gt;tcpInfo, &amp;tcp_info_length) &lt; 0)</span></pre>
+<div class="remedy"><strong>Remedy</strong>Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant. <a href="#rule-QNX-API-SOCKOPT-LINUX">Rule QNX-API-SOCKOPT-LINUX</a></div>
+<p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) &amp;&amp; \</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 6 min (heuristic)</p>
+</article>
+<article class="finding" id="f-36" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/tcp_info.c" data-guard="other" data-text="qnx-api-sockopt-linux linux-specific socket options src/tcp_info.c tcp_info socket options that are linux extensions (some exist on bsd stacks with different meaning)." aria-labelledby="f-36-t">
+<h3 id="f-36-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
+<span>Linux-specific socket options</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/tcp_info.c:105</span></h3>
+<p>Socket options that are Linux extensions (some exist on BSD stacks with different meaning).</p><pre class="code" tabindex="0" aria-label="Code context for src/tcp_info.c line 105"><span class="ln"><b>102</b>	defined(TCP_INFO)</span><span class="ln"><b>103</b>    socklen_t tcp_info_length = sizeof(struct tcp_info);</span><span class="ln"><b>104</b> </span><span class="ln hit"><b>105</b>    if (getsockopt(sp-&gt;socket, IPPROTO_TCP, TCP_INFO, (void *)&amp;irp-&gt;tcpInfo, &amp;tcp_info_length) &lt; 0)</span><span class="ln"><b>106</b>	iperf_err(sp-&gt;test, &quot;getsockopt - %s&quot;, strerror(errno));</span><span class="ln"><b>107</b> </span><span class="ln"><b>108</b>    if (sp-&gt;test-&gt;debug) {</span></pre>
+<div class="remedy"><strong>Remedy</strong>Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant. <a href="#rule-QNX-API-SOCKOPT-LINUX">Rule QNX-API-SOCKOPT-LINUX</a></div>
+<p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if (defined(linux) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)) &amp;&amp; \</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 6 min (heuristic)</p>
+</article></details>
+<details class="file" open><summary><span class="path">configure.ac</span>
+<span class="meta"><span class="vis">1</span>/1 findings &middot; 30 min</span></summary>
+<article class="finding" id="f-37" tabindex="-1" data-sev="info" data-conf="guess" data-file="configure.ac" data-guard="none" data-text="qnx-bld-autoconf-host autotools project with no qnx host support configure.ac (project-level) no qnx mention in the tree. old bundled config.sub/config.guess may not recognise a qnx host triplet." aria-labelledby="f-37-t">
+<h3 id="f-37-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
+<span>Autotools project with no QNX host support</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">configure.ac:1</span></h3>
+<p>No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet.</p><p class="note">Project-level finding (no single source line).</p>
+<div class="remedy"><strong>Remedy</strong>Refresh config.sub/config.guess (autoreconf -fi or copy from a current automake), then configure with --host=&lt;cpu&gt;-unknown-nto-qnx&lt;version&gt; and CC set to qcc. <a href="#rule-QNX-BLD-AUTOCONF-HOST">Rule QNX-BLD-AUTOCONF-HOST</a></div>
+<p class="verify">⚠ verify against SDP: exact host triplet format for 8.0.</p>
+<p class="note">Estimated effort for this item: 30 min (heuristic)</p>
+</article></details>
+<details class="file" open><summary><span class="path">src/iperf_server_api.c</span>
+<span class="meta"><span class="vis">2</span>/2 findings &middot; 26 min</span></summary>
+<article class="finding" id="f-29" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/iperf_server_api.c" data-guard="other" data-text="qnx-api-sockopt-linux linux-specific socket options src/iperf_server_api.c tcp_user_timeout socket options that are linux extensions (some exist on bsd stacks with different meaning)." aria-labelledby="f-29-t">
+<h3 id="f-29-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
+<span>Linux-specific socket options</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_server_api.c:180</span></h3>
+<p>Socket options that are Linux extensions (some exist on BSD stacks with different meaning).</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_server_api.c line 180"><span class="ln"><b>177</b>#if defined(HAVE_TCP_USER_TIMEOUT)</span><span class="ln"><b>178</b>        int opt;</span><span class="ln"><b>179</b>        if ((opt = test-&gt;settings-&gt;snd_timeout)) {</span><span class="ln hit"><b>180</b>            if (setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &amp;opt, sizeof(opt)) &lt; 0) {</span><span class="ln"><b>181</b>                i_errno = IESETUSERTIMEOUT;</span><span class="ln"><b>182</b>                goto error_handling;</span><span class="ln"><b>183</b>            }</span></pre>
+<div class="remedy"><strong>Remedy</strong>Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant. <a href="#rule-QNX-API-SOCKOPT-LINUX">Rule QNX-API-SOCKOPT-LINUX</a></div>
+<p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_TCP_USER_TIMEOUT)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 20 min (heuristic)</p>
+</article>
+<article class="finding" id="f-30" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/iperf_server_api.c" data-guard="other" data-text="qnx-api-sockopt-linux linux-specific socket options src/iperf_server_api.c tcp_user_timeout socket options that are linux extensions (some exist on bsd stacks with different meaning)." aria-labelledby="f-30-t">
+<h3 id="f-30-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
+<span>Linux-specific socket options</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_server_api.c:802</span></h3>
+<p>Socket options that are Linux extensions (some exist on BSD stacks with different meaning).</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_server_api.c line 802"><span class="ln"><b>799</b>		    if (test-&gt;protocol-&gt;id == Ptcp) {</span><span class="ln"><b>800</b>                        int opt;</span><span class="ln"><b>801</b>                        if ((opt = test-&gt;settings-&gt;snd_timeout)) {</span><span class="ln hit"><b>802</b>                            if (setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &amp;opt, sizeof(opt)) &lt; 0) {</span><span class="ln"><b>803</b>                                saved_errno = errno;</span><span class="ln"><b>804</b>                                close(s);</span><span class="ln"><b>805</b>                                cleanup_server(test);</span></pre>
+<div class="remedy"><strong>Remedy</strong>Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant. <a href="#rule-QNX-API-SOCKOPT-LINUX">Rule QNX-API-SOCKOPT-LINUX</a></div>
+<p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_TCP_USER_TIMEOUT)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 6 min (heuristic)</p>
+</article></details>
+<details class="file" open><summary><span class="path">src/iperf_client_api.c</span>
+<span class="meta"><span class="vis">1</span>/1 findings &middot; 20 min</span></summary>
+<article class="finding" id="f-28" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/iperf_client_api.c" data-guard="other" data-text="qnx-api-sockopt-linux linux-specific socket options src/iperf_client_api.c tcp_user_timeout socket options that are linux extensions (some exist on bsd stacks with different meaning)." aria-labelledby="f-28-t">
+<h3 id="f-28-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
+<span>Linux-specific socket options</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_client_api.c:479</span></h3>
+<p>Socket options that are Linux extensions (some exist on BSD stacks with different meaning).</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_client_api.c line 479"><span class="ln"><b>476</b> </span><span class="ln"><b>477</b>#if defined(HAVE_TCP_USER_TIMEOUT)</span><span class="ln"><b>478</b>    if ((opt = test-&gt;settings-&gt;snd_timeout)) {</span><span class="ln hit"><b>479</b>        if (setsockopt(test-&gt;ctrl_sck, IPPROTO_TCP, TCP_USER_TIMEOUT, &amp;opt, sizeof(opt)) &lt; 0) {</span><span class="ln"><b>480</b>            i_errno = IESETUSERTIMEOUT;</span><span class="ln"><b>481</b>            return -1;</span><span class="ln"><b>482</b>        }</span></pre>
+<div class="remedy"><strong>Remedy</strong>Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant. <a href="#rule-QNX-API-SOCKOPT-LINUX">Rule QNX-API-SOCKOPT-LINUX</a></div>
+<p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_TCP_USER_TIMEOUT)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 20 min (heuristic)</p>
+</article></details>
+<details class="file" open><summary><span class="path">src/iperf_tcp.c</span>
+<span class="meta"><span class="vis">1</span>/1 findings &middot; 20 min</span></summary>
+<article class="finding" id="f-31" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/iperf_tcp.c" data-guard="other" data-text="qnx-api-sockopt-linux linux-specific socket options src/iperf_tcp.c tcp_user_timeout socket options that are linux extensions (some exist on bsd stacks with different meaning)." aria-labelledby="f-31-t">
+<h3 id="f-31-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
+<span>Linux-specific socket options</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/iperf_tcp.c:458</span></h3>
+<p>Socket options that are Linux extensions (some exist on BSD stacks with different meaning).</p><pre class="code" tabindex="0" aria-label="Code context for src/iperf_tcp.c line 458"><span class="ln"><b>455</b>    }</span><span class="ln"><b>456</b>#if defined(HAVE_TCP_USER_TIMEOUT)</span><span class="ln"><b>457</b>    if ((opt = test-&gt;settings-&gt;snd_timeout)) {</span><span class="ln hit"><b>458</b>        if (setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &amp;opt, sizeof(opt)) &lt; 0) {</span><span class="ln"><b>459</b>	    saved_errno = errno;</span><span class="ln"><b>460</b>	    close(s);</span><span class="ln"><b>461</b>	    freeaddrinfo(server_res);</span></pre>
+<div class="remedy"><strong>Remedy</strong>Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant. <a href="#rule-QNX-API-SOCKOPT-LINUX">Rule QNX-API-SOCKOPT-LINUX</a></div>
+<p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if defined(HAVE_TCP_USER_TIMEOUT)</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 20 min (heuristic)</p>
+</article></details>
+<p class="empty">No findings match the current filters.</p>
+<h2>Remedies and rule notes</h2>
+<section class="rule" id="rule-QNX-HDR-LINUX-DIR"><h3>QNX-HDR-LINUX-DIR <span class="badge b-blocker"><span aria-hidden="true">■</span> blocker</span> <span class="badge b-known">known</span></h3>
+<p><strong>Includes a Linux kernel header.</strong> &lt;linux/...&gt; and &lt;asm/...&gt; are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.</p>
+<div class="remedy"><strong>Remedy</strong>Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.</div>
+
+<p class="note">Documentation to read (names only, not fetched by this tool): QNX SDP 8.0 System Architecture: a QNX target does not use the Linux kernel</p>
+<p class="note">6 occurrences: <a href="#f-0">src/flowlabel.h:31</a>, <a href="#f-1">src/flowlabel.h:32</a>, <a href="#f-2">src/flowlabel.h:35</a>, <a href="#f-3">src/iperf.h:42</a>, <a href="#f-4">src/iperf_udp.c:44</a>, <a href="#f-5">src/net.c:42</a></p></section>
+<section class="rule" id="rule-QNX-API-AFFINITY"><h3>QNX-API-AFFINITY <span class="badge b-major"><span aria-hidden="true">▲</span> major</span> <span class="badge b-guess">guess</span></h3>
+<p><strong>CPU affinity (sched_setaffinity &amp; friends).</strong> Linux affinity API.</p>
+<div class="remedy"><strong>Remedy</strong>Use ThreadCtl(_NTO_TCTL_RUNMASK, &amp;mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.</div>
+<p class="verify">⚠ verify against SDP: ThreadCtl runmask argument layout.</p>
+<p class="note">Documentation to read (names only, not fetched by this tool): QNX docs: ThreadCtl()</p>
+<p class="note">17 occurrences: <a href="#f-6">src/iperf_api.c:3449</a>, <a href="#f-7">src/iperf_api.c:3766</a>, <a href="#f-8">src/iperf_api.c:5566</a>, <a href="#f-9">src/iperf_api.c:5572</a>, <a href="#f-10">src/iperf_api.c:5573</a>, <a href="#f-11">src/iperf_api.c:5574</a>, <a href="#f-12">src/iperf_api.c:5592</a>, <a href="#f-13">src/iperf_api.c:5593</a> and 9 more</p></section>
+<section class="rule" id="rule-QNX-API-SENDFILE"><h3>QNX-API-SENDFILE <span class="badge b-major"><span aria-hidden="true">▲</span> major</span> <span class="badge b-guess">guess</span></h3>
+<p><strong>sendfile/splice zero-copy calls.</strong> Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile.</p>
+<div class="remedy"><strong>Remedy</strong>Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.</div>
+<p class="verify">⚠ verify against SDP: some of these may exist with other semantics.</p>
+
+<p class="note">3 occurrences: <a href="#f-24">src/net.c:788</a>, <a href="#f-25">src/net.c:792</a>, <a href="#f-26">src/net.c:796</a></p></section>
+<section class="rule" id="rule-QNX-HDR-SYS-LINUX"><h3>QNX-HDR-SYS-LINUX <span class="badge b-major"><span aria-hidden="true">▲</span> major</span> <span class="badge b-guess">guess</span></h3>
+<p><strong>Includes a Linux-specific &lt;sys/...&gt; header.</strong> This glibc/Linux &lt;sys/...&gt; header is believed to be absent from the QNX 8.0 SDP.</p>
+<div class="remedy"><strong>Remedy</strong>Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.</div>
+<p class="verify">⚠ verify against SDP: grep $QNX_TARGET/usr/include for the header.</p>
+
+<p class="note">1 occurrence: <a href="#f-23">src/net.c:47</a></p></section>
+<section class="rule" id="rule-QNX-API-SOCKOPT-LINUX"><h3>QNX-API-SOCKOPT-LINUX <span class="badge b-minor"><span aria-hidden="true">●</span> minor</span> <span class="badge b-guess">guess</span></h3>
+<p><strong>Linux-specific socket options.</strong> Socket options that are Linux extensions (some exist on BSD stacks with different meaning).</p>
+<div class="remedy"><strong>Remedy</strong>Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.</div>
+<p class="verify">⚠ verify against SDP.</p>
+
+<p class="note">10 occurrences: <a href="#f-27">src/iperf.h:112</a>, <a href="#f-28">src/iperf_client_api.c:479</a>, <a href="#f-29">src/iperf_server_api.c:180</a>, <a href="#f-30">src/iperf_server_api.c:802</a>, <a href="#f-31">src/iperf_tcp.c:458</a>, <a href="#f-32">src/net.c:136</a>, <a href="#f-33">src/net.c:332</a>, <a href="#f-34">src/tcp_info.c:64</a> and 2 more</p></section>
+<section class="rule" id="rule-QNX-BLD-AUTOCONF-HOST"><h3>QNX-BLD-AUTOCONF-HOST <span class="badge b-info"><span aria-hidden="true">○</span> info</span> <span class="badge b-guess">guess</span></h3>
+<p><strong>Autotools project with no QNX host support.</strong> No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet.</p>
+<div class="remedy"><strong>Remedy</strong>Refresh config.sub/config.guess (autoreconf -fi or copy from a current automake), then configure with --host=&lt;cpu&gt;-unknown-nto-qnx&lt;version&gt; and CC set to qcc.</div>
+<p class="verify">⚠ verify against SDP: exact host triplet format for 8.0.</p>
+
+<p class="note">1 occurrence: <a href="#f-37">configure.ac:1</a></p></section>
+<footer><p>What this report does not claim: that anything here compiled or ran on QNX; that a missing finding means the code ports; that 'guess' rules are true. Remedies name public QNX/POSIX interfaces from documentation the authors recall; confirm each against your SDP.</p></footer>
+</main>
+<dialog id="help" aria-labelledby="help-t"><h2 id="help-t" style="margin-top:0">Keyboard shortcuts</h2>
+<p><kbd>/</kbd> search &nbsp; <kbd>j</kbd> / <kbd>k</kbd> next / previous finding &nbsp; <kbd>1</kbd>&ndash;<kbd>4</kbd> toggle blocker, major, minor, info &nbsp; <kbd>t</kbd> theme &nbsp; <kbd>Esc</kbd> leave search or clear directory filter &nbsp; <kbd>?</kbd> this help</p>
+<form method="dialog"><button class="btn">Close</button></form></dialog>
+<script type="application/json" id="pd-data">{"tool":"portdoctor","version":"0.1.0","stats":{"filesScanned":48,"filesByKind":{"make":4,"autoconf":1,"c":43},"filesSkipped":0,"findings":38,"suppressedQnxBranch":0,"rules":55,"bySeverity":{"blocker":6,"major":21,"minor":10,"info":1},"effortMinutes":876}}</script>
+<script>
+(function(){
+var root=document.documentElement;root.classList.add('js');
+var $=function(s,c){return (c||document).querySelector(s)},$$=function(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s))};
+var state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true};
+var findings=$$('article.finding'),files=$$('details.file'),count=$('#count'),empty=$('.empty');
+function apply(){
+ var q=state.q.toLowerCase().trim(),vis=0,i;
+ for(i=0;i<findings.length;i++){var f=findings[i],d=f.dataset,ok=true;
+  if(!state.sev[d.sev])ok=false;
+  if(ok&&state.conf!=='all'&&d.conf!==state.conf)ok=false;
+  if(ok&&state.dir!==null&&!(state.dir==='.'?d.file.indexOf('/')<0:(d.file===state.dir||d.file.indexOf(state.dir+'/')===0)))ok=false;
+  if(ok&&!state.guard&&d.guard==='linux-only')ok=false;
+  if(ok&&q&&d.text.indexOf(q)<0)ok=false;
+  f.hidden=!ok;if(ok)vis++;}
+ files.forEach(function(fl){var n=$$('article.finding:not([hidden])',fl).length;fl.hidden=n===0;var c=$('.vis',fl);if(c)c.textContent=n;});
+ count.textContent=vis+' of '+findings.length+' findings shown';
+ if(empty)empty.classList.toggle('show',vis===0);
+ $$('[data-sevbtn]').forEach(function(b){b.setAttribute('aria-pressed',state.sev[b.dataset.sevbtn]?'true':'false')});
+ $$('.tile').forEach(function(t){t.setAttribute('aria-pressed',state.dir!==null&&t.dataset.dir===state.dir?'true':'false')});
+}
+$$('[data-sevbtn]').forEach(function(b){b.addEventListener('click',function(){state.sev[b.dataset.sevbtn]=state.sev[b.dataset.sevbtn]?0:1;apply()})});
+$$('.tile').forEach(function(t){t.addEventListener('click',function(){state.dir=state.dir===t.dataset.dir?null:t.dataset.dir;apply();if(state.dir!==null){var l=$('#findings');if(l)l.scrollIntoView()}})});
+var qi=$('#q');qi.addEventListener('input',function(){state.q=qi.value;apply()});
+$('#conf').addEventListener('change',function(e){state.conf=e.target.value;apply()});
+$('#guard').addEventListener('change',function(e){state.guard=e.target.checked;apply()});
+$('#clear').addEventListener('click',function(){state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true};qi.value='';$('#conf').value='all';$('#guard').checked=true;apply()});
+$('#expand').addEventListener('click',function(){var any=files.some(function(f){return !f.open&&!f.hidden});files.forEach(function(f){f.open=any});this.textContent=any?'Collapse all':'Expand all'});
+function theme(t){if(t)root.setAttribute('data-theme',t);else root.removeAttribute('data-theme');try{if(t)localStorage.setItem('pd-theme',t)}catch(e){}}
+try{var st=localStorage.getItem('pd-theme');if(st)root.setAttribute('data-theme',st)}catch(e){}
+function toggleTheme(){var cur=root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');theme(cur==='dark'?'light':'dark')}
+$('#themebtn').addEventListener('click',toggleTheme);
+var dlg=$('#help');function help(){if(dlg.showModal)dlg.showModal();else dlg.setAttribute('open','')}
+$('#helpbtn').addEventListener('click',help);
+var cur=-1;function vis(){return findings.filter(function(f){return !f.hidden})}
+function go(n){var v=vis();if(!v.length)return;cur=Math.max(0,Math.min(v.length-1,n));var f=v[cur],fl=f.closest('details');if(fl&&!fl.open)fl.open=true;f.focus();f.scrollIntoView({block:'center'})}
+document.addEventListener('keydown',function(e){
+ var t=e.target,typing=t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA');
+ if(e.key==='Escape'){if(typing){t.blur();return}if(state.dir!==null){state.dir=null;apply()}return}
+ if(typing||e.ctrlKey||e.metaKey||e.altKey)return;
+ if(e.key==='/'){e.preventDefault();qi.focus()}
+ else if(e.key==='j'){var v=vis(),i=v.indexOf(document.activeElement);go(i>=0?i+1:cur+1)}
+ else if(e.key==='k'){var v2=vis(),i2=v2.indexOf(document.activeElement);go(i2>=0?i2-1:cur-1)}
+ else if(e.key==='t')toggleTheme();
+ else if(e.key==='?')help();
+ else if('1234'.indexOf(e.key)>=0&&e.key){var s=['blocker','major','minor','info'][+e.key-1];state.sev[s]=state.sev[s]?0:1;apply()}
+});
+apply();
+})();
+</script>
+</body></html>

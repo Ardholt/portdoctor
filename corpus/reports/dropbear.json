@@ -1,0 +1,2334 @@
+{
+  "tool": "portdoctor",
+  "version": "0.1.0",
+  "root": "dropbear",
+  "disclaimer": "PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked 'guess' are unverified claims about QNX 8.0 and must be checked against the SDP.",
+  "stats": {
+    "filesScanned": 832,
+    "filesByKind": {
+      "autoconf": 1,
+      "c": 818,
+      "make": 13
+    },
+    "filesSkipped": 0,
+    "findings": 45,
+    "suppressedQnxBranch": 0,
+    "rules": 55,
+    "bySeverity": {
+      "blocker": 3,
+      "major": 9,
+      "minor": 12,
+      "info": 21
+    },
+    "effortMinutes": 509
+  },
+  "findings": [
+    {
+      "ruleId": "QNX-API-SYSCALL",
+      "title": "Raw Linux syscall()",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "file": "src/dbutil.c",
+      "line": 761,
+      "column": 7,
+      "match": "syscall(",
+      "context": [
+        {
+          "n": 758,
+          "text": "\tif (!linux_monotonic_failed) {"
+        },
+        {
+          "n": 759,
+          "text": "\t\t/* CLOCK_MONOTONIC isn't in some headers */"
+        },
+        {
+          "n": 760,
+          "text": "\t\tint clock_source_monotonic = 1; "
+        },
+        {
+          "n": 761,
+          "text": "\t\tif (syscall(SYS_clock_gettime, clock_source_monotonic, now) == 0) {"
+        },
+        {
+          "n": 762,
+          "text": "\t\t\treturn;"
+        },
+        {
+          "n": 763,
+          "text": "\t\t} else {"
+        },
+        {
+          "n": 764,
+          "text": "\t\t\t/* Don't try again */"
+        }
+      ],
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.",
+      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
+      "verify": "verify against SDP.",
+      "effort": 60,
+      "guard": "linux-only",
+      "guards": [
+        "#if defined(__linux__) && defined(SYS_clock_gettime)"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "known",
+      "file": "src/includes.h",
+      "line": 179,
+      "column": 1,
+      "match": "#include <linux/types.h>",
+      "context": [
+        {
+          "n": 176,
+          "text": "#endif /* SIZE_T_MAX */"
+        },
+        {
+          "n": 177,
+          "text": ""
+        },
+        {
+          "n": 178,
+          "text": "#ifdef HAVE_LINUX_PKT_SCHED_H"
+        },
+        {
+          "n": 179,
+          "text": "#include <linux/types.h>"
+        },
+        {
+          "n": 180,
+          "text": "#include <linux/pkt_sched.h>"
+        },
+        {
+          "n": 181,
+          "text": "#endif"
+        },
+        {
+          "n": 182,
+          "text": ""
+        }
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "effort": 60,
+      "guard": "other",
+      "guards": [
+        "#ifndef DROPBEAR_INCLUDES_H_",
+        "#ifdef HAVE_LINUX_PKT_SCHED_H"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "known",
+      "file": "src/includes.h",
+      "line": 180,
+      "column": 1,
+      "match": "#include <linux/pkt_sched.h>",
+      "context": [
+        {
+          "n": 177,
+          "text": ""
+        },
+        {
+          "n": 178,
+          "text": "#ifdef HAVE_LINUX_PKT_SCHED_H"
+        },
+        {
+          "n": 179,
+          "text": "#include <linux/types.h>"
+        },
+        {
+          "n": 180,
+          "text": "#include <linux/pkt_sched.h>"
+        },
+        {
+          "n": 181,
+          "text": "#endif"
+        },
+        {
+          "n": 182,
+          "text": ""
+        },
+        {
+          "n": 183,
+          "text": "#ifndef environ"
+        }
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "effort": 18,
+      "guard": "other",
+      "guards": [
+        "#ifndef DROPBEAR_INCLUDES_H_",
+        "#ifdef HAVE_LINUX_PKT_SCHED_H"
+      ]
+    },
+    {
+      "ruleId": "QNX-PATH-PROC",
+      "title": "Linux /proc paths",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/dbrandom.c",
+      "line": 274,
+      "column": 21,
+      "match": "/proc/loadavg",
+      "context": [
+        {
+          "n": 271,
+          "text": "\t/* Might help on systems with wireless */"
+        },
+        {
+          "n": 272,
+          "text": "\tprocess_file(&hs, \"/proc/interrupts\", 0, 0);"
+        },
+        {
+          "n": 273,
+          "text": ""
+        },
+        {
+          "n": 274,
+          "text": "\tprocess_file(&hs, \"/proc/loadavg\", 0, 0);"
+        },
+        {
+          "n": 275,
+          "text": "\tprocess_file(&hs, \"/proc/sys/kernel/random/entropy_avail\", 0, 0);"
+        },
+        {
+          "n": 276,
+          "text": ""
+        },
+        {
+          "n": 277,
+          "text": "\t/* Mostly network visible but useful in some situations."
+        }
+      ],
+      "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
+      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "effort": 23,
+      "guard": "linux-only",
+      "guards": [
+        "#ifdef __linux__"
+      ]
+    },
+    {
+      "ruleId": "QNX-PATH-PROC",
+      "title": "Linux /proc paths",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/dbrandom.c",
+      "line": 275,
+      "column": 21,
+      "match": "/proc/sys/",
+      "context": [
+        {
+          "n": 272,
+          "text": "\tprocess_file(&hs, \"/proc/interrupts\", 0, 0);"
+        },
+        {
+          "n": 273,
+          "text": ""
+        },
+        {
+          "n": 274,
+          "text": "\tprocess_file(&hs, \"/proc/loadavg\", 0, 0);"
+        },
+        {
+          "n": 275,
+          "text": "\tprocess_file(&hs, \"/proc/sys/kernel/random/entropy_avail\", 0, 0);"
+        },
+        {
+          "n": 276,
+          "text": ""
+        },
+        {
+          "n": 277,
+          "text": "\t/* Mostly network visible but useful in some situations."
+        },
+        {
+          "n": 278,
+          "text": "\t * Limit size to avoid slowdowns on systems with lots of routes */"
+        }
+      ],
+      "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
+      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "effort": 7,
+      "guard": "linux-only",
+      "guards": [
+        "#ifdef __linux__"
+      ]
+    },
+    {
+      "ruleId": "QNX-PATH-SYS",
+      "title": "Linux /sys (sysfs) paths",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/dbrandom.c",
+      "line": 275,
+      "column": 26,
+      "match": "/sys/kernel",
+      "context": [
+        {
+          "n": 272,
+          "text": "\tprocess_file(&hs, \"/proc/interrupts\", 0, 0);"
+        },
+        {
+          "n": 273,
+          "text": ""
+        },
+        {
+          "n": 274,
+          "text": "\tprocess_file(&hs, \"/proc/loadavg\", 0, 0);"
+        },
+        {
+          "n": 275,
+          "text": "\tprocess_file(&hs, \"/proc/sys/kernel/random/entropy_avail\", 0, 0);"
+        },
+        {
+          "n": 276,
+          "text": ""
+        },
+        {
+          "n": 277,
+          "text": "\t/* Mostly network visible but useful in some situations."
+        },
+        {
+          "n": 278,
+          "text": "\t * Limit size to avoid slowdowns on systems with lots of routes */"
+        }
+      ],
+      "message": "sysfs is a Linux kernel pseudo-filesystem; not assumed on QNX.",
+      "remedy": "Query the real source: sysconf/getifaddrs for system facts, device resource managers for hardware state, the system page for CPU data.",
+      "verify": "verify against SDP.",
+      "effort": 30,
+      "guard": "linux-only",
+      "guards": [
+        "#ifdef __linux__"
+      ]
+    },
+    {
+      "ruleId": "QNX-PATH-PROC",
+      "title": "Linux /proc paths",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/dbrandom.c",
+      "line": 279,
+      "column": 21,
+      "match": "/proc/net/",
+      "context": [
+        {
+          "n": 276,
+          "text": ""
+        },
+        {
+          "n": 277,
+          "text": "\t/* Mostly network visible but useful in some situations."
+        },
+        {
+          "n": 278,
+          "text": "\t * Limit size to avoid slowdowns on systems with lots of routes */"
+        },
+        {
+          "n": 279,
+          "text": "\tprocess_file(&hs, \"/proc/net/netstat\", 4096, 0);"
+        },
+        {
+          "n": 280,
+          "text": "\tprocess_file(&hs, \"/proc/net/dev\", 4096, 0);"
+        },
+        {
+          "n": 281,
+          "text": "\tprocess_file(&hs, \"/proc/net/tcp\", 4096, 0);"
+        },
+        {
+          "n": 282,
+          "text": "\t/* Also includes interface lo */"
+        }
+      ],
+      "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
+      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "effort": 7,
+      "guard": "linux-only",
+      "guards": [
+        "#ifdef __linux__"
+      ]
+    },
+    {
+      "ruleId": "QNX-PATH-PROC",
+      "title": "Linux /proc paths",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/dbrandom.c",
+      "line": 280,
+      "column": 21,
+      "match": "/proc/net/",
+      "context": [
+        {
+          "n": 277,
+          "text": "\t/* Mostly network visible but useful in some situations."
+        },
+        {
+          "n": 278,
+          "text": "\t * Limit size to avoid slowdowns on systems with lots of routes */"
+        },
+        {
+          "n": 279,
+          "text": "\tprocess_file(&hs, \"/proc/net/netstat\", 4096, 0);"
+        },
+        {
+          "n": 280,
+          "text": "\tprocess_file(&hs, \"/proc/net/dev\", 4096, 0);"
+        },
+        {
+          "n": 281,
+          "text": "\tprocess_file(&hs, \"/proc/net/tcp\", 4096, 0);"
+        },
+        {
+          "n": 282,
+          "text": "\t/* Also includes interface lo */"
+        },
+        {
+          "n": 283,
+          "text": "\tprocess_file(&hs, \"/proc/net/rt_cache\", 4096, 0);"
+        }
+      ],
+      "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
+      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "effort": 7,
+      "guard": "linux-only",
+      "guards": [
+        "#ifdef __linux__"
+      ]
+    },
+    {
+      "ruleId": "QNX-PATH-PROC",
+      "title": "Linux /proc paths",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/dbrandom.c",
+      "line": 281,
+      "column": 21,
+      "match": "/proc/net/",
+      "context": [
+        {
+          "n": 278,
+          "text": "\t * Limit size to avoid slowdowns on systems with lots of routes */"
+        },
+        {
+          "n": 279,
+          "text": "\tprocess_file(&hs, \"/proc/net/netstat\", 4096, 0);"
+        },
+        {
+          "n": 280,
+          "text": "\tprocess_file(&hs, \"/proc/net/dev\", 4096, 0);"
+        },
+        {
+          "n": 281,
+          "text": "\tprocess_file(&hs, \"/proc/net/tcp\", 4096, 0);"
+        },
+        {
+          "n": 282,
+          "text": "\t/* Also includes interface lo */"
+        },
+        {
+          "n": 283,
+          "text": "\tprocess_file(&hs, \"/proc/net/rt_cache\", 4096, 0);"
+        },
+        {
+          "n": 284,
+          "text": "\tprocess_file(&hs, \"/proc/vmstat\", 0, 0);"
+        }
+      ],
+      "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
+      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "effort": 7,
+      "guard": "linux-only",
+      "guards": [
+        "#ifdef __linux__"
+      ]
+    },
+    {
+      "ruleId": "QNX-PATH-PROC",
+      "title": "Linux /proc paths",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/dbrandom.c",
+      "line": 283,
+      "column": 21,
+      "match": "/proc/net/",
+      "context": [
+        {
+          "n": 280,
+          "text": "\tprocess_file(&hs, \"/proc/net/dev\", 4096, 0);"
+        },
+        {
+          "n": 281,
+          "text": "\tprocess_file(&hs, \"/proc/net/tcp\", 4096, 0);"
+        },
+        {
+          "n": 282,
+          "text": "\t/* Also includes interface lo */"
+        },
+        {
+          "n": 283,
+          "text": "\tprocess_file(&hs, \"/proc/net/rt_cache\", 4096, 0);"
+        },
+        {
+          "n": 284,
+          "text": "\tprocess_file(&hs, \"/proc/vmstat\", 0, 0);"
+        },
+        {
+          "n": 285,
+          "text": "#endif"
+        },
+        {
+          "n": 286,
+          "text": ""
+        }
+      ],
+      "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
+      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "effort": 7,
+      "guard": "linux-only",
+      "guards": [
+        "#ifdef __linux__"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-SYS-LINUX",
+      "title": "Includes a Linux-specific <sys/...> header",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/includes.h",
+      "line": 131,
+      "column": 1,
+      "match": "#include <sys/prctl.h>",
+      "context": [
+        {
+          "n": 128,
+          "text": "#endif"
+        },
+        {
+          "n": 129,
+          "text": ""
+        },
+        {
+          "n": 130,
+          "text": "#ifdef HAVE_SYS_PRCTL_H"
+        },
+        {
+          "n": 131,
+          "text": "#include <sys/prctl.h>"
+        },
+        {
+          "n": 132,
+          "text": "#endif"
+        },
+        {
+          "n": 133,
+          "text": ""
+        },
+        {
+          "n": 134,
+          "text": "#ifdef HAVE_ENDIAN_H"
+        }
+      ],
+      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP.",
+      "remedy": "Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.",
+      "verify": "verify against SDP: grep $QNX_TARGET/usr/include for the header.",
+      "effort": 30,
+      "guard": "other",
+      "guards": [
+        "#ifndef DROPBEAR_INCLUDES_H_",
+        "#ifdef HAVE_SYS_PRCTL_H"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-PRCTL",
+      "title": "prctl",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/svr-main.c",
+      "line": 79,
+      "column": 3,
+      "match": "prctl(",
+      "context": [
+        {
+          "n": 76,
+          "text": "\t\t/* Fix the \"Name:\" in /proc/pid/status, otherwise it's"
+        },
+        {
+          "n": 77,
+          "text": "\t\ta FD number from fexecve."
+        },
+        {
+          "n": 78,
+          "text": "\t\tFailure doesn't really matter, it's mostly aesthetic */"
+        },
+        {
+          "n": 79,
+          "text": "\t\tprctl(PR_SET_NAME, basename(argv[0]), 0, 0);"
+        },
+        {
+          "n": 80,
+          "text": "#endif"
+        },
+        {
+          "n": 81,
+          "text": "\t\tmain_inetd();"
+        },
+        {
+          "n": 82,
+          "text": "\t\t/* notreached */"
+        }
+      ],
+      "message": "prctl is a Linux process-control multiplexer.",
+      "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np(); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE/NO_NEW_PRIVS -> drop (no QNX analogue assumed).",
+      "verify": "verify against SDP: confirm pthread_setname_np signature.",
+      "effort": 30,
+      "guard": "other",
+      "guards": [
+        "#if defined(DBMULTI_dropbear) || !DROPBEAR_MULTI",
+        "#if DROPBEAR_DO_REEXEC",
+        "#ifdef PR_SET_NAME"
+      ]
+    },
+    {
+      "ruleId": "QNX-BLD-PIE",
+      "title": "-pie / -fPIE flags",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "configure.ac",
+      "line": 89,
+      "column": 14,
+      "match": "-Wl,-pie",
+      "context": [
+        {
+          "n": 86,
+          "text": "\t\tDB_TRYADDCFLAGS([-fPIE])"
+        },
+        {
+          "n": 87,
+          "text": ""
+        },
+        {
+          "n": 88,
+          "text": "\t\tOLDLDFLAGS=\"$LDFLAGS\""
+        },
+        {
+          "n": 89,
+          "text": "\t\tTESTFLAGS=\"-Wl,-pie\""
+        },
+        {
+          "n": 90,
+          "text": "\t\tLDFLAGS=\"$TESTFLAGS $LDFLAGS\""
+        },
+        {
+          "n": 91,
+          "text": "\t\tAC_LINK_IFELSE([AC_LANG_PROGRAM([])],"
+        },
+        {
+          "n": 92,
+          "text": "\t\t\t[AC_MSG_NOTICE([Setting $TESTFLAGS])],"
+        }
+      ],
+      "message": "Position-independent executable flags may be handled differently (or rejected) by qcc.",
+      "remedy": "Keep them behind a platform check until confirmed with the target toolchain.",
+      "verify": "verify against SDP: run qcc with the flag on the target variant.",
+      "effort": 10,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-PIE",
+      "title": "-pie / -fPIE flags",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "configure.ac",
+      "line": 95,
+      "column": 15,
+      "match": "\"-pie",
+      "context": [
+        {
+          "n": 92,
+          "text": "\t\t\t[AC_MSG_NOTICE([Setting $TESTFLAGS])],"
+        },
+        {
+          "n": 93,
+          "text": "\t\t\t["
+        },
+        {
+          "n": 94,
+          "text": "\t\t\t\tLDFLAGS=\"$OLDLDFLAGS\""
+        },
+        {
+          "n": 95,
+          "text": "\t\t\t\tTESTFLAGS=\"-pie\""
+        },
+        {
+          "n": 96,
+          "text": "\t\t\t\tLDFLAGS=\"$TESTFLAGS $LDFLAGS\""
+        },
+        {
+          "n": 97,
+          "text": "\t\t\t\tAC_LINK_IFELSE([AC_LANG_PROGRAM([])],"
+        },
+        {
+          "n": 98,
+          "text": "\t\t\t\t\t[AC_MSG_NOTICE([Setting $TESTFLAGS])],"
+        }
+      ],
+      "message": "Position-independent executable flags may be handled differently (or rejected) by qcc.",
+      "remedy": "Keep them behind a platform check until confirmed with the target toolchain.",
+      "verify": "verify against SDP: run qcc with the flag on the target variant.",
+      "effort": 3,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-LDFLAGS",
+      "title": "GNU-ld specific linker flags",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "configure.ac",
+      "line": 105,
+      "column": 14,
+      "match": "-Wl,-z,",
+      "context": [
+        {
+          "n": 102,
+          "text": "\t\t\t)"
+        },
+        {
+          "n": 103,
+          "text": "\t\t# readonly elf relocation sections (relro)"
+        },
+        {
+          "n": 104,
+          "text": "\t\tOLDLDFLAGS=\"$LDFLAGS\""
+        },
+        {
+          "n": 105,
+          "text": "\t\tTESTFLAGS=\"-Wl,-z,now -Wl,-z,relro\""
+        },
+        {
+          "n": 106,
+          "text": "\t\tLDFLAGS=\"$TESTFLAGS $LDFLAGS\""
+        },
+        {
+          "n": 107,
+          "text": "\t\tAC_LINK_IFELSE([AC_LANG_PROGRAM([])],"
+        },
+        {
+          "n": 108,
+          "text": "\t\t\t[AC_MSG_NOTICE([Setting $TESTFLAGS])],"
+        }
+      ],
+      "message": "Linker options that depend on the GNU/Linux linker setup or default behaviour; qcc may pass them to a different ld or reject them.",
+      "remedy": "Test each flag on the QNX toolchain; drop the optional ones (--as-needed, --hash-style, -z hardening) behind a platform check.",
+      "verify": "verify against SDP: run the link with the flag via qcc.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "libtomcrypt/makefile.mingw",
+      "line": 19,
+      "column": 1,
+      "match": "CC        = gcc",
+      "context": [
+        {
+          "n": 16,
+          "text": ""
+        },
+        {
+          "n": 17,
+          "text": "#The following can be overridden from command line e.g. make -f makefile.mingw CC=gcc ARFLAGS=rcs"
+        },
+        {
+          "n": 18,
+          "text": "PREFIX    = c:\\mingw"
+        },
+        {
+          "n": 19,
+          "text": "CC        = gcc"
+        },
+        {
+          "n": 20,
+          "text": "AR        = ar"
+        },
+        {
+          "n": 21,
+          "text": "ARFLAGS   = r"
+        },
+        {
+          "n": 22,
+          "text": "RANLIB    = ranlib"
+        }
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "libtomcrypt/makefile.unix",
+      "line": 32,
+      "column": 1,
+      "match": "CC        = cc",
+      "context": [
+        {
+          "n": 29,
+          "text": "INCPATH   = $(PREFIX)/include"
+        },
+        {
+          "n": 30,
+          "text": "DATAPATH  = $(PREFIX)/share/doc/libtomcrypt/pdf"
+        },
+        {
+          "n": 31,
+          "text": "BINPATH   = $(PREFIX)/bin"
+        },
+        {
+          "n": 32,
+          "text": "CC        = cc"
+        },
+        {
+          "n": 33,
+          "text": "AR        = ar"
+        },
+        {
+          "n": 34,
+          "text": "ARFLAGS   = r"
+        },
+        {
+          "n": 35,
+          "text": "RANLIB    = ranlib"
+        }
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-GETRANDOM",
+      "title": "getrandom",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "libtommath/bn_s_mp_rand_platform.c",
+      "line": 61,
+      "column": 21,
+      "match": "getrandom(",
+      "context": [
+        {
+          "n": 58,
+          "text": "{"
+        },
+        {
+          "n": 59,
+          "text": "   char *q = (char *)p;"
+        },
+        {
+          "n": 60,
+          "text": "   while (n > 0u) {"
+        },
+        {
+          "n": 61,
+          "text": "      ssize_t ret = getrandom(q, n, 0);"
+        },
+        {
+          "n": 62,
+          "text": "      if (ret < 0) {"
+        },
+        {
+          "n": 63,
+          "text": "         if (errno == EINTR) {"
+        },
+        {
+          "n": 64,
+          "text": "            continue;"
+        }
+      ],
+      "message": "getrandom is a Linux syscall wrapper.",
+      "remedy": "Read from /dev/urandom (or /dev/random) with a small helper.",
+      "verify": "verify against SDP whether getrandom/arc4random exist.",
+      "effort": 8,
+      "guard": "linux-only",
+      "guards": [
+        "#ifdef BN_S_MP_RAND_PLATFORM_C",
+        "#if !defined(BN_S_READ_WINCSP_C) && defined(__linux__) && defined(__GLIBC_PREREQ)",
+        "#if __GLIBC_PREREQ(2, 25)"
+      ]
+    },
+    {
+      "ruleId": "QNX-BLD-UNAME",
+      "title": "Makefile branches on uname",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "file": "libtommath/makefile_include.mk",
+      "line": 116,
+      "column": 20,
+      "match": "uname -m",
+      "context": [
+        {
+          "n": 113,
+          "text": "ifeq ($(PLATFORM),FreeBSD)"
+        },
+        {
+          "n": 114,
+          "text": "  _ARCH := $(shell sysctl -b hw.machine_arch)"
+        },
+        {
+          "n": 115,
+          "text": "else"
+        },
+        {
+          "n": 116,
+          "text": "  _ARCH := $(shell uname -m)"
+        },
+        {
+          "n": 117,
+          "text": "endif"
+        },
+        {
+          "n": 118,
+          "text": ""
+        },
+        {
+          "n": 119,
+          "text": "# adjust coverage set"
+        }
+      ],
+      "message": "Platform is taken from the build host. When cross-compiling the host is Linux/macOS while the target is QNX; uname on a QNX host reports QNX.",
+      "remedy": "Key the logic on a target variable (for example TARGET_OS passed on the command line) rather than uname of the build machine.",
+      "effort": 15,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-API-GETRANDOM",
+      "title": "getrandom",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/dbrandom.c",
+      "line": 174,
+      "column": 8,
+      "match": "getrandom(",
+      "context": [
+        {
+          "n": 171,
+          "text": "\tssize_t ret;"
+        },
+        {
+          "n": 172,
+          "text": ""
+        },
+        {
+          "n": 173,
+          "text": "\t/* First try non-blocking so that we can warn about waiting */"
+        },
+        {
+          "n": 174,
+          "text": "\tret = getrandom(buf, sizeof(buf), GRND_NONBLOCK);"
+        },
+        {
+          "n": 175,
+          "text": "\tif (ret == -1) {"
+        },
+        {
+          "n": 176,
+          "text": "\t\tif (errno == ENOSYS) {"
+        },
+        {
+          "n": 177,
+          "text": "\t\t\t/* Old kernel */"
+        }
+      ],
+      "message": "getrandom is a Linux syscall wrapper.",
+      "remedy": "Read from /dev/urandom (or /dev/random) with a small helper.",
+      "verify": "verify against SDP whether getrandom/arc4random exist.",
+      "effort": 15,
+      "guard": "other",
+      "guards": [
+        "#ifdef HAVE_GETRANDOM"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-GETRANDOM",
+      "title": "getrandom",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/dbrandom.c",
+      "line": 189,
+      "column": 9,
+      "match": "getrandom(",
+      "context": [
+        {
+          "n": 186,
+          "text": ""
+        },
+        {
+          "n": 187,
+          "text": "\t/* Wait blocking if needed. Loop in case we get EINTR */"
+        },
+        {
+          "n": 188,
+          "text": "\twhile (ret != sizeof(buf)) {"
+        },
+        {
+          "n": 189,
+          "text": "\t\tret = getrandom(buf, sizeof(buf), 0);"
+        },
+        {
+          "n": 190,
+          "text": ""
+        },
+        {
+          "n": 191,
+          "text": "\t\tif (ret == sizeof(buf)) {"
+        },
+        {
+          "n": 192,
+          "text": "\t\t\t/* Success */"
+        }
+      ],
+      "message": "getrandom is a Linux syscall wrapper.",
+      "remedy": "Read from /dev/urandom (or /dev/random) with a small helper.",
+      "verify": "verify against SDP whether getrandom/arc4random exist.",
+      "effort": 5,
+      "guard": "other",
+      "guards": [
+        "#ifdef HAVE_GETRANDOM"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/netio.c",
+      "line": 423,
+      "column": 32,
+      "match": "TCP_FASTOPEN",
+      "context": [
+        {
+          "n": 420,
+          "text": "#if DROPBEAR_SERVER_TCP_FAST_OPEN"
+        },
+        {
+          "n": 421,
+          "text": "void set_listen_fast_open(int sock) {"
+        },
+        {
+          "n": 422,
+          "text": "\tint qlen = MAX(MAX_UNAUTH_PER_IP, 5);"
+        },
+        {
+          "n": 423,
+          "text": "\tif (setsockopt(sock, SOL_TCP, TCP_FASTOPEN, &qlen, sizeof(qlen)) != 0) {"
+        },
+        {
+          "n": 424,
+          "text": "\t\tTRACE((\"set_listen_fast_open failed for socket %d: %s\", sock, strerror(errno)))"
+        },
+        {
+          "n": 425,
+          "text": "\t}"
+        },
+        {
+          "n": 426,
+          "text": "}"
+        }
+      ],
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "effort": 20,
+      "guard": "other",
+      "guards": [
+        "#if DROPBEAR_SERVER_TCP_FAST_OPEN"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/netio.c",
+      "line": 622,
+      "column": 48,
+      "match": "SO_BINDTODEVICE",
+      "context": [
+        {
+          "n": 619,
+          "text": "\t\tsetsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*) &val, sizeof(val));"
+        },
+        {
+          "n": 620,
+          "text": ""
+        },
+        {
+          "n": 621,
+          "text": "#ifdef SO_BINDTODEVICE"
+        },
+        {
+          "n": 622,
+          "text": "\t\tif(interface && setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface)) < 0) {"
+        },
+        {
+          "n": 623,
+          "text": "\t\t\tdropbear_log(LOG_WARNING, \"Couldn't set SO_BINDTODEVICE\");"
+        },
+        {
+          "n": 624,
+          "text": "\t\t\tTRACE((\"Failed setsockopt with errno failure, %d %s\", errno, strerror(errno)))"
+        },
+        {
+          "n": 625,
+          "text": "\t\t}"
+        }
+      ],
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "effort": 6,
+      "guard": "other",
+      "guards": [
+        "#ifdef SO_BINDTODEVICE"
+      ]
+    },
+    {
+      "ruleId": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "file": "src/netio.h",
+      "line": 62,
+      "column": 9,
+      "match": "TCP_FASTOPEN",
+      "context": [
+        {
+          "n": 59,
+          "text": "void set_listen_fast_open(int sock);"
+        },
+        {
+          "n": 60,
+          "text": "/* Define values which may be supported by the kernel even if the libc is too old */"
+        },
+        {
+          "n": 61,
+          "text": "#ifndef TCP_FASTOPEN"
+        },
+        {
+          "n": 62,
+          "text": "#define TCP_FASTOPEN 23"
+        },
+        {
+          "n": 63,
+          "text": "#endif"
+        },
+        {
+          "n": 64,
+          "text": "#ifndef MSG_FASTOPEN"
+        },
+        {
+          "n": 65,
+          "text": "#define MSG_FASTOPEN 0x20000000"
+        }
+      ],
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "effort": 20,
+      "guard": "other",
+      "guards": [
+        "#ifndef DROPBEAR_NETIO_H",
+        "#if DROPBEAR_SERVER_TCP_FAST_OPEN",
+        "#ifndef TCP_FASTOPEN"
+      ]
+    },
+    {
+      "ruleId": "QNX-BLD-AUTOCONF-HOST",
+      "title": "Autotools project with no QNX host support",
+      "category": "build",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "configure.ac",
+      "line": 1,
+      "column": 1,
+      "match": "(project-level)",
+      "context": [],
+      "message": "No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet.",
+      "remedy": "Refresh config.sub/config.guess (autoreconf -fi or copy from a current automake), then configure with --host=<cpu>-unknown-nto-qnx<version> and CC set to qcc.",
+      "verify": "verify against SDP: exact host triplet format for 8.0.",
+      "effort": 30,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "file": "libtommath/bn_s_mp_rand_platform.c",
+      "line": 51,
+      "column": 1,
+      "match": "#if !defined(BN_S_READ_WINCSP_C) && defined(__linux__",
+      "context": [
+        {
+          "n": 48,
+          "text": "}"
+        },
+        {
+          "n": 49,
+          "text": "#endif /* WIN32 */"
+        },
+        {
+          "n": 50,
+          "text": ""
+        },
+        {
+          "n": 51,
+          "text": "#if !defined(BN_S_READ_WINCSP_C) && defined(__linux__) && defined(__GLIBC_PREREQ)"
+        },
+        {
+          "n": 52,
+          "text": "#if __GLIBC_PREREQ(2, 25)"
+        },
+        {
+          "n": 53,
+          "text": "#define BN_S_READ_GETRANDOM_C"
+        },
+        {
+          "n": 54,
+          "text": "#include <sys/random.h>"
+        }
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "effort": 10,
+      "guard": "other",
+      "guards": [
+        "#ifdef BN_S_MP_RAND_PLATFORM_C"
+      ]
+    },
+    {
+      "ruleId": "QNX-BLD-SANITIZE",
+      "title": "Sanitizer flags",
+      "category": "build",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "libtommath/makefile_include.mk",
+      "line": 55,
+      "column": 15,
+      "match": "-fsanitize=",
+      "context": [
+        {
+          "n": 52,
+          "text": ""
+        },
+        {
+          "n": 53,
+          "text": "# renamed for Dropbear to avoid clash with oss-fuzz $SANITIZER var"
+        },
+        {
+          "n": 54,
+          "text": "ifdef LTM_SANITIZER"
+        },
+        {
+          "n": 55,
+          "text": "LTM_CFLAGS += -fsanitize=undefined -fno-sanitize-recover=all -fno-sanitize=float-divide-by-zero"
+        },
+        {
+          "n": 56,
+          "text": "endif"
+        },
+        {
+          "n": 57,
+          "text": ""
+        },
+        {
+          "n": 58,
+          "text": "ifndef NO_ADDTL_WARNINGS"
+        }
+      ],
+      "message": "Sanitizer runtimes may not be available for the QNX target.",
+      "remedy": "Keep sanitizer builds as host-only (Linux) test configurations.",
+      "verify": "verify against SDP.",
+      "effort": 0,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "file": "src/dbrandom.c",
+      "line": 270,
+      "column": 1,
+      "match": "#ifdef __linux__",
+      "context": [
+        {
+          "n": 267,
+          "text": ""
+        },
+        {
+          "n": 268,
+          "text": "\t/* A few other sources to fall back on. "
+        },
+        {
+          "n": 269,
+          "text": "\t * Add more here for other platforms */"
+        },
+        {
+          "n": 270,
+          "text": "#ifdef __linux__"
+        },
+        {
+          "n": 271,
+          "text": "\t/* Might help on systems with wireless */"
+        },
+        {
+          "n": 272,
+          "text": "\tprocess_file(&hs, \"/proc/interrupts\", 0, 0);"
+        },
+        {
+          "n": 273,
+          "text": ""
+        }
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "effort": 10,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "file": "src/dbutil.c",
+      "line": 53,
+      "column": 1,
+      "match": "#ifdef __linux__",
+      "context": [
+        {
+          "n": 50,
+          "text": ""
+        },
+        {
+          "n": 51,
+          "text": "#include \"config.h\""
+        },
+        {
+          "n": 52,
+          "text": ""
+        },
+        {
+          "n": 53,
+          "text": "#ifdef __linux__"
+        },
+        {
+          "n": 54,
+          "text": "#define _GNU_SOURCE"
+        },
+        {
+          "n": 55,
+          "text": "/* To call clock_gettime() directly */"
+        },
+        {
+          "n": 56,
+          "text": "#include <sys/syscall.h>"
+        }
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "effort": 10,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-ADV-UNIX-SOCKET-IPC",
+      "title": "UNIX-domain socket IPC",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "src/dbutil.c",
+      "line": 249,
+      "column": 2,
+      "match": "struct sockaddr_un",
+      "context": [
+        {
+          "n": 246,
+          "text": "/* Connect to a given unix socket. The socket is blocking */"
+        },
+        {
+          "n": 247,
+          "text": "#if ENABLE_CONNECT_UNIX"
+        },
+        {
+          "n": 248,
+          "text": "int connect_unix(const char* path) {"
+        },
+        {
+          "n": 249,
+          "text": "\tstruct sockaddr_un addr;"
+        },
+        {
+          "n": 250,
+          "text": "\tint fd = -1;"
+        },
+        {
+          "n": 251,
+          "text": ""
+        },
+        {
+          "n": 252,
+          "text": "\tmemset((void*)&addr, 0x0, sizeof(addr));"
+        }
+      ],
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+      "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+      "effort": 0,
+      "guard": "other",
+      "guards": [
+        "#if ENABLE_CONNECT_UNIX"
+      ]
+    },
+    {
+      "ruleId": "QNX-ADV-UNIX-SOCKET-IPC",
+      "title": "UNIX-domain socket IPC",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "src/dbutil.c",
+      "line": 253,
+      "column": 20,
+      "match": "AF_UNIX",
+      "context": [
+        {
+          "n": 250,
+          "text": "\tint fd = -1;"
+        },
+        {
+          "n": 251,
+          "text": ""
+        },
+        {
+          "n": 252,
+          "text": "\tmemset((void*)&addr, 0x0, sizeof(addr));"
+        },
+        {
+          "n": 253,
+          "text": "\taddr.sun_family = AF_UNIX;"
+        },
+        {
+          "n": 254,
+          "text": "\tstrlcpy(addr.sun_path, path, sizeof(addr.sun_path));"
+        },
+        {
+          "n": 255,
+          "text": "\tfd = socket(PF_UNIX, SOCK_STREAM, 0);"
+        },
+        {
+          "n": 256,
+          "text": "\tif (fd < 0) {"
+        }
+      ],
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+      "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+      "effort": 0,
+      "guard": "other",
+      "guards": [
+        "#if ENABLE_CONNECT_UNIX"
+      ]
+    },
+    {
+      "ruleId": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "file": "src/dbutil.c",
+      "line": 753,
+      "column": 1,
+      "match": "#if defined(__linux__",
+      "context": [
+        {
+          "n": 750,
+          "text": "\t}"
+        },
+        {
+          "n": 751,
+          "text": "#endif"
+        },
+        {
+          "n": 752,
+          "text": ""
+        },
+        {
+          "n": 753,
+          "text": "#if defined(__linux__) && defined(SYS_clock_gettime)"
+        },
+        {
+          "n": 754,
+          "text": "\t{"
+        },
+        {
+          "n": 755,
+          "text": "\t/* Old linux toolchain - kernel might support it but not the build headers */"
+        },
+        {
+          "n": 756,
+          "text": "\t/* Also glibc <2.17 requires -lrt which we neglect to add */"
+        }
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "effort": 3,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-ADV-UNIX-SOCKET-IPC",
+      "title": "UNIX-domain socket IPC",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "src/netio.c",
+      "line": 32,
+      "column": 28,
+      "match": "AF_UNIX",
+      "context": [
+        {
+          "n": 29,
+          "text": "static void remove_connect(struct dropbear_progress_connection *c, m_list_elem *iter) {"
+        },
+        {
+          "n": 30,
+          "text": "\tif (c->res) {"
+        },
+        {
+          "n": 31,
+          "text": "\t\t/* Only call freeaddrinfo if connection is not AF_UNIX. */"
+        },
+        {
+          "n": 32,
+          "text": "\t\tif (c->res->ai_family != AF_UNIX) {"
+        },
+        {
+          "n": 33,
+          "text": "\t\t\tfreeaddrinfo(c->res);"
+        },
+        {
+          "n": 34,
+          "text": "\t\t} else {"
+        },
+        {
+          "n": 35,
+          "text": "\t\t\tm_free(c->res);"
+        }
+      ],
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+      "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+      "effort": 0,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-ADV-UNIX-SOCKET-IPC",
+      "title": "UNIX-domain socket IPC",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "src/netio.c",
+      "line": 84,
+      "column": 33,
+      "match": "AF_UNIX",
+      "context": [
+        {
+          "n": 81,
+          "text": "\t\t/* According to the connect(2) manpage it should be testing EAGAIN"
+        },
+        {
+          "n": 82,
+          "text": "\t\t * rather than EINPROGRESS for unix sockets."
+        },
+        {
+          "n": 83,
+          "text": "\t\t */"
+        },
+        {
+          "n": 84,
+          "text": "\t\tretry_errno = r->ai_family == AF_UNIX ? EAGAIN : EINPROGRESS;"
+        },
+        {
+          "n": 85,
+          "text": ""
+        },
+        {
+          "n": 86,
+          "text": "\t\tif (c->bind_address || c->bind_port) {"
+        },
+        {
+          "n": 87,
+          "text": "\t\t\t/* bind to a source port/address */"
+        }
+      ],
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+      "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+      "effort": 0,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-ADV-UNIX-SOCKET-IPC",
+      "title": "UNIX-domain socket IPC",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "src/netio.c",
+      "line": 130,
+      "column": 56,
+      "match": "AF_UNIX",
+      "context": [
+        {
+          "n": 127,
+          "text": "\t\tsetnonblocking(c->sock);"
+        },
+        {
+          "n": 128,
+          "text": ""
+        },
+        {
+          "n": 129,
+          "text": "#if DROPBEAR_CLIENT_TCP_FAST_OPEN"
+        },
+        {
+          "n": 130,
+          "text": "\t\tfastopen = (c->writequeue != NULL && r->ai_family != AF_UNIX);"
+        },
+        {
+          "n": 131,
+          "text": ""
+        },
+        {
+          "n": 132,
+          "text": "\t\tif (fastopen) {"
+        },
+        {
+          "n": 133,
+          "text": "\t\t\tmemset(&message, 0x0, sizeof(message));"
+        }
+      ],
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+      "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+      "effort": 0,
+      "guard": "other",
+      "guards": [
+        "#if DROPBEAR_CLIENT_TCP_FAST_OPEN"
+      ]
+    },
+    {
+      "ruleId": "QNX-ADV-UNIX-SOCKET-IPC",
+      "title": "UNIX-domain socket IPC",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "src/netio.c",
+      "line": 245,
+      "column": 2,
+      "match": "struct sockaddr_un",
+      "context": [
+        {
+          "n": 242,
+          "text": "\tconnect_callback cb, void* cb_data, enum dropbear_prio prio)"
+        },
+        {
+          "n": 243,
+          "text": "{"
+        },
+        {
+          "n": 244,
+          "text": "\tstruct dropbear_progress_connection *c = NULL;"
+        },
+        {
+          "n": 245,
+          "text": "\tstruct sockaddr_un *sunaddr;"
+        },
+        {
+          "n": 246,
+          "text": ""
+        },
+        {
+          "n": 247,
+          "text": "\tc = m_malloc(sizeof(*c));"
+        },
+        {
+          "n": 248,
+          "text": "\tc->remotehost = m_strdup(localpath);"
+        }
+      ],
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+      "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+      "effort": 0,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-ADV-UNIX-SOCKET-IPC",
+      "title": "UNIX-domain socket IPC",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "src/netio.c",
+      "line": 278,
+      "column": 22,
+      "match": "AF_UNIX",
+      "context": [
+        {
+          "n": 275,
+          "text": "\tc->res = m_malloc(sizeof(*c->res) + sizeof(*sunaddr));"
+        },
+        {
+          "n": 276,
+          "text": "\tc->res->ai_addr = (struct sockaddr *)(c->res + 1);"
+        },
+        {
+          "n": 277,
+          "text": "\tc->res->ai_addrlen = sizeof(*sunaddr);"
+        },
+        {
+          "n": 278,
+          "text": "\tc->res->ai_family = AF_UNIX;"
+        },
+        {
+          "n": 279,
+          "text": "\tc->res->ai_socktype = SOCK_STREAM;"
+        },
+        {
+          "n": 280,
+          "text": "\tc->res->ai_protocol = PF_UNSPEC;"
+        },
+        {
+          "n": 281,
+          "text": "\tsunaddr = (struct sockaddr_un *)c->res->ai_addr;"
+        }
+      ],
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+      "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+      "effort": 0,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-ADV-UNIX-SOCKET-IPC",
+      "title": "UNIX-domain socket IPC",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "src/netio.c",
+      "line": 281,
+      "column": 13,
+      "match": "struct sockaddr_un",
+      "context": [
+        {
+          "n": 278,
+          "text": "\tc->res->ai_family = AF_UNIX;"
+        },
+        {
+          "n": 279,
+          "text": "\tc->res->ai_socktype = SOCK_STREAM;"
+        },
+        {
+          "n": 280,
+          "text": "\tc->res->ai_protocol = PF_UNSPEC;"
+        },
+        {
+          "n": 281,
+          "text": "\tsunaddr = (struct sockaddr_un *)c->res->ai_addr;"
+        },
+        {
+          "n": 282,
+          "text": "\tsunaddr->sun_family = AF_UNIX;"
+        },
+        {
+          "n": 283,
+          "text": "\tstrlcpy(sunaddr->sun_path, localpath, sizeof(sunaddr->sun_path));"
+        },
+        {
+          "n": 284,
+          "text": ""
+        }
+      ],
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+      "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+      "effort": 0,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-ADV-UNIX-SOCKET-IPC",
+      "title": "UNIX-domain socket IPC",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "src/netio.c",
+      "line": 282,
+      "column": 24,
+      "match": "AF_UNIX",
+      "context": [
+        {
+          "n": 279,
+          "text": "\tc->res->ai_socktype = SOCK_STREAM;"
+        },
+        {
+          "n": 280,
+          "text": "\tc->res->ai_protocol = PF_UNSPEC;"
+        },
+        {
+          "n": 281,
+          "text": "\tsunaddr = (struct sockaddr_un *)c->res->ai_addr;"
+        },
+        {
+          "n": 282,
+          "text": "\tsunaddr->sun_family = AF_UNIX;"
+        },
+        {
+          "n": 283,
+          "text": "\tstrlcpy(sunaddr->sun_path, localpath, sizeof(sunaddr->sun_path));"
+        },
+        {
+          "n": 284,
+          "text": ""
+        },
+        {
+          "n": 285,
+          "text": "\t/* Copy to target iter */ "
+        }
+      ],
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+      "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+      "effort": 0,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-ADV-UNIX-SOCKET-IPC",
+      "title": "UNIX-domain socket IPC",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "src/svr-agentfwd.c",
+      "line": 225,
+      "column": 2,
+      "match": "struct sockaddr_un",
+      "context": [
+        {
+          "n": 222,
+          "text": "   returns DROPBEAR_SUCCESS or DROPBEAR_FAILURE */"
+        },
+        {
+          "n": 223,
+          "text": "static int bindagent(int fd, struct ChanSess * chansess) {"
+        },
+        {
+          "n": 224,
+          "text": ""
+        },
+        {
+          "n": 225,
+          "text": "\tstruct sockaddr_un addr;"
+        },
+        {
+          "n": 226,
+          "text": "\tunsigned int prefix;"
+        },
+        {
+          "n": 227,
+          "text": "\tchar path[(sizeof(addr.sun_path)-1)/2], sockfile[(sizeof(addr.sun_path)-1)/2];"
+        },
+        {
+          "n": 228,
+          "text": "\tmode_t mode;"
+        }
+      ],
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+      "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+      "effort": 0,
+      "guard": "other",
+      "guards": [
+        "#if DROPBEAR_SVR_AGENTFWD"
+      ]
+    },
+    {
+      "ruleId": "QNX-ADV-UNIX-SOCKET-IPC",
+      "title": "UNIX-domain socket IPC",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "src/svr-agentfwd.c",
+      "line": 248,
+      "column": 20,
+      "match": "AF_UNIX",
+      "context": [
+        {
+          "n": 245,
+          "text": "#endif"
+        },
+        {
+          "n": 246,
+          "text": ""
+        },
+        {
+          "n": 247,
+          "text": "\tmemset((void*)&addr, 0x0, sizeof(addr));"
+        },
+        {
+          "n": 248,
+          "text": "\taddr.sun_family = AF_UNIX;"
+        },
+        {
+          "n": 249,
+          "text": ""
+        },
+        {
+          "n": 250,
+          "text": "\tmode = S_IRWXU;"
+        },
+        {
+          "n": 251,
+          "text": ""
+        }
+      ],
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+      "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+      "effort": 0,
+      "guard": "other",
+      "guards": [
+        "#if DROPBEAR_SVR_AGENTFWD"
+      ]
+    },
+    {
+      "ruleId": "QNX-ADV-UNIX-SOCKET-IPC",
+      "title": "UNIX-domain socket IPC",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "src/svr-streamfwd.c",
+      "line": 121,
+      "column": 5,
+      "match": "struct sockaddr_un",
+      "context": [
+        {
+          "n": 118,
+          "text": ""
+        },
+        {
+          "n": 119,
+          "text": "    int sock, rc, saved_errno;"
+        },
+        {
+          "n": 120,
+          "text": "    struct Listener *listener = NULL;"
+        },
+        {
+          "n": 121,
+          "text": "    struct sockaddr_un addr;"
+        },
+        {
+          "n": 122,
+          "text": "    mode_t old_umask;"
+        },
+        {
+          "n": 123,
+          "text": ""
+        },
+        {
+          "n": 124,
+          "text": "    TRACE((\"enter listen_streamlocal\"))"
+        }
+      ],
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+      "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+      "effort": 0,
+      "guard": "other",
+      "guards": [
+        "#if DROPBEAR_SVR_REMOTESTREAMFWD"
+      ]
+    },
+    {
+      "ruleId": "QNX-ADV-UNIX-SOCKET-IPC",
+      "title": "UNIX-domain socket IPC",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "guess",
+      "file": "src/svr-streamfwd.c",
+      "line": 152,
+      "column": 23,
+      "match": "AF_UNIX",
+      "context": [
+        {
+          "n": 149,
+          "text": "    }"
+        },
+        {
+          "n": 150,
+          "text": ""
+        },
+        {
+          "n": 151,
+          "text": "    memset(&addr, 0, sizeof(addr));"
+        },
+        {
+          "n": 152,
+          "text": "    addr.sun_family = AF_UNIX;"
+        },
+        {
+          "n": 153,
+          "text": "    strlcpy(addr.sun_path, tcpinfo->socket_path, sizeof(addr.sun_path));"
+        },
+        {
+          "n": 154,
+          "text": ""
+        },
+        {
+          "n": 155,
+          "text": "    /* Unlink existing socket if it exists */"
+        }
+      ],
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+      "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+      "effort": 0,
+      "guard": "other",
+      "guards": [
+        "#if DROPBEAR_SVR_REMOTESTREAMFWD"
+      ]
+    },
+    {
+      "ruleId": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "file": "src/sysoptions.h",
+      "line": 45,
+      "column": 1,
+      "match": "#if defined(HAVE_FEXECVE) && DROPBEAR_REEXEC && defined(__linux__",
+      "context": [
+        {
+          "n": 42,
+          "text": "#endif"
+        },
+        {
+          "n": 43,
+          "text": ""
+        },
+        {
+          "n": 44,
+          "text": "/* Would probably work on freebsd but hasn't been tested */"
+        },
+        {
+          "n": 45,
+          "text": "#if defined(HAVE_FEXECVE) && DROPBEAR_REEXEC && defined(__linux__)"
+        },
+        {
+          "n": 46,
+          "text": "#define DROPBEAR_DO_REEXEC 1"
+        },
+        {
+          "n": 47,
+          "text": "#else"
+        },
+        {
+          "n": 48,
+          "text": "#define DROPBEAR_DO_REEXEC 0"
+        }
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "effort": 10,
+      "guard": "none",
+      "guards": []
+    },
+    {
+      "ruleId": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "file": "src/sysoptions.h",
+      "line": 426,
+      "column": 1,
+      "match": "#ifdef __linux__",
+      "context": [
+        {
+          "n": 423,
+          "text": "/* Linux will attempt TCP fast open, falling back if not supported by the kernel."
+        },
+        {
+          "n": 424,
+          "text": " * Currently server is enabled but client is disabled by default until there"
+        },
+        {
+          "n": 425,
+          "text": " * is further compatibility testing */"
+        },
+        {
+          "n": 426,
+          "text": "#ifdef __linux__"
+        },
+        {
+          "n": 427,
+          "text": "#define DROPBEAR_SERVER_TCP_FAST_OPEN 1"
+        },
+        {
+          "n": 428,
+          "text": "#define DROPBEAR_CLIENT_TCP_FAST_OPEN 0"
+        },
+        {
+          "n": 429,
+          "text": "#else"
+        }
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "effort": 3,
+      "guard": "none",
+      "guards": []
+    }
+  ],
+  "rules": [
+    {
+      "id": "QNX-BLD-HARDCODED-CC",
+      "title": "Compiler hard-coded to gcc/clang instead of qcc",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "remedy": "Do not hard-code the compiler; let the caller set CC/CXX (CC=qcc -Vgcc_ntoaarch64le after sourcing qnxsdp-env.sh) or supply a CMake toolchain file.",
+      "refs": [
+        "QNX docs: qcc",
+        "QNX SDP: qnxsdp-env.sh"
+      ],
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc."
+    },
+    {
+      "id": "QNX-BLD-PIE",
+      "title": "-pie / -fPIE flags",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "guess",
+      "remedy": "Keep them behind a platform check until confirmed with the target toolchain.",
+      "verify": "verify against SDP: run qcc with the flag on the target variant.",
+      "message": "Position-independent executable flags may be handled differently (or rejected) by qcc."
+    },
+    {
+      "id": "QNX-BLD-LDFLAGS",
+      "title": "GNU-ld specific linker flags",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "guess",
+      "remedy": "Test each flag on the QNX toolchain; drop the optional ones (--as-needed, --hash-style, -z hardening) behind a platform check.",
+      "verify": "verify against SDP: run the link with the flag via qcc.",
+      "message": "Linker options that depend on the GNU/Linux linker setup or default behaviour; qcc may pass them to a different ld or reject them."
+    },
+    {
+      "id": "QNX-BLD-SANITIZE",
+      "title": "Sanitizer flags",
+      "category": "build",
+      "severity": "info",
+      "confidence": "guess",
+      "remedy": "Keep sanitizer builds as host-only (Linux) test configurations.",
+      "verify": "verify against SDP.",
+      "message": "Sanitizer runtimes may not be available for the QNX target."
+    },
+    {
+      "id": "QNX-BLD-AUTOCONF-HOST",
+      "title": "Autotools project with no QNX host support",
+      "category": "build",
+      "severity": "info",
+      "confidence": "guess",
+      "remedy": "Refresh config.sub/config.guess (autoreconf -fi or copy from a current automake), then configure with --host=<cpu>-unknown-nto-qnx<version> and CC set to qcc.",
+      "verify": "verify against SDP: exact host triplet format for 8.0.",
+      "message": "No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet."
+    },
+    {
+      "id": "QNX-BLD-UNAME",
+      "title": "Makefile branches on uname",
+      "category": "build",
+      "severity": "minor",
+      "confidence": "known",
+      "remedy": "Key the logic on a target variable (for example TARGET_OS passed on the command line) rather than uname of the build machine.",
+      "message": "Platform is taken from the build host. When cross-compiling the host is Linux/macOS while the target is QNX; uname on a QNX host reports QNX."
+    },
+    {
+      "id": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "known",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "refs": [
+        "QNX SDP 8.0 System Architecture: a QNX target does not use the Linux kernel"
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them."
+    },
+    {
+      "id": "QNX-HDR-SYS-LINUX",
+      "title": "Includes a Linux-specific <sys/...> header",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.",
+      "verify": "verify against SDP: grep $QNX_TARGET/usr/include for the header.",
+      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP."
+    },
+    {
+      "id": "QNX-API-PRCTL",
+      "title": "prctl",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np(); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE/NO_NEW_PRIVS -> drop (no QNX analogue assumed).",
+      "verify": "verify against SDP: confirm pthread_setname_np signature.",
+      "message": "prctl is a Linux process-control multiplexer."
+    },
+    {
+      "id": "QNX-API-GETRANDOM",
+      "title": "getrandom",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "remedy": "Read from /dev/urandom (or /dev/random) with a small helper.",
+      "verify": "verify against SDP whether getrandom/arc4random exist.",
+      "message": "getrandom is a Linux syscall wrapper."
+    },
+    {
+      "id": "QNX-API-SYSCALL",
+      "title": "Raw Linux syscall()",
+      "category": "linux-api",
+      "severity": "blocker",
+      "confidence": "guess",
+      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
+      "verify": "verify against SDP.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX."
+    },
+    {
+      "id": "QNX-API-SOCKOPT-LINUX",
+      "title": "Linux-specific socket options",
+      "category": "linux-api",
+      "severity": "minor",
+      "confidence": "guess",
+      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
+      "verify": "verify against SDP.",
+      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning)."
+    },
+    {
+      "id": "QNX-ADV-LINUX-IFDEF",
+      "title": "Linux-only preprocessor branch without QNX branch",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "known",
+      "remedy": "Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.",
+      "refs": [
+        "QNX docs: Predefined macros (__QNX__, __QNXNTO__)"
+      ],
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__)."
+    },
+    {
+      "id": "QNX-ADV-UNIX-SOCKET-IPC",
+      "title": "UNIX-domain socket IPC",
+      "category": "advice",
+      "severity": "info",
+      "confidence": "guess",
+      "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
+      "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off."
+    },
+    {
+      "id": "QNX-PATH-PROC",
+      "title": "Linux /proc paths",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
+      "verify": "verify against SDP: procfs layout on QNX 8.0.",
+      "refs": [
+        "QNX docs: procfs / DCMD_PROC_INFO"
+      ],
+      "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files)."
+    },
+    {
+      "id": "QNX-PATH-SYS",
+      "title": "Linux /sys (sysfs) paths",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Query the real source: sysconf/getifaddrs for system facts, device resource managers for hardware state, the system page for CPU data.",
+      "verify": "verify against SDP.",
+      "message": "sysfs is a Linux kernel pseudo-filesystem; not assumed on QNX."
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+$WORK/out/qnx-bin/pd-server: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /usr/lib/ldqnx-64.so.2
+mkqnximage --build: exit 0
+mkqnximage --build (with demo): exit 0
+
+
+For full list of options, run "mkqnximage --options"
+90:[perms=0755] pd-server=$WORK/out/qnx-bin/pd-server
+91:[perms=0755] pd-client=$WORK/out/qnx-bin/pd-client
+157159936 output/disk-qemu
+10931272 output/ifs.bin
+-- boot: mkqnximage --run
+Can't find qemu-system-x86_64, perhaps you need to install QEMU.

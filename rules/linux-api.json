@@ -402,8 +402,8 @@
     "effort": 30,
     "pattern": "\\bprctl\\s*\\(|\\bPR_(?:SET|GET)_[A-Z_]+\\b",
     "message": "prctl is a Linux process-control multiplexer. It does not exist on QNX 8.0 (no <sys/prctl.h>, no prctl symbol, no PR_* macro in SDP 8.0 build 141).",
-    "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np() (declared and exported in SDP 8.0 build 141; so is pthread_getname_np); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE/NO_NEW_PRIVS -> drop (no QNX analogue is known).",
-    "verify": "Absence and pthread_setname_np verified on SDP 8.0 build 141 (probes); argument limits of pthread_setname_np not checked.",
+    "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np() (declared and exported in SDP 8.0 build 141; so is pthread_getname_np); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE -> drop (no QNX analogue is known). PR_SET_NO_NEW_PRIVS: dropping the call silently weakens a sandbox; re-implement with procmgr abilities (procmgr_ability() and the PROCMGR_AID_* / PROCMGR_ADN_* / PROCMGR_AOP_* constants in <sys/procmgr.h>, present in SDP 8.0 build 141; which abilities to drop is design work) or accept the loss explicitly and write it down.",
+    "verify": "Absence of prctl and PR_* verified on SDP 8.0 build 141 (probes); pthread_setname_np, procmgr_ability and the PROCMGR_* constants verified present by probe. Which abilities replace NO_NEW_PRIVS, and the name-length limit of pthread_setname_np, are not verified.",
     "examples": {
       "positive": [
         "prctl(PR_SET_NAME, \"worker\");\n"
@@ -481,8 +481,8 @@
     "effort": 15,
     "pattern": "\\bgetrandom\\s*\\(|\\bGRND_(?:NONBLOCK|RANDOM)\\b",
     "message": "getrandom is a Linux syscall wrapper. On SDP 8.0 build 141 getrandom is not declared and GRND_* do not exist; getentropy is not declared either (an unrelated library, libunbound, exports a private symbol of that name, so a call without a prototype would link to the wrong thing). arc4random is not available to user code.",
-    "remedy": "Read from /dev/urandom (QNX provides it; a helper that handles short reads and EINTR is enough). <entropy.h> in the SDP is the QNX entropy-source interface (entropy_return_status/entropy_sleep exist in the header; entropy_return_status does not link by default), not a getrandom replacement.",
-    "verify": "Absence verified on SDP 8.0 build 141; /dev/urandom exists on the target image: not checked here.",
+    "remedy": "Read from /dev/urandom with a helper that handles short reads, EINTR and open failure. /dev/urandom exists only while QNX's random service (the `random` resource manager) is running: an image built with mkqnximage starts it (its startup script runs `random` and waits for /dev/random), but a minimal or custom image may not, so add it to the image's startup and treat a failed open as a hard error. <entropy.h> in the SDP is the QNX entropy-source interface (entropy_return_status/entropy_sleep exist in the header; entropy_return_status does not link by default), not a getrandom replacement.",
+    "verify": "Absence verified on SDP 8.0 build 141. That a default mkqnximage image starts `random` was read from its generated startup script; that /dev/urandom (not only /dev/random) appears was not run on a target.",
     "examples": {
       "positive": [
         "getrandom(buf, 16, 0);\n"
@@ -1060,8 +1060,8 @@
     "effort": 45,
     "pattern": "/proc/(?!self/exe)(?:self|%d|%u|%ld|\\d+|cpuinfo|meminfo|stat\\b|loadavg|uptime|version|sys/|net/|mounts|cmdline|maps|status|fd\\b|task\\b)",
     "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
-    "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.",
-    "verify": "verify against SDP: procfs layout on QNX 8.0.",
+    "remedy": "Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (<sys/syspage.h>) for CPU/memory facts, procfs devctl calls for process info. /proc/self/maps has no file equivalent: open /proc/self/as and use devctl(fd, DCMD_PROC_MAPINFO, ...) (and DCMD_PROC_INFO for the process summary), both defined in <sys/procfs.h> in SDP 8.0 build 141; the structure layout and calls were not run.",
+    "verify": "DCMD_PROC_MAPINFO / DCMD_PROC_INFO and <sys/procfs.h> verified present on SDP 8.0 build 141 (probes); procfs layout and devctl usage not run on a target.",
     "refs": [
       "QNX docs: procfs / DCMD_PROC_INFO"
     ],
@@ -1126,6 +1126,118 @@
         "shm_open(\"/foo\", 2, 0);\n",
         "open(\"/dev/shmem/foo\", 2);\n"
       ]
+    }
+  },
+  {
+    "id": "QNX-HDR-ENDIAN",
+    "title": "Includes <endian.h>, <sys/endian.h> or <byteswap.h>",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "include",
+    "effort": 20,
+    "pattern": "^[ \\t]*#[ \\t]*include[ \\t]*[<\"](?:sys/endian|endian|byteswap)\\.h[>\"]",
+    "message": "<endian.h>, <sys/endian.h> and <byteswap.h> do not exist in the QNX 8.0 SDP (build 141). Code that includes one without a QNX branch stops at the include (iperf's portable_endian.h falls into its 'platform not supported' branch and includes <endian.h>).",
+    "remedy": "Byte-order conversion is in <net/netbyte.h> (pulled in by <netinet/in.h>): htole16/32/64, le16/32/64toh, htobe16/32/64 and be16/32/64toh are macros there (present in build 141); <gulliver.h> has ENDIAN_LE16/32 and ENDIAN_BE16/32; BYTE_ORDER and BIG_ENDIAN come from <sys/param.h>. There is no bswap_16/32/64 and no __BYTE_ORDER / __LITTLE_ENDIAN. Add a __QNXNTO__ branch that includes <net/netbyte.h> and <sys/param.h>.",
+    "verify": "Header absence and the macro names verified on SDP 8.0 build 141 (qcc probes); not run on a target.",
+    "examples": {
+      "positive": [
+        "#include <endian.h>\n",
+        "#include <sys/endian.h>\n",
+        "#include <byteswap.h>\n"
+      ],
+      "negative": [
+        "#include <net/netbyte.h>\n",
+        "#include <endianfake.h>\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-BSWAP",
+    "title": "glibc byte-order names (bswap_N, __BYTE_ORDER, __LITTLE_ENDIAN)",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 15,
+    "pattern": "\\bbswap_(?:16|32|64)\\s*\\(|\\b__BYTE_ORDER\\b|\\b__LITTLE_ENDIAN\\b",
+    "message": "bswap_16/32/64, __BYTE_ORDER and __LITTLE_ENDIAN are glibc names. On the QNX 8.0 SDP (build 141) bswap_* and __BYTE_ORDER are undeclared and __LITTLE_ENDIAN is not in any user header.",
+    "remedy": "Use BYTE_ORDER with LITTLE_ENDIAN/BIG_ENDIAN from <sys/param.h> (present in build 141), and the htole*/htobe*/le*toh/be*toh macros from <net/netbyte.h> or ENDIAN_LE32()/ENDIAN_BE32() from <gulliver.h> instead of bswap_N. Do not redeclare htole64 and friends as functions: on QNX they are macros and the redeclaration fails to compile (dropbear's compat.h).",
+    "verify": "Name absence and the replacement names verified on SDP 8.0 build 141 (probes); not run on a target.",
+    "examples": {
+      "positive": [
+        "x = bswap_32(y);\n",
+        "#if __BYTE_ORDER == __LITTLE_ENDIAN\n"
+      ],
+      "negative": [
+        "x = bswap(y);\n",
+        "p->bswap_32(y);\n",
+        "#if BYTE_ORDER == LITTLE_ENDIAN\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-POLLRDHUP",
+    "title": "POLLRDHUP",
+    "category": "linux-api",
+    "severity": "major",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 20,
+    "pattern": "\\bPOLLRDHUP\\b",
+    "message": "POLLRDHUP (peer shut down its writing half) is Linux-specific. It is not defined in the QNX 8.0 SDP (build 141).",
+    "remedy": "Detect a peer's close by reading: POLLIN, then read()/recv() returning 0 means orderly shutdown; POLLHUP, POLLPRI and POLLRDNORM are defined in <poll.h> (build 141). Whether POLLHUP is raised for a half-close on QNX sockets was not tested, so keep the read()==0 path as the authority.",
+    "verify": "Absence of POLLRDHUP and presence of POLLHUP verified on SDP 8.0 build 141 (probes); half-close behaviour not run on a target.",
+    "examples": {
+      "positive": [
+        "pfd.events = POLLIN | POLLRDHUP;\n"
+      ],
+      "negative": [
+        "pfd.events = POLLIN | POLLHUP;\n",
+        "x = POLLRDHUPX;\n"
+      ]
+    }
+  },
+  {
+    "id": "QNX-API-RTSIG",
+    "title": "Real-time signals (SIGRTMIN, SIGRTMAX)",
+    "category": "linux-api",
+    "severity": "info",
+    "confidence": "guess",
+    "appliesTo": [
+      "c"
+    ],
+    "scope": "code",
+    "effort": 10,
+    "pattern": "\\bSIG(?:RTMIN|RTMAX)\\b",
+    "message": "SIGRTMIN and SIGRTMAX are used for real-time signals. They are defined in the QNX 8.0 SDP (build 141, <signal.h>), as are sigqueue, sigtimedwait and sigwaitinfo.",
+    "remedy": "Defined-ness is not parity: check how many real-time signals QNX provides against the highest SIGRTMIN+N the code uses, that sigqueue() delivery and queueing match what the code relies on, and that signal numbers are not assumed identical to Linux's (glibc reserves the first ones for threads). On QNX a pulse (SIGEV_PULSE, MsgSendPulse) is the native event.",
+    "verify": "Macro and function presence verified on SDP 8.0 build 141 (probes); the number of real-time signals and delivery semantics not checked or run.",
+    "examples": {
+      "positive": [
+        "int sig = SIGRTMIN + 2;\n",
+        "sigaddset(&s, SIGRTMAX);\n"
+      ],
+      "negative": [
+        "int sig = SIGUSR1;\n",
+        "x = SIGRTMINX;\n"
+      ]
+    },
+    "sdp": {
+      "present": {
+        "message": "SIGRTMIN/SIGRTMAX are defined in the SDP headers (signal.h) and sigqueue, sigtimedwait and sigwaitinfo link. The number of real-time signals and their delivery semantics were not compared with Linux.",
+        "keep": true,
+        "severity": "info"
+      }
     }
   }
 ]

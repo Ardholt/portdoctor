@@ -24,7 +24,7 @@ Everything SDP-related ran only in the sandbox (no network); no vendor header, l
 
 - `node --test tests/` on the UK box (Node 26.13): **183 tests, 183 pass**, five consecutive runs (one flaky failure in an earlier run, an EPIPE race, was found and fixed). In the jail (no Chrome): 183 tests, 179 pass, 4 skipped (the Chrome tests), 0 fail. New tests: provider failure text, Makefile build check (fake qcc), fix loop with a Makefile patch under `--check qcc`, default manifest and `--no-sdp-manifest`, the where-strip, four new rules' examples.
 - Real qcc evidence: see items 1-3; transcripts and outputs are in the repo.
-- Secrets/host-name grep (`<redacted>|<redacted>|the build box|/<home>/|<redacted>|sandbox user|<redacted>`, case-insensitive): **tree: 0 hits**. **History: not 0**, see below.
+- Secrets/host-name grep (the seven patterns from the slice brief for operator, host, sandbox-user, home/lib paths and licence <redacted>, case-insensitive, `git grep` over the tracked tree): **tree: 0 hits**. **History: not 0**, see below.
 
 ## What was NOT verified
 

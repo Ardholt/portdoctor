@@ -1,6 +1,6 @@
 {
   "tool": "portdoctor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "root": "cJSON",
   "disclaimer": "PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked 'guess' are unverified claims about QNX 8.0 and must be checked against the SDP.",
   "stats": {
@@ -14,6 +14,11 @@
     "findings": 21,
     "suppressedQnxBranch": 0,
     "suppressedNonCall": 0,
+    "build": {
+      "source": "none",
+      "findingsNotInBuildList": 0,
+      "note": "build files use globs/wildcards: source lists are not knowable, nothing was marked"
+    },
     "rules": 55,
     "bySeverity": {
       "blocker": 0,

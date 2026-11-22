@@ -66,6 +66,9 @@ export interface ScanOptions {
   rulesDir?: string;
   ruleIds?: string[];
   ignore?: string[];
+  ignorePresets?: string[];
+  /** default true: read compile_commands.json / CMake / Makefile source lists and flag files not in them */
+  buildAwareness?: boolean;
 }
 
 export interface ScanResult {
@@ -80,6 +83,8 @@ export interface ScanResult {
     findings: number;
     suppressedQnxBranch: number;
     suppressedNonCall: number;
+    /** heuristic build awareness: where the list came from and how many findings sit in files it does not mention */
+    build: { source: string; findingsNotInBuildList: number; note: string };
     rules: number;
     bySeverity: Record<Severity, number>;
     effortMinutes: number;

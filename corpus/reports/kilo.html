@@ -110,9 +110,9 @@ details.grp:target{outline:3px solid var(--accent)}
 <a class="skip" href="#start">Skip to start-here panel</a>
 <header class="top">
 <h1>PortDoctor <span>QNX 8.0 porting report for</span> kilo</h1>
-<p class="sub">portdoctor 0.1.0 &middot; 2 files scanned (1 make, 1 c) &middot; 55 rules</p>
+<p class="sub">portdoctor 0.2.0 &middot; 2 files scanned (1 make, 1 c) &middot; 55 rules</p>
 <details class="banner"><summary><strong>Static analysis only:</strong> nothing here was compiled or run on QNX. <span class="note">Details</span></summary>
-<p>PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked &#39;guess&#39; are unverified claims about QNX 8.0 and must be checked against the SDP.</p><p>Effort figures are rough, uncalibrated ranges derived from rule groups, not measurements. A clean scan is not proof of portability.</p></details>
+<p>PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked &#39;guess&#39; are unverified claims about QNX 8.0 and must be checked against the SDP.</p><p>Effort figures are rough, uncalibrated ranges derived from rule groups, not measurements. A clean scan is not proof of portability. Build awareness (heuristic): 1 source paths named in CMake/Makefile lists (variables and generated sources are not followed).</p></details>
 <p style="margin:.7rem 0 0"><button class="btn" id="themebtn" type="button" aria-label="Toggle light and dark theme">Theme (t)</button> <button class="btn" id="helpbtn" type="button">Keyboard shortcuts (?)</button></p>
 </header>
 <main id="main">
@@ -143,6 +143,7 @@ details.grp:target{outline:3px solid var(--accent)}
 <button type="button" class="chip" data-sevbtn="info" aria-pressed="true" title="Toggle info (4)"><span aria-hidden="true">○</span> info <span class="sr">toggle</span>(1)</button>
 <label class="note">Confidence <select id="conf" aria-label="Confidence filter"><option value="all">all</option><option value="known">known</option><option value="guess">guess</option></select></label>
 <label class="note"><input type="checkbox" id="guard" checked> include Linux-guarded</label>
+
 <button class="btn" id="expand" type="button">Expand all groups</button>
 <button class="btn" id="clear" type="button">Reset filters</button>
 <span id="count" role="status" aria-live="polite">1 findings</span>
@@ -155,7 +156,7 @@ details.grp:target{outline:3px solid var(--accent)}
 <div class="remedy"><strong>Remedy</strong>Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.</div>
 <p class="note">Documentation to read (names only, not fetched by this tool): QNX docs: Predefined macros (__QNX__, __QNXNTO__)</p>
 <details class="site"><summary><span class="loc">kilo.c:37</span><span class="hitline">#ifdef __linux__</span></summary>
-<article class="finding" id="f-0" tabindex="-1" data-sev="info" data-conf="known" data-file="kilo.c" data-guard="none" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch kilo.c #ifdef __linux__ a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-label="Linux-only preprocessor branch without QNX branch at kilo.c line 37">
+<article class="finding" id="f-0" tabindex="-1" data-sev="info" data-conf="known" data-file="kilo.c" data-guard="none" data-built="" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch kilo.c #ifdef __linux__ a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-label="Linux-only preprocessor branch without QNX branch at kilo.c line 37">
 <pre class="code" tabindex="0" aria-label="Code context for kilo.c line 37"><span class="ln"><b>34</b> </span><span class="ln"><b>35</b>#define KILO_VERSION &quot;0.0.1&quot;</span><span class="ln"><b>36</b> </span><span class="ln hit"><b>37</b>#ifdef __linux__</span><span class="ln"><b>38</b>#define _POSIX_C_SOURCE 200809L</span><span class="ln"><b>39</b>#endif</span><span class="ln"><b>40</b> </span></pre>
 <p class="note">Finding index 0 (for <code>portdoctor propose --finding 0</code>)</p>
 </article></details></div></details>
@@ -165,12 +166,12 @@ details.grp:target{outline:3px solid var(--accent)}
 <dialog id="help" aria-labelledby="help-t"><h2 id="help-t" style="margin-top:0">Keyboard shortcuts</h2>
 <p><kbd>/</kbd> search &nbsp; <kbd>j</kbd> / <kbd>k</kbd> next / previous finding &nbsp; <kbd>1</kbd>&ndash;<kbd>4</kbd> toggle blocker, major, minor, info &nbsp; <kbd>t</kbd> theme &nbsp; <kbd>Esc</kbd> close this dialog, leave search or clear the tile filter &nbsp; <kbd>?</kbd> this help</p>
 <form method="dialog"><button class="btn">Close</button></form></dialog>
-<script type="application/json" id="pd-data">{"tool":"portdoctor","version":"0.1.0","stats":{"filesScanned":2,"filesByKind":{"make":1,"c":1},"filesSkipped":0,"findings":1,"suppressedQnxBranch":0,"suppressedNonCall":0,"rules":55,"bySeverity":{"blocker":0,"major":0,"minor":0,"info":1},"effortMinutes":10}}</script>
+<script type="application/json" id="pd-data">{"tool":"portdoctor","version":"0.2.0","stats":{"filesScanned":2,"filesByKind":{"make":1,"c":1},"filesSkipped":0,"findings":1,"suppressedQnxBranch":0,"suppressedNonCall":0,"build":{"source":"build files","findingsNotInBuildList":0,"note":"1 source paths named in CMake/Makefile lists (variables and generated sources are not followed)"},"rules":55,"bySeverity":{"blocker":0,"major":0,"minor":0,"info":1},"effortMinutes":10}}</script>
 <script>
 (function(){
 var root=document.documentElement;root.classList.add('js');
 var $=function(s,c){return (c||document).querySelector(s)},$$=function(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s))};
-var state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true,scale:'rel'};
+var state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true,unbuilt:true,scale:'rel'};
 var findings=$$('article.finding'),groups=$$('details.grp'),count=$('#count'),empty=$('.empty');
 function setScale(){
  $$('.tile').forEach(function(t){t.style.setProperty('--i',state.scale==='abs'?t.dataset.abs:t.dataset.rel)});
@@ -184,6 +185,7 @@ function apply(){
   if(ok&&state.conf!=='all'&&d.conf!==state.conf)ok=false;
   if(ok&&state.dir!==null&&!(state.dir==='.'?d.file.indexOf('/')<0:(d.file===state.dir||d.file.indexOf(state.dir+'/')===0)))ok=false;
   if(ok&&!state.guard&&d.guard==='linux-only')ok=false;
+  if(ok&&!state.unbuilt&&d.built==='no')ok=false;
   if(ok&&q&&d.text.indexOf(q)<0)ok=false;
   f.hidden=!ok;var site=f.closest('details.site');if(site)site.hidden=!ok;if(ok)vis++;}
  groups.forEach(function(g){var n=$$('article.finding:not([hidden])',g).length;g.hidden=n===0;var c=$('.vis',g);if(c)c.textContent=n;});
@@ -198,7 +200,8 @@ var sc=$('#scale');if(sc)sc.addEventListener('click',function(){state.scale=stat
 var qi=$('#q');qi.addEventListener('input',function(){state.q=qi.value;apply()});
 $('#conf').addEventListener('change',function(e){state.conf=e.target.value;apply()});
 $('#guard').addEventListener('change',function(e){state.guard=e.target.checked;apply()});
-$('#clear').addEventListener('click',function(){state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true,scale:state.scale};qi.value='';$('#conf').value='all';$('#guard').checked=true;apply()});
+var ub=$('#unbuilt');if(ub)ub.addEventListener('change',function(e){state.unbuilt=e.target.checked;apply()});
+$('#clear').addEventListener('click',function(){state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true,unbuilt:true,scale:state.scale};qi.value='';$('#conf').value='all';$('#guard').checked=true;if(ub)ub.checked=true;apply()});
 $('#expand').addEventListener('click',function(){var any=groups.some(function(f){return !f.open&&!f.hidden});groups.forEach(function(f){f.open=any});this.textContent=any?'Collapse all groups':'Expand all groups'});
 function theme(t){if(t)root.setAttribute('data-theme',t);else root.removeAttribute('data-theme');try{if(t)localStorage.setItem('pd-theme',t)}catch(e){}}
 try{var st=localStorage.getItem('pd-theme');if(st)root.setAttribute('data-theme',st)}catch(e){}

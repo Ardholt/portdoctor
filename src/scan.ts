@@ -2,9 +2,15 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, sep, basename, resolve } from 'node:path';
 import { loadRules } from './rules.ts';
 import { groupFindings, totalEffort } from './group.ts';
+import { collectBuildInfo, isTranslationUnit } from './build.ts';
 import type { CompiledRule, Finding, Kind, ScanOptions, ScanResult, Severity, ContextLine } from './types.ts';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';
+
+/** Opt-in ignore presets. `other-os` is a path-name heuristic for sources written for other operating systems; it never runs unless asked. */
+export const IGNORE_PRESETS: Record<string, string[]> = {
+  'other-os': ['(^|[/._-])(os390|mingw\\d*|win32|win64|windows|msvc|cygwin|darwin|macos|freebsd|openbsd|netbsd|dragonfly|solaris|sunos|aix|haiku|android|ios)([/._-]|$)', '(^|/)win(/|$)'],
+};
 export const DISCLAIMER =
   'PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. ' +
   "Rules marked 'guess' are unverified claims about QNX 8.0 and must be checked against the SDP.";
@@ -348,7 +354,12 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
   const maxBytes = opts.maxFileBytes ?? 2_000_000;
   const files: string[] = [];
   const skipped = { n: 0 };
-  walk(root, '', files, skipped, (opts.ignore ?? []).map((x) => new RegExp(x)));
+  const ign = [...(opts.ignore ?? [])];
+  for (const p of opts.ignorePresets ?? []) {
+    if (!IGNORE_PRESETS[p]) throw new Error(`unknown ignore preset '${p}' (known: ${Object.keys(IGNORE_PRESETS).join(', ')})`);
+    ign.push(...IGNORE_PRESETS[p]);
+  }
+  walk(root, '', files, skipped, ign.map((x) => new RegExp(x)));
   const findings: Finding[] = [];
   const counters: { suppressed: number; nonCall: number } = { suppressed: 0, nonCall: 0 };
   const seenRuleFile = new Set<string>();
@@ -415,6 +426,16 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
       remedy: r.remedy, verify: r.verify, effort: r.effort, guard: 'none', guards: [],
     });
   }
+  const build = opts.buildAwareness === false ? { source: 'none' as const, compiled: null, note: 'disabled' } : collectBuildInfo(root, loaded);
+  let marked = 0;
+  if (build.compiled) {
+    for (const f of findings) {
+      if (isTranslationUnit(f.file) && !build.compiled.has(f.file)) {
+        f.built = 'no';
+        marked++;
+      }
+    }
+  }
   findings.sort(
     (a, b) =>
       SEV_ORDER[a.severity] - SEV_ORDER[b.severity] ||
@@ -443,6 +464,7 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
       findings: findings.length,
       suppressedQnxBranch: counters.suppressed,
       suppressedNonCall: counters.nonCall,
+      build: { source: build.source, findingsNotInBuildList: marked, note: build.note },
       rules: rules.length,
       bySeverity,
       effortMinutes: Math.round(totalEffort(groups)),

@@ -20,6 +20,8 @@ scan:
   -o <file>         write to file instead of stdout
   --fail-on <sev>   exit 1 if any finding at or above severity (blocker|major|minor|info)
   --ignore <regex>  skip paths matching the regex (repeatable), e.g. --ignore 'os390|mingw|/test/'
+  --ignore-preset other-os   skip paths named for other OSes (os390, mingw, win32, darwin, freebsd, solaris, android ...): a heuristic, opt-in
+  --no-build-awareness       do not read compile_commands.json / CMake / Makefile source lists
   --rules <dir>     use a different rules directory
 `;
 
@@ -46,6 +48,7 @@ export function textSummary(r: ReturnType<typeof scanDir>): string {
     `${s.filesScanned} files scanned, ${s.findings} findings in ${groups.length} rule group${groups.length === 1 ? '' : 's'} (blocker ${s.bySeverity.blocker}, major ${s.bySeverity.major}, minor ${s.bySeverity.minor}, info ${s.bySeverity.info})`,
     `rough effort: ${fmtRange(s.effortMinutes)}`,
     `${s.suppressedQnxBranch} matches suppressed inside QNX-specific #if branches; ${s.suppressedNonCall} skipped as non-calls or user-defined functions`,
+    ...(s.build.source !== 'none' ? [`build awareness (heuristic): ${s.build.note}; ${s.build.findingsNotInBuildList} findings are in files it does not mention`] : []),
     '',
   ];
   const top = startHere(groups, 3);
@@ -81,11 +84,14 @@ export async function main(argv: string[]): Promise<void> {
     const rulesDir = opt(args, '--rules');
     const ignore: string[] = [];
     for (let v = opt(args, '--ignore'); v !== undefined; v = opt(args, '--ignore')) ignore.push(v);
+    const presets: string[] = [];
+    for (let v = opt(args, '--ignore-preset'); v !== undefined; v = opt(args, '--ignore-preset')) presets.push(v);
+    const noBuild = flag(args, '--no-build-awareness');
     const dir = args.shift();
     if (!dir || args.length) throw new Error('usage: portdoctor scan <dir> [--json|--html] [-o file]');
     if (!existsSync(dir) || !statSync(dir).isDirectory()) throw new Error(`not a directory: ${dir}`);
     if (failOn && !SEVERITIES.includes(failOn)) throw new Error('--fail-on must be blocker|major|minor|info');
-    const res = scanDir(dir, { rulesDir, ignore });
+    const res = scanDir(dir, { rulesDir, ignore, ignorePresets: presets, buildAwareness: !noBuild });
     const renderHtml = html ? (await import('./report-html.ts')).renderHtml : null;
     const body = sarif ? JSON.stringify((await import('./sarif.ts')).toSarif(res), null, 2) + '\n' : renderHtml ? renderHtml(res) : json ? JSON.stringify(res, null, 2) + '\n' : textSummary(res);
     if (out) writeFileSync(out, body);

@@ -133,7 +133,7 @@ const JS = `
 (function(){
 var root=document.documentElement;root.classList.add('js');
 var $=function(s,c){return (c||document).querySelector(s)},$$=function(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s))};
-var state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true,scale:'rel'};
+var state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true,unbuilt:true,scale:'rel'};
 var findings=$$('article.finding'),groups=$$('details.grp'),count=$('#count'),empty=$('.empty');
 function setScale(){
  $$('.tile').forEach(function(t){t.style.setProperty('--i',state.scale==='abs'?t.dataset.abs:t.dataset.rel)});
@@ -147,6 +147,7 @@ function apply(){
   if(ok&&state.conf!=='all'&&d.conf!==state.conf)ok=false;
   if(ok&&state.dir!==null&&!(state.dir==='.'?d.file.indexOf('/')<0:(d.file===state.dir||d.file.indexOf(state.dir+'/')===0)))ok=false;
   if(ok&&!state.guard&&d.guard==='linux-only')ok=false;
+  if(ok&&!state.unbuilt&&d.built==='no')ok=false;
   if(ok&&q&&d.text.indexOf(q)<0)ok=false;
   f.hidden=!ok;var site=f.closest('details.site');if(site)site.hidden=!ok;if(ok)vis++;}
  groups.forEach(function(g){var n=$$('article.finding:not([hidden])',g).length;g.hidden=n===0;var c=$('.vis',g);if(c)c.textContent=n;});
@@ -161,7 +162,8 @@ var sc=$('#scale');if(sc)sc.addEventListener('click',function(){state.scale=stat
 var qi=$('#q');qi.addEventListener('input',function(){state.q=qi.value;apply()});
 $('#conf').addEventListener('change',function(e){state.conf=e.target.value;apply()});
 $('#guard').addEventListener('change',function(e){state.guard=e.target.checked;apply()});
-$('#clear').addEventListener('click',function(){state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true,scale:state.scale};qi.value='';$('#conf').value='all';$('#guard').checked=true;apply()});
+var ub=$('#unbuilt');if(ub)ub.addEventListener('change',function(e){state.unbuilt=e.target.checked;apply()});
+$('#clear').addEventListener('click',function(){state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true,unbuilt:true,scale:state.scale};qi.value='';$('#conf').value='all';$('#guard').checked=true;if(ub)ub.checked=true;apply()});
 $('#expand').addEventListener('click',function(){var any=groups.some(function(f){return !f.open&&!f.hidden});groups.forEach(function(f){f.open=any});this.textContent=any?'Collapse all groups':'Expand all groups'});
 function theme(t){if(t)root.setAttribute('data-theme',t);else root.removeAttribute('data-theme');try{if(t)localStorage.setItem('pd-theme',t)}catch(e){}}
 try{var st=localStorage.getItem('pd-theme');if(st)root.setAttribute('data-theme',st)}catch(e){}
@@ -211,7 +213,7 @@ function renderSite(f: Finding, idx: number): string {
   const text = `${f.ruleId} ${f.title} ${f.file} ${f.match} ${f.message}`.toLowerCase();
   const hit = f.context.find((c) => c.n === f.line);
   return `<details class="site"><summary><span class="loc">${esc(f.file)}:${f.line}</span>${f.guard === 'linux-only' ? ' <span class="badge b-info">Linux-only #if</span>' : f.guard === 'other' ? ' <span class="badge b-info">guarded</span>' : ''}${f.built === 'no' ? ' <span class="badge b-info">not in build list?</span>' : ''}<span class="hitline">${esc((hit?.text ?? f.match).trim().slice(0, 90))}</span></summary>
-<article class="finding" id="f-${idx}" tabindex="-1" data-sev="${f.severity}" data-conf="${f.confidence}" data-file="${esc(f.file)}" data-guard="${f.guard}" data-text="${esc(text)}" aria-label="${esc(f.title)} at ${esc(f.file)} line ${f.line}">
+<article class="finding" id="f-${idx}" tabindex="-1" data-sev="${f.severity}" data-conf="${f.confidence}" data-file="${esc(f.file)}" data-guard="${f.guard}" data-built="${f.built ?? ''}" data-text="${esc(text)}" aria-label="${esc(f.title)} at ${esc(f.file)} line ${f.line}">
 ${code}${guardNote}${builtNote}
 <p class="note">Finding index ${idx} (for <code>portdoctor propose --finding ${idx}</code>)</p>
 </article></details>`;
@@ -291,7 +293,7 @@ ${sites}</div></details>`;
 <h1>PortDoctor <span>QNX 8.0 porting report for</span> ${esc(res.root)}</h1>
 <p class="sub">portdoctor ${esc(res.version)} &middot; ${s.filesScanned} files scanned (${Object.entries(s.filesByKind).map(([k, v]) => `${v} ${esc(k)}`).join(', ') || 'none'}) &middot; ${s.rules} rules</p>
 <details class="banner"><summary><strong>Static analysis only:</strong> nothing here was compiled or run on QNX. <span class="note">Details</span></summary>
-<p>${esc(res.disclaimer)}</p><p>Effort figures are rough, uncalibrated ranges derived from rule groups, not measurements. A clean scan is not proof of portability.</p></details>
+<p>${esc(res.disclaimer)}</p><p>Effort figures are rough, uncalibrated ranges derived from rule groups, not measurements. A clean scan is not proof of portability.${s.build.source !== 'none' ? ` Build awareness (heuristic): ${esc(s.build.note)}.` : ''}</p></details>
 <p style="margin:.7rem 0 0"><button class="btn" id="themebtn" type="button" aria-label="Toggle light and dark theme">Theme (t)</button> <button class="btn" id="helpbtn" type="button">Keyboard shortcuts (?)</button></p>
 </header>
 <main id="main">
@@ -313,6 +315,7 @@ ${heat}
 ${SEVERITIES.map((v, i) => `<button type="button" class="chip" data-sevbtn="${v}" aria-pressed="true" title="Toggle ${v} (${i + 1})"><span aria-hidden="true">${SEV_GLYPH[v]}</span> ${v} <span class="sr">toggle</span>(${s.bySeverity[v]})</button>`).join('\n')}
 <label class="note">Confidence <select id="conf" aria-label="Confidence filter"><option value="all">all</option><option value="known">known</option><option value="guess">guess</option></select></label>
 <label class="note"><input type="checkbox" id="guard" checked> include Linux-guarded</label>
+${s.build.findingsNotInBuildList ? `<label class="note"><input type="checkbox" id="unbuilt" checked> include files not in build list (${s.build.findingsNotInBuildList})</label>` : ''}
 <button class="btn" id="expand" type="button">Expand all groups</button>
 <button class="btn" id="clear" type="button">Reset filters</button>
 <span id="count" role="status" aria-live="polite">${s.findings} findings</span>

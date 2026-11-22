@@ -36,7 +36,7 @@ io-sock driver headers), memfd_create, prctl, getrandom/getentropy, sched_setaff
 Each finding is looked up by the identifiers/header/`-l` flag/compiler flag it matched. Confidence becomes `verified-present`, `verified-absent` or `verified-partial`;
 an API the SDP has is **dropped** (`--sdp-keep-present` keeps it as info), unless it needs a library or carries a semantics caveat (kept as info with the library named, e.g. inotify needs `-lfsnotify`).
 The message gets the evidence ("verified on SDP 8.0.0.00141...: epoll_create1: not declared in any user header..."). Rule messages and remedies were rewritten from the evidence
-for 36 rules (no more kqueue advice, inotify no longer a blocker, gettid native, dup3-only, -lsocket). Names not in the manifest are reported (`stats.sdp.uncovered`), never guessed.
+for 39 rules (no more kqueue advice, inotify no longer a blocker, gettid native, dup3-only, -lsocket). Names not in the manifest are reported (`stats.sdp.uncovered`), never guessed.
 HTML chips, SARIF, `init-toolchain` and the disclaimer carry the new labels.
 
 **Corpus (`corpus/SDP-DELTA.md`, regenerate with `node corpus/sdp-delta.mjs`).** 501 findings before, **488** after; **272 (54%)** changed class: 212 verified-absent, 17 partial (sanitizer flags),

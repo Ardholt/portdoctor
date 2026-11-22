@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { writeFileSync, existsSync, statSync } from 'node:fs';
 import { readFileSync } from 'node:fs';
 import { scanDir, VERSION } from './scan.ts';
@@ -25,7 +26,8 @@ scan:
   --ignore-preset other-os   skip paths named for other OSes (os390, mingw, win32, darwin, freebsd, solaris, android ...): a heuristic, opt-in
   --no-build-awareness       do not read compile_commands.json / CMake / Makefile source lists
   --rules <dir>     use a different rules directory
-  --sdp-manifest <file>   verify API/header/library claims against a manifest made from a real SDP (tools/sdp-manifest.mjs): findings become verified-present/verified-absent; APIs the SDP has are dropped
+  --sdp-manifest <file>   (default: the bundled data/sdp-8.0-manifest.json) verify API/header/library claims against a manifest made from a real SDP (tools/sdp-manifest.mjs): findings become verified-present/verified-absent; APIs the SDP has are dropped
+  --no-sdp-manifest       do not use the bundled SDP manifest (findings stay known/guess; APIs the SDP has are still reported)
   --sdp-keep-present      keep findings the SDP disproves, as info, instead of dropping them
 `;
 
@@ -42,6 +44,12 @@ function opt(args: string[], name: string): string | undefined {
   if (v === undefined) throw new Error(`${name} needs a value`);
   args.splice(i, 2);
   return v;
+}
+
+/** The manifest shipped with the tool (data/sdp-8.0-manifest.json), used unless --no-sdp-manifest is given. */
+export function defaultManifestPath(): string | undefined {
+  const p = fileURLToPath(new URL('../data/sdp-8.0-manifest.json', import.meta.url));
+  return existsSync(p) ? p : undefined;
 }
 
 export function textSummary(r: ReturnType<typeof scanDir>): string {
@@ -92,7 +100,8 @@ export async function main(argv: string[]): Promise<void> {
     const presets: string[] = [];
     for (let v = opt(args, '--ignore-preset'); v !== undefined; v = opt(args, '--ignore-preset')) presets.push(v);
     const noBuild = flag(args, '--no-build-awareness');
-    const sdpFile = opt(args, '--sdp-manifest');
+    const noSdp = flag(args, '--no-sdp-manifest');
+    const sdpFile = noSdp ? undefined : (opt(args, '--sdp-manifest') ?? defaultManifestPath());
     const keepPresent = flag(args, '--sdp-keep-present');
     const dir = args.shift();
     if (!dir || args.length) throw new Error('usage: portdoctor scan <dir> [--json|--html] [-o file]');

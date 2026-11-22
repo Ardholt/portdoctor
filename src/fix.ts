@@ -318,7 +318,9 @@ export async function runFixCli(argv: string[]): Promise<number> {
   };
   const provider = take('--provider');
   const check = take('--check');
-  const sdpFile = take('--sdp-manifest');
+  const noSdp = args.includes('--no-sdp-manifest');
+  if (noSdp) args.splice(args.indexOf('--no-sdp-manifest'), 1);
+  const sdpFile = take('--sdp-manifest') ?? (noSdp ? undefined : (await import('./cli.ts')).defaultManifestPath());
   const qccFlags = take('--qcc-flags');
   const count = Number(take('--count') ?? 3);
   const out = take('-o') ?? 'fix-report.html';

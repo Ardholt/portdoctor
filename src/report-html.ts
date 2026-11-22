@@ -60,6 +60,17 @@ h2{font-size:1.15rem;margin:2rem 0 .75rem}
 .tile{width:100%;text-align:left;font:inherit;color:var(--text);cursor:pointer;border:1px solid var(--border);border-radius:8px;padding:.55rem .7rem;
  background:color-mix(in srgb,var(--heat) calc(var(--i) * 1%),var(--surface));min-height:4.2rem;display:block}
 .tile:hover{border-color:var(--heat)}
+.glance{display:grid;gap:.6rem;margin:.2rem 0 1rem}
+.where{display:flex;align-items:stretch;gap:.4rem;flex-wrap:nowrap}
+.where .wlabel{font-weight:600;white-space:nowrap;align-self:center}
+.wbar{display:flex;gap:.3rem;flex:1;min-width:0}
+.wseg.tile{width:auto;min-width:0;flex:1 1 var(--w);min-height:0;padding:.35rem .5rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:.8rem}
+.wseg .d{display:inline;font-size:.78rem;word-break:normal}.wseg b{margin-left:.35rem}
+.vbar{display:flex;height:1.1rem;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+.vbar i{display:block;min-width:2px}.vb-v{background:var(--accent)}.vb-k{background:color-mix(in srgb,var(--accent) 40%,var(--surface))}.vb-g{background:repeating-linear-gradient(45deg,var(--surface2),var(--surface2) 4px,var(--border) 4px,var(--border) 6px)}
+.vlegend{display:flex;flex-wrap:wrap;gap:.2rem 1rem;font-size:.85rem;color:var(--muted)}
+.vlegend b{color:var(--text)}
+@media (max-width:700px){.where{flex-wrap:wrap}.wbar{flex-wrap:wrap}.wseg.tile{flex:1 1 40%}}
 .tile[aria-pressed=true]{outline:3px solid var(--accent);outline-offset:1px}
 .tile .d{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;word-break:break-all;display:block}
 .tile .m{font-size:.8rem;color:var(--text);opacity:.85;display:block;margin-top:.2rem}
@@ -256,6 +267,27 @@ export function renderHtml(res: ScanResult): string {
         .join('')}</ul><p class="note">Press a tile to filter the findings below to it; press again (or Esc) to clear.</p>`
     : '<p class="empty show">No findings.</p>';
 
+  const topSeg = tiles.slice(0, 6);
+  const segSum = Math.max(1, topSeg.reduce((a, [, e]) => a + e.w, 0));
+  const whereHtml = topSeg.length
+    ? `<div class="where" role="group" aria-label="Where the findings are: top ${topSeg.length} ${byFileTiles ? 'files' : 'directories'} by weight; press one to filter"><span class="wlabel">Where:</span><div class="wbar">${topSeg
+        .map(([d, e]) => {
+          const rel = Math.round(8 + (e.w / maxW) * 47);
+          const abs = Math.round(8 + (e.w / sumW) * 47);
+          const nm = byFileTiles ? d : d === '.' ? '(top level)' : d + '/';
+          return `<button type="button" class="tile wseg" style="--i:${rel};--w:${Math.max(4, Math.round((e.w / segSum) * 100))}%" data-rel="${rel}" data-abs="${abs}" data-dir="${esc(d)}" aria-pressed="false" title="${esc(nm)}: ${e.n} finding${e.n === 1 ? '' : 's'}. Press to filter." aria-label="${esc(nm)}: ${e.n} finding${e.n === 1 ? '' : 's'}. Press to filter."><span class="d">${esc(nm)}</span><b>${e.n}</b></button>`;
+        })
+        .join('')}</div>${tiles.length > topSeg.length ? `<span class="note" style="align-self:center">+${tiles.length - topSeg.length} more below</span>` : ''}</div>`
+    : '';
+  const nVer = res.findings.filter((f) => f.confidence.startsWith('verified')).length;
+  const nKnown = res.findings.filter((f) => f.confidence === 'known').length;
+  const nGuess = res.findings.length - nVer - nKnown;
+  const pc = (n: number) => (res.findings.length ? (n / res.findings.length) * 100 : 0).toFixed(1);
+  const verifyBar = res.findings.length
+    ? `<div role="img" aria-label="Evidence behind the findings: ${nVer} verified against the SDP, ${nKnown} known, ${nGuess} guess"><div class="vbar"><i class="vb-v" style="width:${pc(nVer)}%"></i><i class="vb-k" style="width:${pc(nKnown)}%"></i><i class="vb-g" style="width:${pc(nGuess)}%"></i></div>
+<div class="vlegend"><span><b>${nVer}</b> verified on the SDP</span><span><b>${nKnown}</b> known (recalled from documentation)</span><span><b>${nGuess}</b> guess (unverified)</span></div></div>`
+    : '';
+
   const startHtml = top.length
     ? `<ol class="start">${top
         .map(
@@ -277,7 +309,7 @@ export function renderHtml(res: ScanResult): string {
       return `<details class="grp" id="rule-${esc(g.ruleId)}"><summary><span class="badge b-${g.severity}" title="${esc(SEV_HELP[g.severity])}"><span aria-hidden="true">${SEV_GLYPH[g.severity]}</span> ${g.severity}</span>
 <strong>${esc(g.title)}</strong>
 <span class="badge ${confClass(g.confidence)}" title="${confTitle(g.confidence)}">${confLabel(g.confidence)}</span>
-<span class="meta"><span class="vis">${g.sites.length}</span>/${g.sites.length} sites in ${g.files.length} file${g.files.length === 1 ? '' : 's'} &middot; ${esc(fmtRange(g.effortMin))}</span></summary>
+<span class="meta"><span class="vis">${g.sites.length}</span>/${g.sites.length} site${g.sites.length === 1 ? '' : 's'} in ${g.files.length} file${g.files.length === 1 ? '' : 's'} &middot; ${esc(fmtRange(g.effortMin))}</span></summary>
 <div class="grp-body"><p><span class="note">${esc(g.ruleId)}</span> ${esc(r?.message ?? '')}</p>
 <div class="remedy"><strong>Remedy</strong>${esc(r?.remedy ?? '')}</div>
 ${r?.verify ? `<p class="verify">⚠ ${esc(r.verify)}</p>` : ''}${r?.refs?.length ? `<p class="note">Documentation to read (names only, not fetched by this tool): ${r.refs.map(esc).join('; ')}</p>` : ''}
@@ -285,7 +317,6 @@ ${sites}</div></details>`;
     })
     .join('\n');
 
-  const confKnown = res.findings.filter((f) => f.confidence === 'known' || f.confidence.startsWith('verified')).length;
   const data = JSON.stringify({ tool: res.tool, version: res.version, stats: res.stats }).replace(/</g, '\\u003c');
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -302,12 +333,15 @@ ${sites}</div></details>`;
 <p style="margin:.7rem 0 0"><button class="btn" id="themebtn" type="button" aria-label="Toggle light and dark theme">Theme (t)</button> <button class="btn" id="helpbtn" type="button">Keyboard shortcuts (?)</button></p>
 </header>
 <main id="main">
+<section class="glance" aria-label="At a glance">
+${whereHtml}
+${verifyBar}
+</section>
 <h2>Summary</h2>
 <div class="cards" role="list">
 ${SEVERITIES.map((v) => `<div class="card sev-${v}" role="listitem"><div class="n">${s.bySeverity[v]}</div><div class="l"><span aria-hidden="true">${SEV_GLYPH[v]}</span> ${v}: ${esc(SEV_HELP[v])}</div></div>`).join('\n')}
 <div class="card" role="listitem"><div class="n">${groups.length}</div><div class="l">rule groups (findings grouped by the rule that found them)</div></div>
 <div class="card" role="listitem"><div class="n" style="font-size:1.25rem">${esc(effortHead(total))}</div><div class="l">rough effort, uncalibrated: scaled by groups, not by lines</div></div>
-<div class="card" role="listitem"><div class="n">${confKnown}/${s.findings}</div><div class="l">findings that are <em>known</em> or verified against the SDP; the rest are <em>guess</em></div></div>
 <div class="card" role="listitem"><div class="n">${s.suppressedQnxBranch}</div><div class="l">matches suppressed inside <code>#if __QNXNTO__</code> branches</div></div>
 </div>
 <h2 id="start">Start here: top ${top.length || 3}</h2>
@@ -341,5 +375,7 @@ ${groupsHtml || '<p class="empty show">No porting blockers found by the current 
 function firstSentence(t: string): string {
   const m = /^(.+?[.!?])(?:\s|$)/.exec(t);
   const r = m ? m[1] : t;
-  return r.length > 220 ? r.slice(0, 217) + '...' : r;
+  if (r.length <= 260) return r;
+  const cut = r.slice(0, 257);
+  return cut.slice(0, Math.max(cut.lastIndexOf(' '), 200)).replace(/[\s,;:(]+$/, '') + ' ... (full remedy in the group below)';
 }

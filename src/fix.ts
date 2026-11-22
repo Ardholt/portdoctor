@@ -163,6 +163,7 @@ export interface FixOptions {
   provider: string;
   check?: string;
   qccFlags?: string;
+  hidePaths?: boolean;
   count?: number;
   rules?: string[];
   ignore?: string[];
@@ -176,7 +177,7 @@ export function runFix(dir: string, o: FixOptions): FixResult {
   const variant = qccVariant(o.check);
   const check = expandCheck(o.check, o.qccFlags);
   o = { ...o, check };
-  const scanOpts = { ignore: o.ignore, sdp: o.sdp };
+  const scanOpts = { ignore: o.ignore, sdp: o.sdp, hidePaths: o.hidePaths };
   const original = scanDir(work, scanOpts);
   let groups = startHere(groupFindings(original), 1000);
   if (o.rules?.length) groups = groups.filter((g) => o.rules!.includes(g.ruleId));
@@ -318,6 +319,8 @@ export async function runFixCli(argv: string[]): Promise<number> {
   };
   const provider = take('--provider');
   const check = take('--check');
+  const showAll = args.includes('--show-all');
+  if (showAll) args.splice(args.indexOf('--show-all'), 1);
   const noSdp = args.includes('--no-sdp-manifest');
   if (noSdp) args.splice(args.indexOf('--no-sdp-manifest'), 1);
   const sdpFile = take('--sdp-manifest') ?? (noSdp ? undefined : (await import('./cli.ts')).defaultManifestPath());
@@ -335,7 +338,7 @@ export async function runFixCli(argv: string[]): Promise<number> {
   if (!dir || !provider || args.length) throw new Error('usage: portdoctor fix <dir> --provider "<cmd>" [--check "<cmd>|qcc[:variant]"] [--sdp-manifest <file>] [--qcc-flags "<flags>"] [--count N] [--rule ID] [--keep <dir>] [-o fix-report.html]');
   if (!existsSync(dir) || !statSync(dir).isDirectory()) throw new Error(`not a directory: ${dir}`);
   if (!Number.isInteger(count) || count < 1) throw new Error('--count must be a positive integer');
-  const r = runFix(dir, { provider, check, qccFlags, count, rules, ignore, keep, sdp: sdpFile ? (await import('./sdp.ts')).loadManifest(sdpFile) : undefined });
+  const r = runFix(dir, { provider, check, qccFlags, hidePaths: !showAll, count, rules, ignore, keep, sdp: sdpFile ? (await import('./sdp.ts')).loadManifest(sdpFile) : undefined });
   writeFileSync(out, fixHtml(r));
   process.stdout.write(json ? JSON.stringify(r, null, 2) + '\n' : fixText(r) + `report: ${out}\n`);
   if (r.steps.length && r.steps.every((s) => s.status === 'provider-failed')) return 3;

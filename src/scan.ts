@@ -12,6 +12,20 @@ export const VERSION = '0.3.0';
 export const IGNORE_PRESETS: Record<string, string[]> = {
   'other-os': ['(^|[/._-])(os390|mingw\\d*|win32|win64|windows|msvc|cygwin|darwin|macos|freebsd|openbsd|netbsd|dragonfly|solaris|sunos|aix|haiku|android|ios)([/._-]|$)', '(^|/)win(/|$)'],
 };
+/**
+ * BRIDGE (expires when a judge replaces it, target 2026-12-15): paths that usually are not the porter's work. A literal path match standing in for a judgement
+ * "is this file part of the port?"; the named replacement is a model judge that reads the file and its neighbours. Hidden findings are counted and listed, never silently lost.
+ */
+export const HIDE_RULES: Array<{ reason: string; re: RegExp }> = [
+  { reason: 'other-os', re: new RegExp(IGNORE_PRESETS['other-os'].join('|')) },
+  { reason: 'vendored', re: /(^|\/)(third_party|thirdparty|3rdparty|vendor|vendored|extern|external|deps|contrib|node_modules)\// },
+  { reason: 'test', re: /(^|\/)(tests?|testing|testsuite|spec|specs|fuzz|fuzzers?|benchmarks?|bench|examples?|samples?)\/|(^|\/)(test_[^/]*|[^/]*_test)\.(c|cc|cpp|cxx|h)$/ },
+];
+export function hideReason(file: string): string | null {
+  for (const h of HIDE_RULES) if (h.re.test(file)) return h.reason;
+  return null;
+}
+
 export const DISCLAIMER =
   'PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. ' +
   "Rules marked 'guess' are unverified claims about QNX 8.0 and must be checked against the SDP.";
@@ -502,6 +516,22 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
       a.line - b.line ||
       (a.ruleId < b.ruleId ? -1 : 1),
   );
+  let hidden: { total: number; byReason: Record<string, number>; paths: string[] } | undefined;
+  if (opts.hidePaths) {
+    const keep: Finding[] = [];
+    const byReason: Record<string, number> = {};
+    const paths = new Set<string>();
+    for (const f of findings) {
+      const why = hideReason(f.file);
+      if (why) {
+        byReason[why] = (byReason[why] ?? 0) + 1;
+        paths.add(f.file.split('/').slice(0, 2).join('/'));
+      } else keep.push(f);
+    }
+    if (keep.length !== findings.length) hidden = { total: findings.length - keep.length, byReason, paths: [...paths].sort().slice(0, 12) };
+    findings.length = 0;
+    findings.push(...keep);
+  }
   const bySeverity: Record<Severity, number> = { blocker: 0, major: 0, minor: 0, info: 0 };
   for (const f of findings) {
     bySeverity[f.severity]++;
@@ -527,6 +557,7 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
       rules: rules.length,
       bySeverity,
       effortMinutes: Math.round(totalEffort(groups)),
+      ...(hidden ? { hidden } : {}),
       ...(sdpStats ? { sdp: sdpStats } : {}),
     },
     findings,

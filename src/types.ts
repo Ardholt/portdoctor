@@ -81,6 +81,8 @@ export interface ScanOptions {
   sdp?: import('./sdp.ts').SdpManifest;
   /** keep findings whose API the SDP has (as info) instead of dropping them */
   sdpKeepPresent?: boolean;
+  /** hide findings in other-OS, vendored and test paths (counted in stats.hidden, not deleted from the world). CLI default on; library default off. */
+  hidePaths?: boolean;
 }
 
 export interface ScanResult {
@@ -100,6 +102,8 @@ export interface ScanResult {
     rules: number;
     bySeverity: Record<Severity, number>;
     effortMinutes: number;
+    /** findings left out of this result by the path heuristic (--show-all keeps them) */
+    hidden?: { total: number; byReason: Record<string, number>; paths: string[] };
     sdp?: { build: string | null; classified: number; verifiedAbsent: number; verifiedPartial: number; verifiedPresentKept: number; verifiedPresentDropped: number; notCovered: number; droppedByRule: Record<string, string[]>; uncovered: string[] };
   };
   findings: Finding[];

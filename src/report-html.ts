@@ -288,6 +288,7 @@ export function renderHtml(res: ScanResult): string {
 <div class="vlegend"><span><b>${nVer}</b> verified on the SDP</span><span><b>${nKnown}</b> known (recalled from documentation)</span><span><b>${nGuess}</b> guess (unverified)</span></div></div>`
     : '';
 
+  const hiddenNote = s.hidden ? `<p class="note"><strong>${s.hidden.total} more findings hidden</strong> in other-OS, vendored and test paths (${Object.entries(s.hidden.byReason).map(([k, v]) => esc(k) + ' ' + v).join(', ')}; e.g. ${s.hidden.paths.slice(0, 3).map(esc).join(', ')}). A path-name heuristic: re-run with <code>--show-all</code> to include them.</p>` : '';
   const startHtml = top.length
     ? `<ol class="start">${top
         .map(
@@ -336,6 +337,7 @@ ${sites}</div></details>`;
 <section class="glance" aria-label="At a glance">
 ${whereHtml}
 ${verifyBar}
+${hiddenNote}
 </section>
 <h2>Summary</h2>
 <div class="cards" role="list">

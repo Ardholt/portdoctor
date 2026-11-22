@@ -28,6 +28,7 @@ scan:
   --rules <dir>     use a different rules directory
   --sdp-manifest <file>   (default: the bundled data/sdp-8.0-manifest.json) verify API/header/library claims against a manifest made from a real SDP (tools/sdp-manifest.mjs): findings become verified-present/verified-absent; APIs the SDP has are dropped
   --no-sdp-manifest       do not use the bundled SDP manifest (findings stay known/guess; APIs the SDP has are still reported)
+  --show-all              include findings in other-OS, vendored and test paths (hidden by default; the summary says how many)
   --sdp-keep-present      keep findings the SDP disproves, as info, instead of dropping them
 `;
 
@@ -61,6 +62,7 @@ export function textSummary(r: ReturnType<typeof scanDir>): string {
     `rough effort: ${fmtRange(s.effortMinutes)}`,
     `${s.suppressedQnxBranch} matches suppressed inside QNX-specific #if branches; ${s.suppressedNonCall} skipped as non-calls or user-defined functions`,
     ...(s.sdp ? [`SDP check (${s.sdp.build}): ${s.sdp.classified} findings decided: ${s.sdp.verifiedAbsent} verified-absent, ${s.sdp.verifiedPartial} partial, ${s.sdp.verifiedPresentDropped} dropped because the SDP has the API, ${s.sdp.verifiedPresentKept} kept as info; ${s.sdp.notCovered} API/header/lib findings not covered by the manifest`] : []),
+    ...(s.hidden ? [`${s.hidden.total} more findings hidden in other-OS/vendored/test paths (${Object.entries(s.hidden.byReason).map(([k, v]) => `${k} ${v}`).join(', ')}; e.g. ${s.hidden.paths.slice(0, 3).join(', ')}); --show-all includes them`] : []),
     ...(s.build.source !== 'none' ? [`build awareness (heuristic): ${s.build.note}; ${s.build.findingsNotInBuildList} findings are in files it does not mention`] : []),
     '',
   ];
@@ -103,11 +105,12 @@ export async function main(argv: string[]): Promise<void> {
     const noSdp = flag(args, '--no-sdp-manifest');
     const sdpFile = noSdp ? undefined : (opt(args, '--sdp-manifest') ?? defaultManifestPath());
     const keepPresent = flag(args, '--sdp-keep-present');
+    const showAll = flag(args, '--show-all');
     const dir = args.shift();
     if (!dir || args.length) throw new Error('usage: portdoctor scan <dir> [--json|--html] [-o file]');
     if (!existsSync(dir) || !statSync(dir).isDirectory()) throw new Error(`not a directory: ${dir}`);
     if (failOn && !SEVERITIES.includes(failOn)) throw new Error('--fail-on must be blocker|major|minor|info');
-    const res = scanDir(dir, { rulesDir, ignore, ignorePresets: presets, buildAwareness: !noBuild, sdp: sdpFile ? loadManifest(sdpFile) : undefined, sdpKeepPresent: keepPresent });
+    const res = scanDir(dir, { rulesDir, ignore, ignorePresets: presets, buildAwareness: !noBuild, sdp: sdpFile ? loadManifest(sdpFile) : undefined, sdpKeepPresent: keepPresent, hidePaths: !showAll });
     const renderHtml = html ? (await import('./report-html.ts')).renderHtml : null;
     const body = sarif ? JSON.stringify((await import('./sarif.ts')).toSarif(res), null, 2) + '\n' : renderHtml ? renderHtml(res) : json ? JSON.stringify(res, null, 2) + '\n' : textSummary(res);
     if (out) writeFileSync(out, body);

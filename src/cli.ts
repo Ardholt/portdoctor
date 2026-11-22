@@ -11,7 +11,7 @@ const HELP = `portdoctor ${VERSION} - QNX 8.0 porting blocker scanner (static; n
 Usage:
   portdoctor scan <dir> [--json|--html|--sarif] [-o <file>] [--fail-on <severity>] [--sdp-manifest <file>]
   portdoctor propose <scan.json|dir> --finding <n> [--provider "<cmd>"] [--patch-file <f>] [--no-check]
-  portdoctor fix <dir> --provider "<cmd>" [--check "<cmd>|qcc[:variant]"] [--sdp-manifest <file>] [--count N] [--rule ID] [--keep <dir>] [-o fix-report.html]
+  portdoctor fix <dir> --provider "<cmd>" [--check "<cmd>|qcc[:variant]"] [--sdp-manifest <file>] [--qcc-flags "<flags>"] [--count N] [--rule ID] [--keep <dir>] [-o fix-report.html]
   portdoctor init-toolchain [<dir>] [--arch aarch64le|x86_64] [--out <dir>] [--force]
   portdoctor rules [--json]
 

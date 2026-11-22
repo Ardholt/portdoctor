@@ -1,8 +1,9 @@
-import { cpSync, existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, extname, dirname, basename } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { scanDir } from './scan.ts';
+import { toolchainCmake } from './init.ts';
 import { groupFindings, startHere } from './group.ts';
 import { buildRequest, describeProviderFailure, readWindow, evaluateResponse, parseProviderOutput, patchPaths } from './propose.ts';
 import type { Finding, ScanResult } from './types.ts';
@@ -37,11 +38,79 @@ export interface FixResult {
 }
 
 /** `--check qcc` / `--check qcc:gcc_ntoaarch64le`: the QNX compiler driver, compile only (-fsyntax-only still links under qcc, so -c is used). Needs the SDP environment sourced. */
-export function expandCheck(check: string | undefined): string | undefined {
+export function qccVariant(check: string | undefined): string | undefined {
   const m = check && /^qcc(?::([\w]+))?$/.exec(check);
-  if (!m) return check;
-  const v = m[1] ?? 'gcc_ntox86_64';
-  return `case {file} in *.c|*.h) qcc -V${v} -c -o /dev/null -x c -I{dir} -I{root} {file};; *.cc|*.cpp|*.cxx|*.hpp|*.hh|*.hxx) q++ -V${v} -c -o /dev/null -x c++ -I{dir} -I{root} {file};; *) true;; esac`;
+  return m ? (m[1] ?? 'gcc_ntox86_64') : undefined;
+}
+
+export function expandCheck(check: string | undefined, extraFlags = ''): string | undefined {
+  const v = qccVariant(check);
+  if (!v) return check;
+  const x = extraFlags ? ` ${extraFlags}` : '';
+  return `case {file} in *.c|*.h) qcc -V${v} -c -o /dev/null -x c -I{dir} -I{root}${x} {file};; *.cc|*.cpp|*.cxx|*.hpp|*.hh|*.hxx) q++ -V${v} -c -o /dev/null -x c++ -I{dir} -I{root}${x} {file};; *) true;; esac`;
+}
+
+type CheckRun = { status: CheckStatus | 'n/a'; command: string; errors: number; output: string; ok: boolean };
+
+/** Build files the qcc check understands: Makefiles (make -n) and CMake lists (cmake configure with the generated qnx-toolchain.cmake). */
+export function buildFileKind(rel: string): 'make' | 'cmake' | null {
+  const b = basename(rel);
+  if (/^(GNUmakefile|makefile|Makefile)$/.test(b) || /\.mk$/.test(b)) return 'make';
+  if (b === 'CMakeLists.txt' || /\.cmake$/.test(b)) return 'cmake';
+  return null;
+}
+
+const ARCH_OF_VARIANT: Record<string, string> = { gcc_ntox86_64: 'x86_64', gcc_ntoaarch64le: 'aarch64le' };
+
+/** -l<name> tokens in a build log, minus the ones that are not libraries (-link, -lc++ style names stay). */
+function libsIn(text: string): string[] {
+  return [...new Set([...text.matchAll(/(?:^|\s)-l([A-Za-z0-9_+.-]+)/g)].map((m) => m[1]))];
+}
+
+/** Dry run of a build-file change with the QNX toolchain: `make -n` / `cmake` configure, then a real qcc link probe for every -l library the build would use. Nothing is compiled. */
+export function runBuildCheck(kind: 'make' | 'cmake', root: string, rel: string, variant: string): CheckRun {
+  const abs = join(root, rel);
+  const scratch = mkdtempSync(join(tmpdir(), 'portdoctor-bchk-'));
+  const sh = (cmd: string, cwd: string) => spawnSync(cmd, { shell: true, cwd, encoding: 'utf8', timeout: 180_000, maxBuffer: 16 << 20 });
+  const q = (x: string) => `'${x.replace(/'/g, `'\\''`)}'`;
+  try {
+    let cmd: string;
+    let libText = '';
+    let cwd = dirname(abs);
+    if (kind === 'make') {
+      cmd = `make -n -f ${q(basename(abs))} CC="qcc -V${variant}" CXX="q++ -V${variant}" AR=ntox86_64-ar 2>&1`;
+    } else {
+      let src = dirname(abs);
+      if (basename(abs).endsWith('.cmake')) { src = root; if (!existsSync(join(src, 'CMakeLists.txt'))) return { status: 'skipped', command: '(no CMakeLists.txt at the project root for this module)', errors: 0, output: '', ok: true }; }
+      const arch = ARCH_OF_VARIANT[variant] ?? 'x86_64';
+      writeFileSync(join(scratch, 'qnx-toolchain.cmake'), toolchainCmake(arch));
+      cwd = src;
+      cmd = `cmake -S . -B ${q(join(scratch, 'build'))} -DCMAKE_TOOLCHAIN_FILE=${q(join(scratch, 'qnx-toolchain.cmake'))} 2>&1`;
+    }
+    const r = sh(cmd, cwd);
+    const out = `${r.stdout ?? ''}${r.stderr ?? ''}`.trim();
+    if (r.error || r.status === 127) return { status: 'skipped', command: cmd, errors: 0, output: out || String(r.error), ok: true };
+    const problems: string[] = [];
+    if (r.status !== 0) problems.push(...out.split('\n').filter((l) => /\b(error|\*\*\*)\b/i.test(l)).slice(0, 5).map((l) => `build tool: ${l.trim()}`), ...(out ? [] : ['build tool failed']));
+    if (r.status !== 0 && !problems.length) problems.push(`build tool exited ${r.status}`);
+    if (kind === 'make') libText = out;
+    else if (existsSync(join(scratch, 'build'))) {
+      const walk = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? walk(join(d, e.name)) : /^(link\.txt)$/.test(e.name) ? [readFileSync(join(d, e.name), 'utf8')] : []);
+      libText = walk(join(scratch, 'build')).join('\n');
+    }
+    const libs = libsIn(libText);
+    for (const l of libs) {
+      const pr = sh(`printf 'int main(void){return 0;}' | qcc -V${variant} -x c - -l${l} -o /dev/null 2>&1`, scratch);
+      const po = `${pr.stdout ?? ''}${pr.stderr ?? ''}`;
+      if (pr.status === 127) return { status: 'skipped', command: cmd, errors: 0, output: 'qcc not found: source the SDP environment', ok: true };
+      if (pr.status !== 0) problems.push(`-l${l}: ${(/cannot find[^\n]*/.exec(po)?.[0] ?? po.split('\n')[0]).trim()}`);
+    }
+    const label = kind === 'make' ? 'make -n (qcc toolchain)' : 'cmake configure (generated qnx-toolchain.cmake)';
+    const output = problems.length ? problems.join('\n') : `${label} ok; link probe ok for ${libs.length} librar${libs.length === 1 ? 'y' : 'ies'}${libs.length ? ': ' + libs.map((l) => '-l' + l).join(' ') : ''}`;
+    return { status: problems.length ? 'fail' : 'pass', command: `${label}; qcc -V${variant} link probe per -l`, errors: problems.length, output, ok: !problems.length };
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
 }
 
 export const CHECK_LABEL =
@@ -49,7 +118,8 @@ export const CHECK_LABEL =
   'A qcc check will replace it; --check is pluggable.';
 
 export const QCC_LABEL =
-  'Compile check here is the QNX SDP compiler (qcc/q++ -c, compile only): it knows which QNX headers, macros and prototypes exist. It does not link and nothing was run on a QNX target.';
+  'Compile check here is the QNX SDP compiler (qcc/q++ -c, compile only): it knows which QNX headers, macros and prototypes exist. It does not link C/C++ files and nothing was run on a QNX target. ' +
+  'Makefile and CMake changes are checked by a dry run (make -n / cmake configure with the generated qnx-toolchain.cmake) plus a qcc link probe for every -l library; nothing is built.';
 
 const C_EXT = new Set(['.c', '.h']);
 const CXX_EXT = new Set(['.cc', '.cpp', '.cxx', '.hpp', '.hh', '.hxx']);
@@ -92,6 +162,7 @@ export interface FixOptions {
   sdp?: import('./sdp.ts').SdpManifest;
   provider: string;
   check?: string;
+  qccFlags?: string;
   count?: number;
   rules?: string[];
   ignore?: string[];
@@ -102,7 +173,8 @@ export function runFix(dir: string, o: FixOptions): FixResult {
   const root = resolve(dir);
   const work = o.keep ? resolve(o.keep) : mkdtempSync(join(tmpdir(), 'portdoctor-fix-'));
   cpSync(root, work, { recursive: true, filter: (s) => !/(^|\/)(\.git|node_modules)(\/|$)/.test(s.slice(root.length)) });
-  const check = expandCheck(o.check);
+  const variant = qccVariant(o.check);
+  const check = expandCheck(o.check, o.qccFlags);
   o = { ...o, check };
   const scanOpts = { ignore: o.ignore, sdp: o.sdp };
   const original = scanDir(work, scanOpts);
@@ -143,14 +215,15 @@ export function runFix(dir: string, o: FixOptions): FixResult {
     }
     const touched = [...new Set(patchPaths(r.unifiedDiff!))];
     const backups = new Map(touched.filter((p) => existsSync(join(work, p))).map((p) => [p, readFileSync(join(work, p))]));
-    const checkFiles = touched.filter((p) => cOrCxx(p) || (o.check && !/^case \{file\} in/.test(o.check)));
-    const baseline = checkFiles.map((p) => runCheck(o.check ?? null, work, p));
+    const runOne = (p: string) => { const k = variant ? buildFileKind(p) : null; return k ? runBuildCheck(k, work, p, variant!) : runCheck(o.check ?? null, work, p); };
+    const checkFiles = touched.filter((p) => cOrCxx(p) || (variant && buildFileKind(p)) || (o.check && !/^case \{file\} in/.test(o.check)));
+    const baseline = checkFiles.map(runOne);
     const ap = applyPatch(r.unifiedDiff!, work);
     if (!ap.ok) {
       steps.push({ ...base, ...meta, status: 'rejected', detail: 'apply: ' + ap.detail, applyCheck: out.applyCheck, findingsAfter: current.stats.findings });
       continue;
     }
-    const after = checkFiles.map((p) => runCheck(o.check ?? null, work, p));
+    const after = checkFiles.map(runOne);
     const bErr = baseline.reduce((a, c) => a + c.errors, 0);
     const aErr = after.reduce((a, c) => a + c.errors, 0);
     const failing = after.filter((c) => c.status === 'fail');
@@ -246,6 +319,7 @@ export async function runFixCli(argv: string[]): Promise<number> {
   const provider = take('--provider');
   const check = take('--check');
   const sdpFile = take('--sdp-manifest');
+  const qccFlags = take('--qcc-flags');
   const count = Number(take('--count') ?? 3);
   const out = take('-o') ?? 'fix-report.html';
   const keep = take('--keep');
@@ -256,10 +330,10 @@ export async function runFixCli(argv: string[]): Promise<number> {
   const json = args.includes('--json');
   if (json) args.splice(args.indexOf('--json'), 1);
   const dir = args.shift();
-  if (!dir || !provider || args.length) throw new Error('usage: portdoctor fix <dir> --provider "<cmd>" [--check "<cmd>|qcc[:variant]"] [--sdp-manifest <file>] [--count N] [--rule ID] [--keep <dir>] [-o fix-report.html]');
+  if (!dir || !provider || args.length) throw new Error('usage: portdoctor fix <dir> --provider "<cmd>" [--check "<cmd>|qcc[:variant]"] [--sdp-manifest <file>] [--qcc-flags "<flags>"] [--count N] [--rule ID] [--keep <dir>] [-o fix-report.html]');
   if (!existsSync(dir) || !statSync(dir).isDirectory()) throw new Error(`not a directory: ${dir}`);
   if (!Number.isInteger(count) || count < 1) throw new Error('--count must be a positive integer');
-  const r = runFix(dir, { provider, check, count, rules, ignore, keep, sdp: sdpFile ? (await import('./sdp.ts')).loadManifest(sdpFile) : undefined });
+  const r = runFix(dir, { provider, check, qccFlags, count, rules, ignore, keep, sdp: sdpFile ? (await import('./sdp.ts')).loadManifest(sdpFile) : undefined });
   writeFileSync(out, fixHtml(r));
   process.stdout.write(json ? JSON.stringify(r, null, 2) + '\n' : fixText(r) + `report: ${out}\n`);
   if (r.steps.length && r.steps.every((s) => s.status === 'provider-failed')) return 3;

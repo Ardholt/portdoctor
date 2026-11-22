@@ -154,3 +154,60 @@ test('a failing provider is reported with its stdout/stderr text and a hint, nev
     rmSync(join(d, '..'), { recursive: true, force: true });
   }
 });
+
+// qcc is faked here (a shell script that behaves like the SDP linker for three libraries) so the build-file check logic runs without an SDP.
+function fakeQccEnv(): { dir: string; env: NodeJS.ProcessEnv } {
+  const dir = mkdtempSync(join(tmpdir(), 'pd-fakeqcc-'));
+  writeFileSync(join(dir, 'qcc'), '#!/bin/sh\nfor a in "$@"; do case "$a" in -lrt|-lpthread|-ldl) echo "ld: cannot find $a" >&2; exit 1;; esac; done\ncat >/dev/null 2>&1 </dev/null\nexit 0\n');
+  chmodSync(join(dir, 'qcc'), 0o755);
+  return { dir, env: { ...process.env, PATH: `${dir}:${process.env.PATH}` } };
+}
+const hasMake = spawnSync('make', ['--version']).status === 0;
+
+test('qcc check understands Makefiles: make -n plus a link probe per -l library; a Makefile that links -lrt fails, one without it passes', { skip: !hasMake }, async () => {
+  const { runBuildCheck } = await import('../src/fix.ts');
+  const { dir, env } = fakeQccEnv();
+  const saved = process.env.PATH;
+  process.env.PATH = env.PATH;
+  const d = demoCopy();
+  try {
+    const bad = runBuildCheck('make', d, 'Makefile', 'gcc_ntox86_64');
+    assert.equal(bad.status, 'fail');
+    assert.match(bad.output, /-lrt: ld: cannot find -lrt/);
+    writeFileSync(join(d, 'Makefile'), readFileSync(join(d, 'Makefile'), 'utf8').replace('LDLIBS = -lrt', 'LDLIBS ='));
+    const good = runBuildCheck('make', d, 'Makefile', 'gcc_ntox86_64');
+    assert.equal(good.status, 'pass', good.output);
+    writeFileSync(join(d, 'Makefile'), 'all:\n\t$(CC) -o x x.c\nbroken line without a tab\n');
+    assert.equal(runBuildCheck('make', d, 'Makefile', 'gcc_ntox86_64').status, 'fail');
+  } finally {
+    process.env.PATH = saved;
+    rmSync(dir, { recursive: true, force: true });
+    rmSync(join(d, '..'), { recursive: true, force: true });
+  }
+});
+
+test('fix loop with --check qcc: a Makefile patch is no longer "skipped" (checked by make -n and the link probe)', { skip: !hasMake }, () => {
+  const { dir, env } = fakeQccEnv();
+  const d = demoCopy();
+  try {
+    const patch = JSON.stringify({ unifiedDiff: 'diff --git a/Makefile b/Makefile\n--- a/Makefile\n+++ b/Makefile\n@@ -1,2 +1,2 @@\n-LDLIBS = -lrt\n+LDLIBS =\n \n all: demo\n', explanation: 'drop -lrt', assumptions: [], confidence: 'high', needsHuman: false });
+    const prov = join(dir, 'prov.sh');
+    writeFileSync(prov, `#!/bin/sh\ncat >/dev/null\nprintf '%s' '${patch.replace(/'/g, "'\\''")}'\n`);
+    chmodSync(prov, 0o755);
+    const saved = process.env.PATH;
+    process.env.PATH = env.PATH;
+    try {
+      const r = runFix(d, { provider: prov, check: 'qcc', rules: ['QNX-BLD-LRT'], count: 1 });
+      assert.equal(r.steps[0].status, 'applied', JSON.stringify(r.steps[0]));
+      assert.equal(r.steps[0].check?.status, 'pass');
+      assert.equal(r.steps[0].check?.baselineErrors, 1);
+      assert.match(r.steps[0].check!.output, /make -n/);
+      rmSync(r.workDir, { recursive: true, force: true });
+    } finally {
+      process.env.PATH = saved;
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+    rmSync(join(d, '..'), { recursive: true, force: true });
+  }
+});

@@ -1,17 +1,17 @@
 import type { Finding, ScanResult, Severity } from './types.ts';
 import { SEVERITIES } from './types.ts';
+import { groupFindings, startHere, fmtRange, totalEffort } from './group.ts';
 
 const esc = (s: unknown): string =>
   String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
+/** Kept for API compatibility: a rough range, never a single figure. */
 export function fmtEffort(min: number): string {
-  if (min < 60) return `${Math.round(min)} min`;
-  const h = min / 60;
-  return h >= 16 ? `${h.toFixed(0)} h (~${(h / 8).toFixed(1)} person-days)` : `${h.toFixed(1)} h`;
+  return fmtRange(min);
 }
 
 export function effortHead(min: number): string {
-  return min < 60 ? `${Math.round(min)} min` : `${(min / 60).toFixed(min >= 6000 ? 0 : 1)} h`;
+  return fmtRange(min, false).replace(/^about /, '');
 }
 
 const SEV_GLYPH: Record<Severity, string> = { blocker: '■', major: '▲', minor: '●', info: '○' };
@@ -42,10 +42,12 @@ header.top{padding:1.5rem clamp(1rem,4vw,3rem) 1rem;border-bottom:1px solid var(
 header.top h1{margin:0;font-size:1.6rem;letter-spacing:-.01em}
 header.top h1 span{color:var(--muted);font-weight:400}
 .sub{color:var(--muted);margin:.25rem 0 0}
-.banner{margin:1rem 0 0;padding:.7rem 1rem;border-left:4px solid var(--major);background:var(--major-bg);color:var(--text);border-radius:6px;font-size:.92rem}
+.banner{margin:.8rem 0 0;padding:.35rem .8rem;border-left:4px solid var(--major);background:var(--major-bg);color:var(--text);border-radius:6px;font-size:.9rem}
+.banner summary{cursor:pointer}.banner p{margin:.4rem 0}
 main{padding:1.25rem clamp(1rem,4vw,3rem) 4rem;max-width:1200px;margin:0 auto}
 h2{font-size:1.15rem;margin:2rem 0 .75rem}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem}
+@media (min-width:640px){.cards{grid-template-columns:repeat(4,1fr)}}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem}
 .card .n{font-size:1.8rem;font-weight:700;line-height:1.1}
 .card .l{color:var(--muted);font-size:.85rem}
@@ -102,7 +104,28 @@ dialog::backdrop{background:#0008}
 kbd{font:.8rem ui-monospace,Menlo,monospace;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:0 .35rem}
 footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-@media print{.bar,.skip,#themebtn,#helpbtn{display:none!important}details.file>*{display:block!important}}
+
+.start{margin:0;padding:0;list-style:none;display:grid;gap:.6rem;counter-reset:s}
+.start li{counter-increment:s;background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--blocker);border-radius:10px;padding:.7rem 1rem .7rem 3rem;position:relative}
+.start li::before{content:counter(s);position:absolute;left:1rem;top:.55rem;font-size:1.5rem;font-weight:700;color:var(--muted)}
+.start a.t{font-weight:700;font-size:1.02rem}
+.start .r{margin:.2rem 0 0;color:var(--text);font-size:.92rem}
+.scalebar{display:flex;gap:.6rem;align-items:center;margin:0 0 .6rem;flex-wrap:wrap}
+details.grp{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin:.6rem 0}
+details.grp>summary{cursor:pointer;padding:.65rem .9rem;list-style:none;display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary::before{content:"\\25B8";color:var(--muted)}
+details.grp[open]>summary::before{content:"\\25BE"}
+details.grp:target{outline:3px solid var(--accent)}
+.grp-body{padding:0 .9rem .6rem;border-top:1px solid var(--border)}
+.sites{list-style:none;margin:.5rem 0 0;padding:0}
+.site{border-top:1px dashed var(--border);padding:.5rem 0}
+.site>summary{cursor:pointer;display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap;list-style:none}
+.site>summary::-webkit-details-marker{display:none}
+.site>summary::before{content:"\\25B8";color:var(--muted)}
+.site[open]>summary::before{content:"\\25BE"}
+.site .hitline{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;color:var(--muted);word-break:break-all}
+@media print{.bar,.skip,#themebtn,#helpbtn,.scalebar{display:none!important}details.grp>*,details.site>*{display:block!important}}
 @media (prefers-reduced-motion:no-preference){.tile,.chip{transition:border-color .15s,background .15s}}
 `;
 
@@ -110,8 +133,13 @@ const JS = `
 (function(){
 var root=document.documentElement;root.classList.add('js');
 var $=function(s,c){return (c||document).querySelector(s)},$$=function(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s))};
-var state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true};
-var findings=$$('article.finding'),files=$$('details.file'),count=$('#count'),empty=$('.empty');
+var state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true,scale:'rel'};
+var findings=$$('article.finding'),groups=$$('details.grp'),count=$('#count'),empty=$('.empty');
+function setScale(){
+ $$('.tile').forEach(function(t){t.style.setProperty('--i',state.scale==='abs'?t.dataset.abs:t.dataset.rel)});
+ var b=$('#scale');if(b){b.setAttribute('aria-pressed',state.scale==='abs'?'true':'false');b.textContent=state.scale==='abs'?'Scale: share of total (absolute)':'Scale: relative to busiest'}
+ $$('.lg-rel').forEach(function(e){e.hidden=state.scale==='abs'});$$('.lg-abs').forEach(function(e){e.hidden=state.scale!=='abs'});
+}
 function apply(){
  var q=state.q.toLowerCase().trim(),vis=0,i;
  for(i=0;i<findings.length;i++){var f=findings[i],d=f.dataset,ok=true;
@@ -120,8 +148,8 @@ function apply(){
   if(ok&&state.dir!==null&&!(state.dir==='.'?d.file.indexOf('/')<0:(d.file===state.dir||d.file.indexOf(state.dir+'/')===0)))ok=false;
   if(ok&&!state.guard&&d.guard==='linux-only')ok=false;
   if(ok&&q&&d.text.indexOf(q)<0)ok=false;
-  f.hidden=!ok;if(ok)vis++;}
- files.forEach(function(fl){var n=$$('article.finding:not([hidden])',fl).length;fl.hidden=n===0;var c=$('.vis',fl);if(c)c.textContent=n;});
+  f.hidden=!ok;var site=f.closest('details.site');if(site)site.hidden=!ok;if(ok)vis++;}
+ groups.forEach(function(g){var n=$$('article.finding:not([hidden])',g).length;g.hidden=n===0;var c=$('.vis',g);if(c)c.textContent=n;});
  count.textContent=vis+' of '+findings.length+' findings shown';
  if(empty)empty.classList.toggle('show',vis===0);
  $$('[data-sevbtn]').forEach(function(b){b.setAttribute('aria-pressed',state.sev[b.dataset.sevbtn]?'true':'false')});
@@ -129,11 +157,12 @@ function apply(){
 }
 $$('[data-sevbtn]').forEach(function(b){b.addEventListener('click',function(){state.sev[b.dataset.sevbtn]=state.sev[b.dataset.sevbtn]?0:1;apply()})});
 $$('.tile').forEach(function(t){t.addEventListener('click',function(){state.dir=state.dir===t.dataset.dir?null:t.dataset.dir;apply();if(state.dir!==null){var l=$('#findings');if(l)l.scrollIntoView()}})});
+var sc=$('#scale');if(sc)sc.addEventListener('click',function(){state.scale=state.scale==='abs'?'rel':'abs';setScale()});
 var qi=$('#q');qi.addEventListener('input',function(){state.q=qi.value;apply()});
 $('#conf').addEventListener('change',function(e){state.conf=e.target.value;apply()});
 $('#guard').addEventListener('change',function(e){state.guard=e.target.checked;apply()});
-$('#clear').addEventListener('click',function(){state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true};qi.value='';$('#conf').value='all';$('#guard').checked=true;apply()});
-$('#expand').addEventListener('click',function(){var any=files.some(function(f){return !f.open&&!f.hidden});files.forEach(function(f){f.open=any});this.textContent=any?'Collapse all':'Expand all'});
+$('#clear').addEventListener('click',function(){state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true,scale:state.scale};qi.value='';$('#conf').value='all';$('#guard').checked=true;apply()});
+$('#expand').addEventListener('click',function(){var any=groups.some(function(f){return !f.open&&!f.hidden});groups.forEach(function(f){f.open=any});this.textContent=any?'Collapse all groups':'Expand all groups'});
 function theme(t){if(t)root.setAttribute('data-theme',t);else root.removeAttribute('data-theme');try{if(t)localStorage.setItem('pd-theme',t)}catch(e){}}
 try{var st=localStorage.getItem('pd-theme');if(st)root.setAttribute('data-theme',st)}catch(e){}
 function toggleTheme(){var cur=root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');theme(cur==='dark'?'light':'dark')}
@@ -141,10 +170,11 @@ $('#themebtn').addEventListener('click',toggleTheme);
 var dlg=$('#help');function help(){if(dlg.showModal)dlg.showModal();else dlg.setAttribute('open','')}
 $('#helpbtn').addEventListener('click',help);
 var cur=-1;function vis(){return findings.filter(function(f){return !f.hidden})}
-function go(n){var v=vis();if(!v.length)return;cur=Math.max(0,Math.min(v.length-1,n));var f=v[cur],fl=f.closest('details');if(fl&&!fl.open)fl.open=true;f.focus();f.scrollIntoView({block:'center'})}
+function openUp(el){var d=el.closest('details');while(d){d.open=true;d=d.parentElement&&d.parentElement.closest('details')}}
+function go(n){var v=vis();if(!v.length)return;cur=Math.max(0,Math.min(v.length-1,n));var f=v[cur];openUp(f);f.focus();f.scrollIntoView({block:'center'})}
 document.addEventListener('keydown',function(e){
  var t=e.target,typing=t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA');
- if(e.key==='Escape'){if(typing){t.blur();return}if(state.dir!==null){state.dir=null;apply()}return}
+ if(e.key==='Escape'){if(typing){t.blur();return}if(dlg.open){dlg.close();return}if(state.dir!==null){state.dir=null;apply()}return}
  if(typing||e.ctrlKey||e.metaKey||e.altKey)return;
  if(e.key==='/'){e.preventDefault();qi.focus()}
  else if(e.key==='j'){var v=vis(),i=v.indexOf(document.activeElement);go(i>=0?i+1:cur+1)}
@@ -153,7 +183,9 @@ document.addEventListener('keydown',function(e){
  else if(e.key==='?')help();
  else if('1234'.indexOf(e.key)>=0&&e.key){var s=['blocker','major','minor','info'][+e.key-1];state.sev[s]=state.sev[s]?0:1;apply()}
 });
-apply();
+function hashOpen(){var h=location.hash;if(h.length>1){var el=document.getElementById(decodeURIComponent(h.slice(1)));if(el){openUp(el)}}}
+window.addEventListener('hashchange',hashOpen);hashOpen();
+setScale();apply();
 })();
 `;
 
@@ -163,7 +195,7 @@ function dirOf(file: string): string {
   return parts.length ? parts.slice(0, 2).join('/') : '.';
 }
 
-function renderFinding(f: Finding, idx: number): string {
+function renderSite(f: Finding, idx: number): string {
   const code = f.context.length
     ? `<pre class="code" tabindex="0" aria-label="Code context for ${esc(f.file)} line ${f.line}">${f.context
         .map((c) => `<span class="ln${c.n === f.line ? ' hit' : ''}"><b>${c.n}</b>${esc(c.text) || ' '}</span>`)
@@ -175,74 +207,74 @@ function renderFinding(f: Finding, idx: number): string {
       : f.guard === 'other' && f.guards.length
         ? `<p class="note">Inside conditional(s): <code>${esc(f.guards.join(' > '))}</code>. PortDoctor does not judge whether these are enabled on QNX.</p>`
         : '';
+  const builtNote = f.built === 'no' ? '<p class="note"><strong>Build awareness (heuristic):</strong> this file does not appear in the build target list, so it may not be compiled for the target.</p>' : '';
   const text = `${f.ruleId} ${f.title} ${f.file} ${f.match} ${f.message}`.toLowerCase();
-  return `<article class="finding" id="f-${idx}" tabindex="-1" data-sev="${f.severity}" data-conf="${f.confidence}" data-file="${esc(f.file)}" data-guard="${f.guard}" data-text="${esc(text)}" aria-labelledby="f-${idx}-t">
-<h3 id="f-${idx}-t"><span class="badge b-${f.severity}" title="${esc(SEV_HELP[f.severity])}"><span aria-hidden="true">${SEV_GLYPH[f.severity]}</span> ${f.severity}</span>
-<span>${esc(f.title)}</span>
-<span class="badge ${f.confidence === 'guess' ? 'b-guess' : 'b-known'}" title="${f.confidence === 'guess' ? 'Unverified claim about QNX 8.0: verify against the SDP' : 'Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)'}">${f.confidence === 'guess' ? 'guess: verify against SDP' : 'known'}</span>
-<span class="loc">${esc(f.file)}:${f.line}</span></h3>
-<p>${esc(f.message)}</p>${code}
-<div class="remedy"><strong>Remedy</strong>${esc(f.remedy)} <a href="#rule-${esc(f.ruleId)}">Rule ${esc(f.ruleId)}</a></div>
-${f.verify ? `<p class="verify">⚠ ${esc(f.verify)}</p>` : ''}${guardNote}
-<p class="note">Estimated effort for this item: ${esc(fmtEffort(f.effort))} (heuristic)</p>
-</article>`;
+  const hit = f.context.find((c) => c.n === f.line);
+  return `<details class="site"><summary><span class="loc">${esc(f.file)}:${f.line}</span>${f.guard === 'linux-only' ? ' <span class="badge b-info">Linux-only #if</span>' : f.guard === 'other' ? ' <span class="badge b-info">guarded</span>' : ''}${f.built === 'no' ? ' <span class="badge b-info">not in build list?</span>' : ''}<span class="hitline">${esc((hit?.text ?? f.match).trim().slice(0, 90))}</span></summary>
+<article class="finding" id="f-${idx}" tabindex="-1" data-sev="${f.severity}" data-conf="${f.confidence}" data-file="${esc(f.file)}" data-guard="${f.guard}" data-text="${esc(text)}" aria-label="${esc(f.title)} at ${esc(f.file)} line ${f.line}">
+${code}${guardNote}${builtNote}
+<p class="note">Finding index ${idx} (for <code>portdoctor propose --finding ${idx}</code>)</p>
+</article></details>`;
 }
 
 export function renderHtml(res: ScanResult): string {
   const s = res.stats;
-  const dirStats = new Map<string, { n: number; effort: number; worst: number; bySev: Record<Severity, number> }>();
+  const groups = groupFindings(res);
+  const total = totalEffort(groups);
+  const top = startHere(groups, 3);
+  const dirStats = new Map<string, { n: number; w: number; bySev: Record<Severity, number> }>();
   const nDirs = new Set(res.findings.map((f) => dirOf(f.file))).size;
   const byFileTiles = nDirs < 4;
   for (const f of res.findings) {
     const d = byFileTiles ? f.file : dirOf(f.file);
-    const e = dirStats.get(d) ?? { n: 0, effort: 0, worst: 9, bySev: { blocker: 0, major: 0, minor: 0, info: 0 } };
+    const e = dirStats.get(d) ?? { n: 0, w: 0, bySev: { blocker: 0, major: 0, minor: 0, info: 0 } };
     e.n++;
-    e.effort += f.effort;
+    e.w += f.effort;
     e.bySev[f.severity]++;
-    e.worst = Math.min(e.worst, SEVERITIES.indexOf(f.severity));
     dirStats.set(d, e);
   }
-  const maxEffort = Math.max(1, ...[...dirStats.values()].map((d) => d.effort));
-  const tiles = [...dirStats.entries()].sort((a, b) => b[1].effort - a[1].effort || (a[0] < b[0] ? -1 : 1)).slice(0, byFileTiles ? 24 : 400);
+  const maxW = Math.max(1, ...[...dirStats.values()].map((d) => d.w));
+  const sumW = Math.max(1, [...dirStats.values()].reduce((a, d) => a + d.w, 0));
+  const tiles = [...dirStats.entries()].sort((a, b) => b[1].w - a[1].w || (a[0] < b[0] ? -1 : 1)).slice(0, byFileTiles ? 24 : 400);
   const heat = tiles.length
-    ? `<ul class="heat">${tiles
+    ? `<div class="scalebar"><button type="button" class="btn" id="scale" aria-pressed="false">Scale: relative to busiest</button>
+<span class="legend"><span class="lg-rel">colour is relative to the busiest tile</span><span class="lg-abs" hidden>colour is each tile's share of all findings' weight</span><i></i><span>less &rarr; more</span></span></div>
+<ul class="heat">${tiles
         .map(([d, e]) => {
-          const inten = Math.round(8 + (e.effort / maxEffort) * 47);
-          return `<li><button type="button" class="tile" style="--i:${inten}" data-dir="${esc(d)}" aria-pressed="false" aria-label="${byFileTiles ? 'File' : 'Directory'} ${esc(d)}: ${e.n} findings, ${esc(fmtEffort(e.effort))}. Press to filter.">
-<span class="d">${esc(byFileTiles ? d : d === '.' ? '(top level)' : d + '/')}</span><span class="m">${e.n} findings &middot; ${esc(fmtEffort(e.effort))}</span><span class="m">${e.bySev.blocker ? `■${e.bySev.blocker} ` : ''}${e.bySev.major ? `▲${e.bySev.major} ` : ''}${e.bySev.minor ? `●${e.bySev.minor} ` : ''}${e.bySev.info ? `○${e.bySev.info}` : ''}</span></button></li>`;
+          const rel = Math.round(8 + (e.w / maxW) * 47);
+          const abs = Math.round(8 + (e.w / sumW) * 47);
+          return `<li><button type="button" class="tile" style="--i:${rel}" data-rel="${rel}" data-abs="${abs}" data-dir="${esc(d)}" aria-pressed="false" aria-label="${byFileTiles ? 'File' : 'Directory'} ${esc(d)}: ${e.n} findings. Press to filter.">
+<span class="d">${esc(byFileTiles ? d : d === '.' ? '(top level)' : d + '/')}</span><span class="m">${e.n} finding${e.n === 1 ? '' : 's'}</span><span class="m">${e.bySev.blocker ? `■${e.bySev.blocker} ` : ''}${e.bySev.major ? `▲${e.bySev.major} ` : ''}${e.bySev.minor ? `●${e.bySev.minor} ` : ''}${e.bySev.info ? `○${e.bySev.info}` : ''}</span></button></li>`;
         })
-        .join('')}</ul><p class="legend"><span>less effort</span><i></i><span>more effort (colour is relative to the busiest directory; counts and effort are in the text)</span></p>`
+        .join('')}</ul><p class="note">Press a tile to filter the findings below to it; press again (or Esc) to clear.</p>`
     : '<p class="empty show">No findings.</p>';
 
-  const byFile = new Map<string, Array<{ f: Finding; i: number }>>();
-  res.findings.forEach((f, i) => {
-    const l = byFile.get(f.file) ?? [];
-    l.push({ f, i });
-    byFile.set(f.file, l);
-  });
-  const fileBlocks = [...byFile.entries()]
-    .map(([file, list]) => ({ file, list, effort: list.reduce((a, x) => a + x.f.effort, 0) }))
-    .sort((a, b) => b.effort - a.effort || (a.file < b.file ? -1 : 1))
-    .map(
-      ({ file, list, effort }) => `<details class="file" open><summary><span class="path">${esc(file)}</span>
-<span class="meta"><span class="vis">${list.length}</span>/${list.length} findings &middot; ${esc(fmtEffort(effort))}</span></summary>
-${list.map(({ f, i }) => renderFinding(f, i)).join('\n')}</details>`,
-    )
-    .join('\n');
+  const startHtml = top.length
+    ? `<ol class="start">${top
+        .map(
+          (g) => `<li><a class="t" href="#rule-${esc(g.ruleId)}">${esc(g.title)}</a> <span class="badge b-${g.severity}"><span aria-hidden="true">${SEV_GLYPH[g.severity]}</span> ${g.severity}</span> <span class="badge ${g.confidence === 'guess' ? 'b-guess' : 'b-known'}">${g.confidence === 'guess' ? 'guess: verify against SDP' : 'known'}</span>
+<div class="meta">${g.sites.length} site${g.sites.length === 1 ? '' : 's'} in ${g.files.length} file${g.files.length === 1 ? '' : 's'} &middot; ${esc(fmtRange(g.effortMin))}${g.allGuarded ? ' &middot; all inside Linux-only #if' : ''}</div>
+<p class="r">${esc(firstSentence(g.rule?.remedy ?? ''))}</p></li>`,
+        )
+        .join('')}</ol><p class="note">Ranked by: has a site outside Linux-only #if, then severity, then number of sites. A heuristic ordering, not a plan.</p>`
+    : '<p class="note">Nothing to start with: no blocker, major or minor findings.</p>';
 
-  const counts = new Map<string, number[]>();
-  res.findings.forEach((f, i) => counts.set(f.ruleId, [...(counts.get(f.ruleId) ?? []), i]));
-  const rulesHtml = res.rules
-    .slice()
-    .sort((a, b) => SEVERITIES.indexOf(a.severity) - SEVERITIES.indexOf(b.severity) || (a.id < b.id ? -1 : 1))
-    .map((r) => {
-      const idxs = counts.get(r.id) ?? [];
-      return `<section class="rule" id="rule-${esc(r.id)}"><h3>${esc(r.id)} <span class="badge b-${r.severity}"><span aria-hidden="true">${SEV_GLYPH[r.severity]}</span> ${r.severity}</span> <span class="badge ${r.confidence === 'guess' ? 'b-guess' : 'b-known'}">${r.confidence}</span></h3>
-<p><strong>${esc(r.title)}.</strong> ${esc(r.message)}</p>
-<div class="remedy"><strong>Remedy</strong>${esc(r.remedy)}</div>
-${r.verify ? `<p class="verify">⚠ ${esc(r.verify)}</p>` : ''}
-${r.refs?.length ? `<p class="note">Documentation to read (names only, not fetched by this tool): ${r.refs.map(esc).join('; ')}</p>` : ''}
-<p class="note">${idxs.length} occurrence${idxs.length === 1 ? '' : 's'}: ${idxs.slice(0, 8).map((i) => `<a href="#f-${i}">${esc(res.findings[i].file)}:${res.findings[i].line}</a>`).join(', ')}${idxs.length > 8 ? ` and ${idxs.length - 8} more` : ''}</p></section>`;
+  const groupsHtml = groups
+    .map((g) => {
+      const r = g.rule;
+      const sites = g.sites
+        .slice()
+        .sort((a, b) => (res.findings[a].file < res.findings[b].file ? -1 : res.findings[a].file > res.findings[b].file ? 1 : res.findings[a].line - res.findings[b].line))
+        .map((i) => renderSite(res.findings[i], i))
+        .join('\n');
+      return `<details class="grp" id="rule-${esc(g.ruleId)}"><summary><span class="badge b-${g.severity}" title="${esc(SEV_HELP[g.severity])}"><span aria-hidden="true">${SEV_GLYPH[g.severity]}</span> ${g.severity}</span>
+<strong>${esc(g.title)}</strong>
+<span class="badge ${g.confidence === 'guess' ? 'b-guess' : 'b-known'}" title="${g.confidence === 'guess' ? 'Unverified claim about QNX 8.0: verify against the SDP' : 'Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)'}">${g.confidence === 'guess' ? 'guess: verify against SDP' : 'known'}</span>
+<span class="meta"><span class="vis">${g.sites.length}</span>/${g.sites.length} sites in ${g.files.length} file${g.files.length === 1 ? '' : 's'} &middot; ${esc(fmtRange(g.effortMin))}</span></summary>
+<div class="grp-body"><p><span class="note">${esc(g.ruleId)}</span> ${esc(r?.message ?? '')}</p>
+<div class="remedy"><strong>Remedy</strong>${esc(r?.remedy ?? '')}</div>
+${r?.verify ? `<p class="verify">⚠ ${esc(r.verify)}</p>` : ''}${r?.refs?.length ? `<p class="note">Documentation to read (names only, not fetched by this tool): ${r.refs.map(esc).join('; ')}</p>` : ''}
+${sites}</div></details>`;
     })
     .join('\n');
 
@@ -254,44 +286,52 @@ ${r.refs?.length ? `<p class="note">Documentation to read (names only, not fetch
 <meta name="color-scheme" content="light dark">
 <style>${CSS}</style></head>
 <body>
-<a class="skip" href="#findings">Skip to findings</a>
+<a class="skip" href="#start">Skip to start-here panel</a>
 <header class="top">
 <h1>PortDoctor <span>QNX 8.0 porting report for</span> ${esc(res.root)}</h1>
 <p class="sub">portdoctor ${esc(res.version)} &middot; ${s.filesScanned} files scanned (${Object.entries(s.filesByKind).map(([k, v]) => `${v} ${esc(k)}`).join(', ') || 'none'}) &middot; ${s.rules} rules</p>
-<p class="banner" role="note"><strong>Static analysis only.</strong> ${esc(res.disclaimer)} Effort figures are rule-based heuristics, not measurements.</p>
+<details class="banner"><summary><strong>Static analysis only:</strong> nothing here was compiled or run on QNX. <span class="note">Details</span></summary>
+<p>${esc(res.disclaimer)}</p><p>Effort figures are rough, uncalibrated ranges derived from rule groups, not measurements. A clean scan is not proof of portability.</p></details>
 <p style="margin:.7rem 0 0"><button class="btn" id="themebtn" type="button" aria-label="Toggle light and dark theme">Theme (t)</button> <button class="btn" id="helpbtn" type="button">Keyboard shortcuts (?)</button></p>
 </header>
 <main id="main">
 <h2>Summary</h2>
 <div class="cards" role="list">
 ${SEVERITIES.map((v) => `<div class="card sev-${v}" role="listitem"><div class="n">${s.bySeverity[v]}</div><div class="l"><span aria-hidden="true">${SEV_GLYPH[v]}</span> ${v}: ${esc(SEV_HELP[v])}</div></div>`).join('\n')}
-<div class="card" role="listitem"><div class="n">${esc(effortHead(s.effortMinutes))}</div><div class="l">estimated porting effort (heuristic)${s.effortMinutes >= 960 ? `, about ${(s.effortMinutes / 480).toFixed(1)} person-days` : ''}</div></div>
+<div class="card" role="listitem"><div class="n">${groups.length}</div><div class="l">rule groups (findings grouped by the rule that found them)</div></div>
+<div class="card" role="listitem"><div class="n" style="font-size:1.25rem">${esc(effortHead(total))}</div><div class="l">rough effort, uncalibrated: scaled by groups, not by lines</div></div>
 <div class="card" role="listitem"><div class="n">${confKnown}/${s.findings}</div><div class="l">findings from rules marked <em>known</em>; the rest are <em>guess</em></div></div>
 <div class="card" role="listitem"><div class="n">${s.suppressedQnxBranch}</div><div class="l">matches suppressed inside <code>#if __QNXNTO__</code> branches</div></div>
 </div>
-<h2>Where the work is <span class="meta">(${byFileTiles ? 'by file, few directories' : 'by directory'}${byFileTiles && nDirs >= 1 && tiles.length === 24 ? ', top 24' : ''})</span></h2>
+<h2 id="start">Start here: top ${top.length || 3}</h2>
+${startHtml}
+<h2>Where the work is <span class="meta">(${byFileTiles ? 'by file, few directories' : 'by directory'}${byFileTiles && tiles.length === 24 ? ', top 24' : ''})</span></h2>
 ${heat}
-<h2 id="findings">Findings</h2>
+<h2 id="findings">Findings by rule group</h2>
 <div class="bar" role="search" aria-label="Filter findings">
 <input id="q" type="search" placeholder="Search file, rule, text ( / )" aria-label="Search findings">
 ${SEVERITIES.map((v, i) => `<button type="button" class="chip" data-sevbtn="${v}" aria-pressed="true" title="Toggle ${v} (${i + 1})"><span aria-hidden="true">${SEV_GLYPH[v]}</span> ${v} <span class="sr">toggle</span>(${s.bySeverity[v]})</button>`).join('\n')}
 <label class="note">Confidence <select id="conf" aria-label="Confidence filter"><option value="all">all</option><option value="known">known</option><option value="guess">guess</option></select></label>
 <label class="note"><input type="checkbox" id="guard" checked> include Linux-guarded</label>
-<button class="btn" id="expand" type="button">Collapse all</button>
+<button class="btn" id="expand" type="button">Expand all groups</button>
 <button class="btn" id="clear" type="button">Reset filters</button>
 <span id="count" role="status" aria-live="polite">${s.findings} findings</span>
 </div>
-${fileBlocks || '<p class="empty show">No porting blockers found by the current rules. That is not proof the code ports.</p>'}
+${groupsHtml || '<p class="empty show">No porting blockers found by the current rules. That is not proof the code ports.</p>'}
 <p class="empty">No findings match the current filters.</p>
-<h2>Remedies and rule notes</h2>
-${rulesHtml}
 <footer><p>What this report does not claim: that anything here compiled or ran on QNX; that a missing finding means the code ports; that 'guess' rules are true. Remedies name public QNX/POSIX interfaces from documentation the authors recall; confirm each against your SDP.</p></footer>
 </main>
 <dialog id="help" aria-labelledby="help-t"><h2 id="help-t" style="margin-top:0">Keyboard shortcuts</h2>
-<p><kbd>/</kbd> search &nbsp; <kbd>j</kbd> / <kbd>k</kbd> next / previous finding &nbsp; <kbd>1</kbd>&ndash;<kbd>4</kbd> toggle blocker, major, minor, info &nbsp; <kbd>t</kbd> theme &nbsp; <kbd>Esc</kbd> leave search or clear directory filter &nbsp; <kbd>?</kbd> this help</p>
+<p><kbd>/</kbd> search &nbsp; <kbd>j</kbd> / <kbd>k</kbd> next / previous finding &nbsp; <kbd>1</kbd>&ndash;<kbd>4</kbd> toggle blocker, major, minor, info &nbsp; <kbd>t</kbd> theme &nbsp; <kbd>Esc</kbd> close this dialog, leave search or clear the tile filter &nbsp; <kbd>?</kbd> this help</p>
 <form method="dialog"><button class="btn">Close</button></form></dialog>
 <script type="application/json" id="pd-data">${data}</script>
 <script>${JS}</script>
 </body></html>
 `;
+}
+
+function firstSentence(t: string): string {
+  const m = /^(.+?[.!?])(?:\s|$)/.exec(t);
+  const r = m ? m[1] : t;
+  return r.length > 220 ? r.slice(0, 217) + '...' : r;
 }

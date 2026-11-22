@@ -21,7 +21,7 @@
       "minor": 0,
       "info": 8
     },
-    "effortMinutes": 2184
+    "effortMinutes": 1352
   },
   "findings": [
     {
@@ -2465,6 +2465,7 @@
       "guards": []
     }
   ],
+  "groups": 8,
   "rules": [
     {
       "id": "QNX-BLD-AUTOCONF-HOST",
@@ -2474,7 +2475,8 @@
       "confidence": "guess",
       "remedy": "Refresh config.sub/config.guess (autoreconf -fi or copy from a current automake), then configure with --host=<cpu>-unknown-nto-qnx<version> and CC set to qcc.",
       "verify": "verify against SDP: exact host triplet format for 8.0.",
-      "message": "No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet."
+      "message": "No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet.",
+      "effort": 30
     },
     {
       "id": "QNX-HDR-SYS-LINUX",
@@ -2484,7 +2486,8 @@
       "confidence": "guess",
       "remedy": "Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.",
       "verify": "verify against SDP: grep $QNX_TARGET/usr/include for the header.",
-      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP."
+      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP.",
+      "effort": 30
     },
     {
       "id": "QNX-API-EPOLL",
@@ -2498,7 +2501,8 @@
         "QNX docs: ionotify()",
         "QNX docs: SIGEV_PULSE_INIT()"
       ],
-      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess)."
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "effort": 120
     },
     {
       "id": "QNX-API-INOTIFY",
@@ -2508,7 +2512,8 @@
       "confidence": "guess",
       "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
-      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool."
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
+      "effort": 180
     },
     {
       "id": "QNX-API-EVENTFD",
@@ -2521,7 +2526,8 @@
       "refs": [
         "QNX docs: MsgSendPulse()"
       ],
-      "message": "eventfd is a Linux file-descriptor wake-up primitive."
+      "message": "eventfd is a Linux file-descriptor wake-up primitive.",
+      "effort": 45
     },
     {
       "id": "QNX-API-SIGNALFD",
@@ -2534,7 +2540,8 @@
       "refs": [
         "POSIX: sigwaitinfo()"
       ],
-      "message": "signalfd turns signals into a readable fd; Linux-only."
+      "message": "signalfd turns signals into a readable fd; Linux-only.",
+      "effort": 90
     },
     {
       "id": "QNX-API-SYSCALL",
@@ -2544,7 +2551,8 @@
       "confidence": "guess",
       "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
       "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel)."
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
+      "effort": 120
     },
     {
       "id": "QNX-ADV-LINUX-IFDEF",
@@ -2556,7 +2564,8 @@
       "refs": [
         "QNX docs: Predefined macros (__QNX__, __QNXNTO__)"
       ],
-      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__)."
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "effort": 10
     }
   ]
 }

@@ -21,7 +21,7 @@
       "minor": 7,
       "info": 1
     },
-    "effortMinutes": 844
+    "effortMinutes": 434
   },
   "findings": [
     {
@@ -1715,6 +1715,7 @@
       "guards": []
     }
   ],
+  "groups": 6,
   "rules": [
     {
       "id": "QNX-BLD-AUTOCONF-HOST",
@@ -1724,7 +1725,8 @@
       "confidence": "guess",
       "remedy": "Refresh config.sub/config.guess (autoreconf -fi or copy from a current automake), then configure with --host=<cpu>-unknown-nto-qnx<version> and CC set to qcc.",
       "verify": "verify against SDP: exact host triplet format for 8.0.",
-      "message": "No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet."
+      "message": "No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet.",
+      "effort": 30
     },
     {
       "id": "QNX-HDR-LINUX-DIR",
@@ -1734,7 +1736,8 @@
       "confidence": "guess",
       "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
       "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not."
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.",
+      "effort": 60
     },
     {
       "id": "QNX-HDR-SYS-LINUX",
@@ -1744,7 +1747,8 @@
       "confidence": "guess",
       "remedy": "Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.",
       "verify": "verify against SDP: grep $QNX_TARGET/usr/include for the header.",
-      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP."
+      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP.",
+      "effort": 30
     },
     {
       "id": "QNX-API-SENDFILE",
@@ -1754,7 +1758,8 @@
       "confidence": "guess",
       "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
       "verify": "verify against SDP: some of these may exist with other semantics.",
-      "message": "Linux zero-copy file transfer calls. sendfile() also exists on BSDs with a different signature, so a same-named call may compile but misbehave."
+      "message": "Linux zero-copy file transfer calls. sendfile() also exists on BSDs with a different signature, so a same-named call may compile but misbehave.",
+      "effort": 60
     },
     {
       "id": "QNX-API-AFFINITY",
@@ -1767,7 +1772,8 @@
       "refs": [
         "QNX docs: ThreadCtl()"
       ],
-      "message": "Linux affinity API."
+      "message": "Linux affinity API.",
+      "effort": 45
     },
     {
       "id": "QNX-API-SOCKOPT-LINUX",
@@ -1777,7 +1783,8 @@
       "confidence": "guess",
       "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
       "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
-      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only."
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "effort": 20
     }
   ]
 }

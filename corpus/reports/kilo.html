@@ -20,10 +20,12 @@ header.top{padding:1.5rem clamp(1rem,4vw,3rem) 1rem;border-bottom:1px solid var(
 header.top h1{margin:0;font-size:1.6rem;letter-spacing:-.01em}
 header.top h1 span{color:var(--muted);font-weight:400}
 .sub{color:var(--muted);margin:.25rem 0 0}
-.banner{margin:1rem 0 0;padding:.7rem 1rem;border-left:4px solid var(--major);background:var(--major-bg);color:var(--text);border-radius:6px;font-size:.92rem}
+.banner{margin:.8rem 0 0;padding:.35rem .8rem;border-left:4px solid var(--major);background:var(--major-bg);color:var(--text);border-radius:6px;font-size:.9rem}
+.banner summary{cursor:pointer}.banner p{margin:.4rem 0}
 main{padding:1.25rem clamp(1rem,4vw,3rem) 4rem;max-width:1200px;margin:0 auto}
 h2{font-size:1.15rem;margin:2rem 0 .75rem}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem}
+@media (min-width:640px){.cards{grid-template-columns:repeat(4,1fr)}}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.8rem 1rem}
 .card .n{font-size:1.8rem;font-weight:700;line-height:1.1}
 .card .l{color:var(--muted);font-size:.85rem}
@@ -80,15 +82,37 @@ dialog::backdrop{background:#0008}
 kbd{font:.8rem ui-monospace,Menlo,monospace;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:0 .35rem}
 footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-@media print{.bar,.skip,#themebtn,#helpbtn{display:none!important}details.file>*{display:block!important}}
+
+.start{margin:0;padding:0;list-style:none;display:grid;gap:.6rem;counter-reset:s}
+.start li{counter-increment:s;background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--blocker);border-radius:10px;padding:.7rem 1rem .7rem 3rem;position:relative}
+.start li::before{content:counter(s);position:absolute;left:1rem;top:.55rem;font-size:1.5rem;font-weight:700;color:var(--muted)}
+.start a.t{font-weight:700;font-size:1.02rem}
+.start .r{margin:.2rem 0 0;color:var(--text);font-size:.92rem}
+.scalebar{display:flex;gap:.6rem;align-items:center;margin:0 0 .6rem;flex-wrap:wrap}
+details.grp{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin:.6rem 0}
+details.grp>summary{cursor:pointer;padding:.65rem .9rem;list-style:none;display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+details.grp>summary::-webkit-details-marker{display:none}
+details.grp>summary::before{content:"\25B8";color:var(--muted)}
+details.grp[open]>summary::before{content:"\25BE"}
+details.grp:target{outline:3px solid var(--accent)}
+.grp-body{padding:0 .9rem .6rem;border-top:1px solid var(--border)}
+.sites{list-style:none;margin:.5rem 0 0;padding:0}
+.site{border-top:1px dashed var(--border);padding:.5rem 0}
+.site>summary{cursor:pointer;display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap;list-style:none}
+.site>summary::-webkit-details-marker{display:none}
+.site>summary::before{content:"\25B8";color:var(--muted)}
+.site[open]>summary::before{content:"\25BE"}
+.site .hitline{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;color:var(--muted);word-break:break-all}
+@media print{.bar,.skip,#themebtn,#helpbtn,.scalebar{display:none!important}details.grp>*,details.site>*{display:block!important}}
 @media (prefers-reduced-motion:no-preference){.tile,.chip{transition:border-color .15s,background .15s}}
 </style></head>
 <body>
-<a class="skip" href="#findings">Skip to findings</a>
+<a class="skip" href="#start">Skip to start-here panel</a>
 <header class="top">
 <h1>PortDoctor <span>QNX 8.0 porting report for</span> kilo</h1>
 <p class="sub">portdoctor 0.1.0 &middot; 2 files scanned (1 make, 1 c) &middot; 55 rules</p>
-<p class="banner" role="note"><strong>Static analysis only.</strong> PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked &#39;guess&#39; are unverified claims about QNX 8.0 and must be checked against the SDP. Effort figures are rule-based heuristics, not measurements.</p>
+<details class="banner"><summary><strong>Static analysis only:</strong> nothing here was compiled or run on QNX. <span class="note">Details</span></summary>
+<p>PortDoctor is a static, text-level scanner. Nothing here was compiled or run against a QNX SDP. Rules marked &#39;guess&#39; are unverified claims about QNX 8.0 and must be checked against the SDP.</p><p>Effort figures are rough, uncalibrated ranges derived from rule groups, not measurements. A clean scan is not proof of portability.</p></details>
 <p style="margin:.7rem 0 0"><button class="btn" id="themebtn" type="button" aria-label="Toggle light and dark theme">Theme (t)</button> <button class="btn" id="helpbtn" type="button">Keyboard shortcuts (?)</button></p>
 </header>
 <main id="main">
@@ -98,14 +122,19 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <div class="card sev-major" role="listitem"><div class="n">0</div><div class="l"><span aria-hidden="true">▲</span> major: Needs a semantic change to port</div></div>
 <div class="card sev-minor" role="listitem"><div class="n">0</div><div class="l"><span aria-hidden="true">●</span> minor: Small mechanical change</div></div>
 <div class="card sev-info" role="listitem"><div class="n">1</div><div class="l"><span aria-hidden="true">○</span> info: Worth checking, probably fine</div></div>
-<div class="card" role="listitem"><div class="n">10 min</div><div class="l">estimated porting effort (heuristic)</div></div>
+<div class="card" role="listitem"><div class="n">1</div><div class="l">rule groups (findings grouped by the rule that found them)</div></div>
+<div class="card" role="listitem"><div class="n" style="font-size:1.25rem">under an hour</div><div class="l">rough effort, uncalibrated: scaled by groups, not by lines</div></div>
 <div class="card" role="listitem"><div class="n">1/1</div><div class="l">findings from rules marked <em>known</em>; the rest are <em>guess</em></div></div>
 <div class="card" role="listitem"><div class="n">0</div><div class="l">matches suppressed inside <code>#if __QNXNTO__</code> branches</div></div>
 </div>
+<h2 id="start">Start here: top 3</h2>
+<p class="note">Nothing to start with: no blocker, major or minor findings.</p>
 <h2>Where the work is <span class="meta">(by file, few directories)</span></h2>
-<ul class="heat"><li><button type="button" class="tile" style="--i:55" data-dir="kilo.c" aria-pressed="false" aria-label="File kilo.c: 1 findings, 10 min. Press to filter.">
-<span class="d">kilo.c</span><span class="m">1 findings &middot; 10 min</span><span class="m">○1</span></button></li></ul><p class="legend"><span>less effort</span><i></i><span>more effort (colour is relative to the busiest directory; counts and effort are in the text)</span></p>
-<h2 id="findings">Findings</h2>
+<div class="scalebar"><button type="button" class="btn" id="scale" aria-pressed="false">Scale: relative to busiest</button>
+<span class="legend"><span class="lg-rel">colour is relative to the busiest tile</span><span class="lg-abs" hidden>colour is each tile's share of all findings' weight</span><i></i><span>less &rarr; more</span></span></div>
+<ul class="heat"><li><button type="button" class="tile" style="--i:55" data-rel="55" data-abs="55" data-dir="kilo.c" aria-pressed="false" aria-label="File kilo.c: 1 findings. Press to filter.">
+<span class="d">kilo.c</span><span class="m">1 finding</span><span class="m">○1</span></button></li></ul><p class="note">Press a tile to filter the findings below to it; press again (or Esc) to clear.</p>
+<h2 id="findings">Findings by rule group</h2>
 <div class="bar" role="search" aria-label="Filter findings">
 <input id="q" type="search" placeholder="Search file, rule, text ( / )" aria-label="Search findings">
 <button type="button" class="chip" data-sevbtn="blocker" aria-pressed="true" title="Toggle blocker (1)"><span aria-hidden="true">■</span> blocker <span class="sr">toggle</span>(0)</button>
@@ -114,42 +143,40 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <button type="button" class="chip" data-sevbtn="info" aria-pressed="true" title="Toggle info (4)"><span aria-hidden="true">○</span> info <span class="sr">toggle</span>(1)</button>
 <label class="note">Confidence <select id="conf" aria-label="Confidence filter"><option value="all">all</option><option value="known">known</option><option value="guess">guess</option></select></label>
 <label class="note"><input type="checkbox" id="guard" checked> include Linux-guarded</label>
-<button class="btn" id="expand" type="button">Collapse all</button>
+<button class="btn" id="expand" type="button">Expand all groups</button>
 <button class="btn" id="clear" type="button">Reset filters</button>
 <span id="count" role="status" aria-live="polite">1 findings</span>
 </div>
-<details class="file" open><summary><span class="path">kilo.c</span>
-<span class="meta"><span class="vis">1</span>/1 findings &middot; 10 min</span></summary>
-<article class="finding" id="f-0" tabindex="-1" data-sev="info" data-conf="known" data-file="kilo.c" data-guard="none" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch kilo.c #ifdef __linux__ a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-0-t">
-<h3 id="f-0-t"><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
-<span>Linux-only preprocessor branch without QNX branch</span>
+<details class="grp" id="rule-QNX-ADV-LINUX-IFDEF"><summary><span class="badge b-info" title="Worth checking, probably fine"><span aria-hidden="true">○</span> info</span>
+<strong>Linux-only preprocessor branch without QNX branch</strong>
 <span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
-<span class="loc">kilo.c:37</span></h3>
-<p>A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).</p><pre class="code" tabindex="0" aria-label="Code context for kilo.c line 37"><span class="ln"><b>34</b> </span><span class="ln"><b>35</b>#define KILO_VERSION &quot;0.0.1&quot;</span><span class="ln"><b>36</b> </span><span class="ln hit"><b>37</b>#ifdef __linux__</span><span class="ln"><b>38</b>#define _POSIX_C_SOURCE 200809L</span><span class="ln"><b>39</b>#endif</span><span class="ln"><b>40</b> </span></pre>
-<div class="remedy"><strong>Remedy</strong>Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic. <a href="#rule-QNX-ADV-LINUX-IFDEF">Rule QNX-ADV-LINUX-IFDEF</a></div>
-
-<p class="note">Estimated effort for this item: 10 min (heuristic)</p>
-</article></details>
-<p class="empty">No findings match the current filters.</p>
-<h2>Remedies and rule notes</h2>
-<section class="rule" id="rule-QNX-ADV-LINUX-IFDEF"><h3>QNX-ADV-LINUX-IFDEF <span class="badge b-info"><span aria-hidden="true">○</span> info</span> <span class="badge b-known">known</span></h3>
-<p><strong>Linux-only preprocessor branch without QNX branch.</strong> A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).</p>
+<span class="meta"><span class="vis">1</span>/1 sites in 1 file &middot; under an hour (rough, uncalibrated)</span></summary>
+<div class="grp-body"><p><span class="note">QNX-ADV-LINUX-IFDEF</span> A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).</p>
 <div class="remedy"><strong>Remedy</strong>Add an explicit #elif defined(__QNXNTO__) branch, or widen the condition if the code is POSIX-generic.</div>
-
 <p class="note">Documentation to read (names only, not fetched by this tool): QNX docs: Predefined macros (__QNX__, __QNXNTO__)</p>
-<p class="note">1 occurrence: <a href="#f-0">kilo.c:37</a></p></section>
+<details class="site"><summary><span class="loc">kilo.c:37</span><span class="hitline">#ifdef __linux__</span></summary>
+<article class="finding" id="f-0" tabindex="-1" data-sev="info" data-conf="known" data-file="kilo.c" data-guard="none" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch kilo.c #ifdef __linux__ a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-label="Linux-only preprocessor branch without QNX branch at kilo.c line 37">
+<pre class="code" tabindex="0" aria-label="Code context for kilo.c line 37"><span class="ln"><b>34</b> </span><span class="ln"><b>35</b>#define KILO_VERSION &quot;0.0.1&quot;</span><span class="ln"><b>36</b> </span><span class="ln hit"><b>37</b>#ifdef __linux__</span><span class="ln"><b>38</b>#define _POSIX_C_SOURCE 200809L</span><span class="ln"><b>39</b>#endif</span><span class="ln"><b>40</b> </span></pre>
+<p class="note">Finding index 0 (for <code>portdoctor propose --finding 0</code>)</p>
+</article></details></div></details>
+<p class="empty">No findings match the current filters.</p>
 <footer><p>What this report does not claim: that anything here compiled or ran on QNX; that a missing finding means the code ports; that 'guess' rules are true. Remedies name public QNX/POSIX interfaces from documentation the authors recall; confirm each against your SDP.</p></footer>
 </main>
 <dialog id="help" aria-labelledby="help-t"><h2 id="help-t" style="margin-top:0">Keyboard shortcuts</h2>
-<p><kbd>/</kbd> search &nbsp; <kbd>j</kbd> / <kbd>k</kbd> next / previous finding &nbsp; <kbd>1</kbd>&ndash;<kbd>4</kbd> toggle blocker, major, minor, info &nbsp; <kbd>t</kbd> theme &nbsp; <kbd>Esc</kbd> leave search or clear directory filter &nbsp; <kbd>?</kbd> this help</p>
+<p><kbd>/</kbd> search &nbsp; <kbd>j</kbd> / <kbd>k</kbd> next / previous finding &nbsp; <kbd>1</kbd>&ndash;<kbd>4</kbd> toggle blocker, major, minor, info &nbsp; <kbd>t</kbd> theme &nbsp; <kbd>Esc</kbd> close this dialog, leave search or clear the tile filter &nbsp; <kbd>?</kbd> this help</p>
 <form method="dialog"><button class="btn">Close</button></form></dialog>
 <script type="application/json" id="pd-data">{"tool":"portdoctor","version":"0.1.0","stats":{"filesScanned":2,"filesByKind":{"make":1,"c":1},"filesSkipped":0,"findings":1,"suppressedQnxBranch":0,"suppressedNonCall":0,"rules":55,"bySeverity":{"blocker":0,"major":0,"minor":0,"info":1},"effortMinutes":10}}</script>
 <script>
 (function(){
 var root=document.documentElement;root.classList.add('js');
 var $=function(s,c){return (c||document).querySelector(s)},$$=function(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s))};
-var state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true};
-var findings=$$('article.finding'),files=$$('details.file'),count=$('#count'),empty=$('.empty');
+var state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true,scale:'rel'};
+var findings=$$('article.finding'),groups=$$('details.grp'),count=$('#count'),empty=$('.empty');
+function setScale(){
+ $$('.tile').forEach(function(t){t.style.setProperty('--i',state.scale==='abs'?t.dataset.abs:t.dataset.rel)});
+ var b=$('#scale');if(b){b.setAttribute('aria-pressed',state.scale==='abs'?'true':'false');b.textContent=state.scale==='abs'?'Scale: share of total (absolute)':'Scale: relative to busiest'}
+ $$('.lg-rel').forEach(function(e){e.hidden=state.scale==='abs'});$$('.lg-abs').forEach(function(e){e.hidden=state.scale!=='abs'});
+}
 function apply(){
  var q=state.q.toLowerCase().trim(),vis=0,i;
  for(i=0;i<findings.length;i++){var f=findings[i],d=f.dataset,ok=true;
@@ -158,8 +185,8 @@ function apply(){
   if(ok&&state.dir!==null&&!(state.dir==='.'?d.file.indexOf('/')<0:(d.file===state.dir||d.file.indexOf(state.dir+'/')===0)))ok=false;
   if(ok&&!state.guard&&d.guard==='linux-only')ok=false;
   if(ok&&q&&d.text.indexOf(q)<0)ok=false;
-  f.hidden=!ok;if(ok)vis++;}
- files.forEach(function(fl){var n=$$('article.finding:not([hidden])',fl).length;fl.hidden=n===0;var c=$('.vis',fl);if(c)c.textContent=n;});
+  f.hidden=!ok;var site=f.closest('details.site');if(site)site.hidden=!ok;if(ok)vis++;}
+ groups.forEach(function(g){var n=$$('article.finding:not([hidden])',g).length;g.hidden=n===0;var c=$('.vis',g);if(c)c.textContent=n;});
  count.textContent=vis+' of '+findings.length+' findings shown';
  if(empty)empty.classList.toggle('show',vis===0);
  $$('[data-sevbtn]').forEach(function(b){b.setAttribute('aria-pressed',state.sev[b.dataset.sevbtn]?'true':'false')});
@@ -167,11 +194,12 @@ function apply(){
 }
 $$('[data-sevbtn]').forEach(function(b){b.addEventListener('click',function(){state.sev[b.dataset.sevbtn]=state.sev[b.dataset.sevbtn]?0:1;apply()})});
 $$('.tile').forEach(function(t){t.addEventListener('click',function(){state.dir=state.dir===t.dataset.dir?null:t.dataset.dir;apply();if(state.dir!==null){var l=$('#findings');if(l)l.scrollIntoView()}})});
+var sc=$('#scale');if(sc)sc.addEventListener('click',function(){state.scale=state.scale==='abs'?'rel':'abs';setScale()});
 var qi=$('#q');qi.addEventListener('input',function(){state.q=qi.value;apply()});
 $('#conf').addEventListener('change',function(e){state.conf=e.target.value;apply()});
 $('#guard').addEventListener('change',function(e){state.guard=e.target.checked;apply()});
-$('#clear').addEventListener('click',function(){state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true};qi.value='';$('#conf').value='all';$('#guard').checked=true;apply()});
-$('#expand').addEventListener('click',function(){var any=files.some(function(f){return !f.open&&!f.hidden});files.forEach(function(f){f.open=any});this.textContent=any?'Collapse all':'Expand all'});
+$('#clear').addEventListener('click',function(){state={sev:{blocker:1,major:1,minor:1,info:1},conf:'all',dir:null,q:'',guard:true,scale:state.scale};qi.value='';$('#conf').value='all';$('#guard').checked=true;apply()});
+$('#expand').addEventListener('click',function(){var any=groups.some(function(f){return !f.open&&!f.hidden});groups.forEach(function(f){f.open=any});this.textContent=any?'Collapse all groups':'Expand all groups'});
 function theme(t){if(t)root.setAttribute('data-theme',t);else root.removeAttribute('data-theme');try{if(t)localStorage.setItem('pd-theme',t)}catch(e){}}
 try{var st=localStorage.getItem('pd-theme');if(st)root.setAttribute('data-theme',st)}catch(e){}
 function toggleTheme(){var cur=root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');theme(cur==='dark'?'light':'dark')}
@@ -179,10 +207,11 @@ $('#themebtn').addEventListener('click',toggleTheme);
 var dlg=$('#help');function help(){if(dlg.showModal)dlg.showModal();else dlg.setAttribute('open','')}
 $('#helpbtn').addEventListener('click',help);
 var cur=-1;function vis(){return findings.filter(function(f){return !f.hidden})}
-function go(n){var v=vis();if(!v.length)return;cur=Math.max(0,Math.min(v.length-1,n));var f=v[cur],fl=f.closest('details');if(fl&&!fl.open)fl.open=true;f.focus();f.scrollIntoView({block:'center'})}
+function openUp(el){var d=el.closest('details');while(d){d.open=true;d=d.parentElement&&d.parentElement.closest('details')}}
+function go(n){var v=vis();if(!v.length)return;cur=Math.max(0,Math.min(v.length-1,n));var f=v[cur];openUp(f);f.focus();f.scrollIntoView({block:'center'})}
 document.addEventListener('keydown',function(e){
  var t=e.target,typing=t&&(t.tagName==='INPUT'||t.tagName==='SELECT'||t.tagName==='TEXTAREA');
- if(e.key==='Escape'){if(typing){t.blur();return}if(state.dir!==null){state.dir=null;apply()}return}
+ if(e.key==='Escape'){if(typing){t.blur();return}if(dlg.open){dlg.close();return}if(state.dir!==null){state.dir=null;apply()}return}
  if(typing||e.ctrlKey||e.metaKey||e.altKey)return;
  if(e.key==='/'){e.preventDefault();qi.focus()}
  else if(e.key==='j'){var v=vis(),i=v.indexOf(document.activeElement);go(i>=0?i+1:cur+1)}
@@ -191,7 +220,9 @@ document.addEventListener('keydown',function(e){
  else if(e.key==='?')help();
  else if('1234'.indexOf(e.key)>=0&&e.key){var s=['blocker','major','minor','info'][+e.key-1];state.sev[s]=state.sev[s]?0:1;apply()}
 });
-apply();
+function hashOpen(){var h=location.hash;if(h.length>1){var el=document.getElementById(decodeURIComponent(h.slice(1)));if(el){openUp(el)}}}
+window.addEventListener('hashchange',hashOpen);hashOpen();
+setScale();apply();
 })();
 </script>
 </body></html>

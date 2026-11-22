@@ -20,7 +20,7 @@
       "minor": 3,
       "info": 1
     },
-    "effortMinutes": 40
+    "effortMinutes": 27
   },
   "findings": [
     {
@@ -210,6 +210,7 @@
       "guards": []
     }
   ],
+  "groups": 3,
   "rules": [
     {
       "id": "QNX-BLD-LDL",
@@ -219,7 +220,8 @@
       "confidence": "guess",
       "remedy": "Use ${CMAKE_DL_LIBS} in CMake (empty where unneeded), or conditionalise -ldl.",
       "verify": "verify against SDP: check for libdl.",
-      "message": "dlopen/dlsym are believed to be in libc on QNX; a separate libdl may not exist (QNX is believed to ship a stub or none)."
+      "message": "dlopen/dlsym are believed to be in libc on QNX; a separate libdl may not exist (QNX is believed to ship a stub or none).",
+      "effort": 10
     },
     {
       "id": "QNX-BLD-HARDCODED-CC",
@@ -232,7 +234,8 @@
         "QNX docs: qcc",
         "QNX SDP: qnxsdp-env.sh"
       ],
-      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc."
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "effort": 15
     },
     {
       "id": "QNX-BLD-FPIC",
@@ -242,7 +245,8 @@
       "confidence": "guess",
       "remedy": "Nothing to change unless qcc rejects it; for CMake prefer CMAKE_POSITION_INDEPENDENT_CODE.",
       "verify": "verify against SDP.",
-      "message": "Expected to be fine (shared objects need position-independent code), listed so it is checked once on the real toolchain."
+      "message": "Expected to be fine (shared objects need position-independent code), listed so it is checked once on the real toolchain.",
+      "effort": 0
     }
   ]
 }

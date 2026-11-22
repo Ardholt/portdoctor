@@ -21,7 +21,7 @@
       "minor": 14,
       "info": 7
     },
-    "effortMinutes": 190
+    "effortMinutes": 100
   },
   "findings": [
     {
@@ -923,6 +923,7 @@
       "guards": []
     }
   ],
+  "groups": 6,
   "rules": [
     {
       "id": "QNX-BLD-HARDCODED-CC",
@@ -935,7 +936,8 @@
         "QNX docs: qcc",
         "QNX SDP: qnxsdp-env.sh"
       ],
-      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc."
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "effort": 15
     },
     {
       "id": "QNX-BLD-FPIC",
@@ -945,7 +947,8 @@
       "confidence": "guess",
       "remedy": "Nothing to change unless qcc rejects it; for CMake prefer CMAKE_POSITION_INDEPENDENT_CODE.",
       "verify": "verify against SDP.",
-      "message": "Expected to be fine (shared objects need position-independent code), listed so it is checked once on the real toolchain."
+      "message": "Expected to be fine (shared objects need position-independent code), listed so it is checked once on the real toolchain.",
+      "effort": 0
     },
     {
       "id": "QNX-BLD-LDFLAGS",
@@ -955,7 +958,8 @@
       "confidence": "guess",
       "remedy": "Test each flag on the QNX toolchain; drop the optional ones (--as-needed, --hash-style, -z hardening) behind a platform check.",
       "verify": "verify against SDP: run the link with the flag via qcc.",
-      "message": "Linker options that depend on the GNU/Linux linker setup or default behaviour; qcc may pass them to a different ld or reject them."
+      "message": "Linker options that depend on the GNU/Linux linker setup or default behaviour; qcc may pass them to a different ld or reject them.",
+      "effort": 15
     },
     {
       "id": "QNX-BLD-SANITIZE",
@@ -965,7 +969,8 @@
       "confidence": "guess",
       "remedy": "Keep sanitizer builds as host-only (Linux) test configurations.",
       "verify": "verify against SDP.",
-      "message": "Sanitizer runtimes may not be available for the QNX target."
+      "message": "Sanitizer runtimes may not be available for the QNX target.",
+      "effort": 0
     },
     {
       "id": "QNX-BLD-CMAKE-NO-TOOLCHAIN",
@@ -979,7 +984,8 @@
         "QNX SDP: qnxsdp-env.sh (sets QNX_HOST, QNX_TARGET)",
         "CMake docs: cmake-toolchains(7)"
       ],
-      "message": "No file in this tree mentions QNX. Cross-building for QNX with CMake needs a toolchain file."
+      "message": "No file in this tree mentions QNX. Cross-building for QNX with CMake needs a toolchain file.",
+      "effort": 30
     },
     {
       "id": "QNX-BLD-UNAME",
@@ -988,7 +994,8 @@
       "severity": "minor",
       "confidence": "known",
       "remedy": "Key the logic on a target variable (for example TARGET_OS passed on the command line) rather than uname of the build machine.",
-      "message": "Platform is taken from the build host. When cross-compiling the host is Linux/macOS while the target is QNX; uname on a QNX host reports QNX."
+      "message": "Platform is taken from the build host. When cross-compiling the host is Linux/macOS while the target is QNX; uname on a QNX host reports QNX.",
+      "effort": 15
     }
   ]
 }

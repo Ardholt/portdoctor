@@ -56,6 +56,8 @@ export interface Finding {
   effort: number;
   guard: 'none' | 'linux-only' | 'other';
   guards: string[];
+  /** build awareness (heuristic): 'no' = file not found in the build target list; absent = unknown */
+  built?: 'no';
 }
 
 export interface ScanOptions {
@@ -83,7 +85,9 @@ export interface ScanResult {
     effortMinutes: number;
   };
   findings: Finding[];
-  rules: Array<Pick<Rule, 'id' | 'title' | 'category' | 'severity' | 'confidence' | 'remedy' | 'verify' | 'refs' | 'message'>>;
+  /** number of rule groups (findings grouped by rule) */
+  groups: number;
+  rules: Array<Pick<Rule, 'id' | 'title' | 'category' | 'severity' | 'confidence' | 'remedy' | 'verify' | 'refs' | 'message' | 'effort'>>;
 }
 
 export const SEVERITIES: Severity[] = ['blocker', 'major', 'minor', 'info'];

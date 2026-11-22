@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, sep, basename, resolve } from 'node:path';
 import { loadRules } from './rules.ts';
+import { groupFindings, totalEffort } from './group.ts';
 import type { CompiledRule, Finding, Kind, ScanOptions, ScanResult, Severity, ContextLine } from './types.ts';
 
 export const VERSION = '0.1.0';
@@ -422,12 +423,14 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
       (a.ruleId < b.ruleId ? -1 : 1),
   );
   const bySeverity: Record<Severity, number> = { blocker: 0, major: 0, minor: 0, info: 0 };
-  let effort = 0;
   for (const f of findings) {
     bySeverity[f.severity]++;
-    effort += f.effort;
   }
   const used = new Set(findings.map((f) => f.ruleId));
+  const ruleSummaries = rules
+    .filter((r) => used.has(r.id))
+    .map((r) => ({ id: r.id, title: r.title, category: r.category, severity: r.severity, confidence: r.confidence, remedy: r.remedy, verify: r.verify, refs: r.refs, message: r.message, effort: r.effort }));
+  const groups = groupFindings({ findings, rules: ruleSummaries });
   return {
     tool: 'portdoctor',
     version: VERSION,
@@ -442,11 +445,10 @@ export function scanDir(root: string, opts: ScanOptions = {}): ScanResult {
       suppressedNonCall: counters.nonCall,
       rules: rules.length,
       bySeverity,
-      effortMinutes: effort,
+      effortMinutes: Math.round(totalEffort(groups)),
     },
     findings,
-    rules: rules
-      .filter((r) => used.has(r.id))
-      .map((r) => ({ id: r.id, title: r.title, category: r.category, severity: r.severity, confidence: r.confidence, remedy: r.remedy, verify: r.verify, refs: r.refs, message: r.message })),
+    groups: groups.length,
+    rules: ruleSummaries,
   };
 }

@@ -70,6 +70,7 @@
       "guards": []
     }
   ],
+  "groups": 1,
   "rules": [
     {
       "id": "QNX-ADV-LINUX-IFDEF",
@@ -81,7 +82,8 @@
       "refs": [
         "QNX docs: Predefined macros (__QNX__, __QNXNTO__)"
       ],
-      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__)."
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "effort": 10
     }
   ]
 }

@@ -21,7 +21,7 @@
       "minor": 11,
       "info": 21
     },
-    "effortMinutes": 459
+    "effortMinutes": 455
   },
   "findings": [
     {
@@ -2063,6 +2063,7 @@
       "guards": []
     }
   ],
+  "groups": 15,
   "rules": [
     {
       "id": "QNX-BLD-HARDCODED-CC",
@@ -2075,7 +2076,8 @@
         "QNX docs: qcc",
         "QNX SDP: qnxsdp-env.sh"
       ],
-      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc."
+      "message": "QNX software is built with the SDP compiler drivers (qcc for C, q++ for C++), selected with -V<variant>, not the host gcc.",
+      "effort": 15
     },
     {
       "id": "QNX-BLD-PIE",
@@ -2085,7 +2087,8 @@
       "confidence": "guess",
       "remedy": "Keep them behind a platform check until confirmed with the target toolchain.",
       "verify": "verify against SDP: run qcc with the flag on the target variant.",
-      "message": "Position-independent executable flags may be handled differently (or rejected) by qcc."
+      "message": "Position-independent executable flags may be handled differently (or rejected) by qcc.",
+      "effort": 10
     },
     {
       "id": "QNX-BLD-LDFLAGS",
@@ -2095,7 +2098,8 @@
       "confidence": "guess",
       "remedy": "Test each flag on the QNX toolchain; drop the optional ones (--as-needed, --hash-style, -z hardening) behind a platform check.",
       "verify": "verify against SDP: run the link with the flag via qcc.",
-      "message": "Linker options that depend on the GNU/Linux linker setup or default behaviour; qcc may pass them to a different ld or reject them."
+      "message": "Linker options that depend on the GNU/Linux linker setup or default behaviour; qcc may pass them to a different ld or reject them.",
+      "effort": 15
     },
     {
       "id": "QNX-BLD-SANITIZE",
@@ -2105,7 +2109,8 @@
       "confidence": "guess",
       "remedy": "Keep sanitizer builds as host-only (Linux) test configurations.",
       "verify": "verify against SDP.",
-      "message": "Sanitizer runtimes may not be available for the QNX target."
+      "message": "Sanitizer runtimes may not be available for the QNX target.",
+      "effort": 0
     },
     {
       "id": "QNX-BLD-AUTOCONF-HOST",
@@ -2115,7 +2120,8 @@
       "confidence": "guess",
       "remedy": "Refresh config.sub/config.guess (autoreconf -fi or copy from a current automake), then configure with --host=<cpu>-unknown-nto-qnx<version> and CC set to qcc.",
       "verify": "verify against SDP: exact host triplet format for 8.0.",
-      "message": "No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet."
+      "message": "No QNX mention in the tree. Old bundled config.sub/config.guess may not recognise a QNX host triplet.",
+      "effort": 30
     },
     {
       "id": "QNX-BLD-UNAME",
@@ -2124,7 +2130,8 @@
       "severity": "minor",
       "confidence": "known",
       "remedy": "Key the logic on a target variable (for example TARGET_OS passed on the command line) rather than uname of the build machine.",
-      "message": "Platform is taken from the build host. When cross-compiling the host is Linux/macOS while the target is QNX; uname on a QNX host reports QNX."
+      "message": "Platform is taken from the build host. When cross-compiling the host is Linux/macOS while the target is QNX; uname on a QNX host reports QNX.",
+      "effort": 15
     },
     {
       "id": "QNX-HDR-LINUX-DIR",
@@ -2134,7 +2141,8 @@
       "confidence": "guess",
       "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
       "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not."
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.",
+      "effort": 60
     },
     {
       "id": "QNX-HDR-SYS-LINUX",
@@ -2144,7 +2152,8 @@
       "confidence": "guess",
       "remedy": "Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.",
       "verify": "verify against SDP: grep $QNX_TARGET/usr/include for the header.",
-      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP."
+      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP.",
+      "effort": 30
     },
     {
       "id": "QNX-API-PRCTL",
@@ -2154,7 +2163,8 @@
       "confidence": "guess",
       "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np(); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE/NO_NEW_PRIVS -> drop (no QNX analogue assumed).",
       "verify": "verify against SDP: confirm pthread_setname_np signature.",
-      "message": "prctl is a Linux process-control multiplexer."
+      "message": "prctl is a Linux process-control multiplexer.",
+      "effort": 30
     },
     {
       "id": "QNX-API-GETRANDOM",
@@ -2164,7 +2174,8 @@
       "confidence": "guess",
       "remedy": "Check <sys/random.h>/<unistd.h> in the SDP first. Fallback: read from /dev/urandom (or /dev/random), which QNX provides (recalled), with a small helper that handles short reads.",
       "verify": "verify against SDP: getrandom, getentropy, arc4random.",
-      "message": "getrandom is a Linux syscall wrapper. getrandom()/getentropy() may exist in QNX 8.0 (guess)."
+      "message": "getrandom is a Linux syscall wrapper. getrandom()/getentropy() may exist in QNX 8.0 (guess).",
+      "effort": 15
     },
     {
       "id": "QNX-API-SYSCALL",
@@ -2174,7 +2185,8 @@
       "confidence": "guess",
       "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
       "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel)."
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
+      "effort": 120
     },
     {
       "id": "QNX-API-SOCKOPT-LINUX",
@@ -2184,7 +2196,8 @@
       "confidence": "guess",
       "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
       "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
-      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only."
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "effort": 20
     },
     {
       "id": "QNX-ADV-LINUX-IFDEF",
@@ -2196,7 +2209,8 @@
       "refs": [
         "QNX docs: Predefined macros (__QNX__, __QNXNTO__)"
       ],
-      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__)."
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "effort": 10
     },
     {
       "id": "QNX-ADV-UNIX-SOCKET-IPC",
@@ -2206,7 +2220,8 @@
       "confidence": "guess",
       "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
       "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
-      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off."
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "effort": 0
     },
     {
       "id": "QNX-PATH-PROC",
@@ -2219,7 +2234,8 @@
       "refs": [
         "QNX docs: procfs / DCMD_PROC_INFO"
       ],
-      "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files)."
+      "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
+      "effort": 45
     }
   ]
 }

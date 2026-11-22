@@ -22,7 +22,7 @@
       "minor": 42,
       "info": 152
     },
-    "effortMinutes": 6532
+    "effortMinutes": 2585
   },
   "findings": [
     {
@@ -16335,6 +16335,7 @@
       "guards": []
     }
   ],
+  "groups": 28,
   "rules": [
     {
       "id": "QNX-BLD-LRT",
@@ -16344,7 +16345,8 @@
       "confidence": "guess",
       "remedy": "Drop -lrt on QNX (conditional on the platform), or detect with check_library_exists / AC_SEARCH_LIBS so a missing library is not fatal.",
       "verify": "verify against SDP: look for librt under $QNX_TARGET/<cpu>/usr/lib.",
-      "message": "On glibc, POSIX realtime functions needed -lrt. A separate librt is not assumed on QNX; the functions are believed to live in libc, so the link line may fail."
+      "message": "On glibc, POSIX realtime functions needed -lrt. A separate librt is not assumed on QNX; the functions are believed to live in libc, so the link line may fail.",
+      "effort": 10
     },
     {
       "id": "QNX-BLD-LNSL",
@@ -16354,7 +16356,8 @@
       "confidence": "guess",
       "remedy": "Remove, or detect per platform. Networking on QNX typically needs -lsocket (add it explicitly when linking socket code).",
       "verify": "verify against SDP: which of these libraries exist.",
-      "message": "These glibc companion libraries may not exist on QNX (functionality may be in libc or libsocket)."
+      "message": "These glibc companion libraries may not exist on QNX (functionality may be in libc or libsocket).",
+      "effort": 15
     },
     {
       "id": "QNX-BLD-SANITIZE",
@@ -16364,7 +16367,8 @@
       "confidence": "guess",
       "remedy": "Keep sanitizer builds as host-only (Linux) test configurations.",
       "verify": "verify against SDP.",
-      "message": "Sanitizer runtimes may not be available for the QNX target."
+      "message": "Sanitizer runtimes may not be available for the QNX target.",
+      "effort": 0
     },
     {
       "id": "QNX-BLD-CMAKE-PLATFORM",
@@ -16376,7 +16380,8 @@
       "refs": [
         "CMake docs: CMAKE_SYSTEM_NAME (QNX is a documented value)"
       ],
-      "message": "A branch or setting assumes Linux. CMake identifies a QNX target as CMAKE_SYSTEM_NAME 'QNX'."
+      "message": "A branch or setting assumes Linux. CMake identifies a QNX target as CMAKE_SYSTEM_NAME 'QNX'.",
+      "effort": 20
     },
     {
       "id": "QNX-HDR-LINUX-DIR",
@@ -16386,7 +16391,8 @@
       "confidence": "guess",
       "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
       "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not."
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.",
+      "effort": 60
     },
     {
       "id": "QNX-HDR-SYS-LINUX",
@@ -16396,7 +16402,8 @@
       "confidence": "guess",
       "remedy": "Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.",
       "verify": "verify against SDP: grep $QNX_TARGET/usr/include for the header.",
-      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP."
+      "message": "This glibc/Linux <sys/...> header is believed to be absent from the QNX 8.0 SDP.",
+      "effort": 30
     },
     {
       "id": "QNX-API-EPOLL",
@@ -16410,7 +16417,8 @@
         "QNX docs: ionotify()",
         "QNX docs: SIGEV_PULSE_INIT()"
       ],
-      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess)."
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "effort": 120
     },
     {
       "id": "QNX-API-INOTIFY",
@@ -16420,7 +16428,8 @@
       "confidence": "guess",
       "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
-      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool."
+      "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
+      "effort": 180
     },
     {
       "id": "QNX-API-EVENTFD",
@@ -16433,7 +16442,8 @@
       "refs": [
         "QNX docs: MsgSendPulse()"
       ],
-      "message": "eventfd is a Linux file-descriptor wake-up primitive."
+      "message": "eventfd is a Linux file-descriptor wake-up primitive.",
+      "effort": 45
     },
     {
       "id": "QNX-API-SENDFILE",
@@ -16443,7 +16453,8 @@
       "confidence": "guess",
       "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
       "verify": "verify against SDP: some of these may exist with other semantics.",
-      "message": "Linux zero-copy file transfer calls. sendfile() also exists on BSDs with a different signature, so a same-named call may compile but misbehave."
+      "message": "Linux zero-copy file transfer calls. sendfile() also exists on BSDs with a different signature, so a same-named call may compile but misbehave.",
+      "effort": 60
     },
     {
       "id": "QNX-API-SOCK-FLAGS",
@@ -16453,7 +16464,8 @@
       "confidence": "guess",
       "remedy": "Check <sys/socket.h> in the SDP first. If absent: create the socket with the plain type and set O_NONBLOCK / FD_CLOEXEC with fcntl().",
       "verify": "verify against SDP: grep SOCK_NONBLOCK and SOCK_CLOEXEC in $QNX_TARGET/usr/include/sys/socket.h.",
-      "message": "Or-ing SOCK_NONBLOCK / SOCK_CLOEXEC into the socket type is not in POSIX.1-2017 (known). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present; FreeBSD has both (recalled). May be a non-issue on 8.0 (guess)."
+      "message": "Or-ing SOCK_NONBLOCK / SOCK_CLOEXEC into the socket type is not in POSIX.1-2017 (known). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present; FreeBSD has both (recalled). May be a non-issue on 8.0 (guess).",
+      "effort": 10
     },
     {
       "id": "QNX-API-PIPE2",
@@ -16463,7 +16475,8 @@
       "confidence": "guess",
       "remedy": "Check <unistd.h> in the SDP first. If absent: pipe()/dup2() then fcntl() for the flags (mind the small race window if other threads fork).",
       "verify": "verify against SDP: grep pipe2 and dup3 in $QNX_TARGET/usr/include/unistd.h.",
-      "message": "pipe2/dup3 are not in POSIX.1-2017 (known). FreeBSD has both (recalled) and QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so they may exist on 8.0 (guess)."
+      "message": "pipe2/dup3 are not in POSIX.1-2017 (known). FreeBSD has both (recalled) and QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so they may exist on 8.0 (guess).",
+      "effort": 10
     },
     {
       "id": "QNX-API-PRCTL",
@@ -16473,7 +16486,8 @@
       "confidence": "guess",
       "remedy": "Map each option individually: PR_SET_NAME -> pthread_setname_np(); PR_SET_PDEATHSIG -> a parent-liveness check; PR_SET_DUMPABLE/NO_NEW_PRIVS -> drop (no QNX analogue assumed).",
       "verify": "verify against SDP: confirm pthread_setname_np signature.",
-      "message": "prctl is a Linux process-control multiplexer."
+      "message": "prctl is a Linux process-control multiplexer.",
+      "effort": 30
     },
     {
       "id": "QNX-API-AFFINITY",
@@ -16486,7 +16500,8 @@
       "refs": [
         "QNX docs: ThreadCtl()"
       ],
-      "message": "Linux affinity API."
+      "message": "Linux affinity API.",
+      "effort": 45
     },
     {
       "id": "QNX-API-SYSCALL",
@@ -16496,7 +16511,8 @@
       "confidence": "guess",
       "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
       "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel)."
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
+      "effort": 120
     },
     {
       "id": "QNX-API-CLONE-NS",
@@ -16506,7 +16522,8 @@
       "confidence": "guess",
       "remedy": "Use fork()/posix_spawn() and pthreads. Isolation features must be redesigned with QNX process management (no namespace equivalent is assumed).",
       "verify": "verify against SDP.",
-      "message": "Linux process/namespace primitives (known); container semantics do not exist on QNX (guess: no namespace equivalent known to this tool)."
+      "message": "Linux process/namespace primitives (known); container semantics do not exist on QNX (guess: no namespace equivalent known to this tool).",
+      "effort": 240
     },
     {
       "id": "QNX-API-SOCKOPT-LINUX",
@@ -16516,7 +16533,8 @@
       "confidence": "guess",
       "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
       "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
-      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only."
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "effort": 20
     },
     {
       "id": "QNX-API-OFLAGS",
@@ -16526,7 +16544,8 @@
       "confidence": "guess",
       "remedy": "Drop or emulate: O_TMPFILE -> mkstemp()+unlink(); O_PATH -> open(O_RDONLY) is not equivalent (symlink handling and permission checks differ), so check what the caller needs; O_NOATIME -> omit; O_DIRECT -> omit unless the SDP defines it with the semantics you need.",
       "verify": "verify against SDP: grep O_DIRECT, O_PATH, O_TMPFILE, O_NOATIME in $QNX_TARGET/usr/include/fcntl.h.",
-      "message": "These open() flags originated on Linux. O_DIRECT also exists on some BSDs with other semantics."
+      "message": "These open() flags originated on Linux. O_DIRECT also exists on some BSDs with other semantics.",
+      "effort": 15
     },
     {
       "id": "QNX-API-SYSINFO",
@@ -16536,7 +16555,8 @@
       "confidence": "guess",
       "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
       "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
-      "message": "Linux sysinfo structure/call (memory, uptime, load)."
+      "message": "Linux sysinfo structure/call (memory, uptime, load).",
+      "effort": 20
     },
     {
       "id": "QNX-API-MMAP-LINUX",
@@ -16546,7 +16566,8 @@
       "confidence": "guess",
       "remedy": "Replace mremap by mmap new + copy/munmap old (or reserve address space up front); drop MAP_POPULATE/HUGETLB hints.",
       "verify": "verify against SDP.",
-      "message": "mremap and these mmap flags are Linux-specific."
+      "message": "mremap and these mmap flags are Linux-specific.",
+      "effort": 30
     },
     {
       "id": "QNX-API-PTHREAD-NP",
@@ -16556,7 +16577,8 @@
       "confidence": "guess",
       "remedy": "pthread_yield -> sched_yield(); tryjoin/timedjoin -> a completion flag + condition variable with timed wait.",
       "verify": "verify against SDP.",
-      "message": "glibc _np extensions that may be missing (pthread_getattr_np may exist on QNX; guess)."
+      "message": "glibc _np extensions that may be missing (pthread_getattr_np may exist on QNX; guess).",
+      "effort": 15
     },
     {
       "id": "QNX-API-CLOCKS",
@@ -16566,7 +16588,8 @@
       "confidence": "guess",
       "remedy": "Use CLOCK_MONOTONIC / CLOCK_REALTIME; keep the Linux ids behind #ifdef CLOCK_BOOTTIME.",
       "verify": "verify against SDP which clock ids are provided.",
-      "message": "Clock ids that are Linux extensions."
+      "message": "Clock ids that are Linux extensions.",
+      "effort": 10
     },
     {
       "id": "QNX-API-SYSV-IPC",
@@ -16581,7 +16604,8 @@
         "QNX docs: MsgReceive()",
         "QNX docs: MsgReply()"
       ],
-      "message": "Availability of System V shared memory/semaphores/queues in QNX 8.0 is unclear: QNX has historically not provided them in the base system (recalled, unverified)."
+      "message": "Availability of System V shared memory/semaphores/queues in QNX 8.0 is unclear: QNX has historically not provided them in the base system (recalled, unverified).",
+      "effort": 90
     },
     {
       "id": "QNX-ADV-LINUX-IFDEF",
@@ -16593,7 +16617,8 @@
       "refs": [
         "QNX docs: Predefined macros (__QNX__, __QNXNTO__)"
       ],
-      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__)."
+      "message": "A Linux conditional on this line does not mention QNX. QNX compilers predefine __QNXNTO__ (and __QNX__).",
+      "effort": 10
     },
     {
       "id": "QNX-ADV-UNIX-SOCKET-IPC",
@@ -16603,7 +16628,8 @@
       "confidence": "guess",
       "remedy": "First port as-is. If this is a hot request/reply path, consider ChannelCreate()/MsgSend()/MsgReceive()/MsgReply(); it gives priority inheritance across the call.",
       "verify": "verify against SDP: abstract-namespace sockets (leading NUL in sun_path) are Linux-only.",
-      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off."
+      "message": "Likely works unchanged (POSIX), listed because request/reply IPC is where QNX native message passing pays off.",
+      "effort": 0
     },
     {
       "id": "QNX-PATH-PROC-EXE",
@@ -16616,7 +16642,8 @@
       "refs": [
         "QNX docs: _cmdname()"
       ],
-      "message": "The Linux /proc/<pid>/exe symlink is not a QNX interface."
+      "message": "The Linux /proc/<pid>/exe symlink is not a QNX interface.",
+      "effort": 20
     },
     {
       "id": "QNX-PATH-PROC",
@@ -16629,7 +16656,8 @@
       "refs": [
         "QNX docs: procfs / DCMD_PROC_INFO"
       ],
-      "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files)."
+      "message": "QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).",
+      "effort": 45
     },
     {
       "id": "QNX-PATH-SYS",
@@ -16639,7 +16667,8 @@
       "confidence": "guess",
       "remedy": "Query the real source: sysconf/getifaddrs for system facts, device resource managers for hardware state, the system page for CPU data.",
       "verify": "verify against SDP.",
-      "message": "sysfs is a Linux kernel pseudo-filesystem; not assumed on QNX."
+      "message": "sysfs is a Linux kernel pseudo-filesystem; not assumed on QNX.",
+      "effort": 60
     }
   ]
 }

@@ -56,13 +56,13 @@ test('CLI --sarif writes valid JSON and still honours --fail-on', () => {
   }
 });
 
-test('toolchain file carries only the recalled facts and labels them unverified', () => {
+test('toolchain file states what was checked (SDP 8.0 build 141 builds, not run on a target)', () => {
   const t = toolchainCmake('aarch64le');
   assert.match(t, /set\(CMAKE_SYSTEM_NAME QNX\)/);
   assert.match(t, /set\(CMAKE_C_COMPILER qcc\)/);
   assert.match(t, /set\(CMAKE_CXX_COMPILER q\+\+\)/);
   assert.match(t, /-Vgcc_ntoaarch64le/);
-  assert.match(t, /NOT verified against an SDP/);
+  assert.match(t, /checked in PD3.*not run on a target/);
   assert.match(toolchainCmake('x86_64'), /gcc_ntox86_64/);
   assert.throws(() => toolchainCmake('mips'), /--arch/);
 });

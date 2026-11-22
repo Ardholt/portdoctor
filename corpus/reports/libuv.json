@@ -17,8 +17,8 @@
     "suppressedNonCall": 7,
     "rules": 55,
     "bySeverity": {
-      "blocker": 89,
-      "major": 61,
+      "blocker": 88,
+      "major": 62,
       "minor": 42,
       "info": 152
     },
@@ -65,9 +65,9 @@
           "text": ""
         }
       ],
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.",
-      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
-      "verify": "verify against SDP.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
+      "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
+      "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
       "effort": 60,
       "guard": "linux-only",
       "guards": [
@@ -114,9 +114,9 @@
           "text": "#elif defined(__linux__) && !defined(__SANITIZE_THREAD__)"
         }
       ],
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.",
-      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
-      "verify": "verify against SDP.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
+      "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
+      "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
       "effort": 18,
       "guard": "linux-only",
       "guards": [
@@ -163,9 +163,9 @@
           "text": "#endif"
         }
       ],
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.",
-      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
-      "verify": "verify against SDP.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
+      "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
+      "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
       "effort": 18,
       "guard": "linux-only",
       "guards": [
@@ -212,9 +212,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 120,
       "guard": "none",
       "guards": []
@@ -259,9 +259,9 @@
           "text": "struct watcher_list {"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -306,9 +306,9 @@
           "text": "  RB_ENTRY(watcher_list) entry;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -353,9 +353,9 @@
           "text": "                               struct uv__iou* ctl,"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -400,9 +400,9 @@
           "text": "                               struct epoll_event* e);"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -447,9 +447,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -494,9 +494,9 @@
           "text": "                 fd_out,"
         }
       ],
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.",
-      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
-      "verify": "verify against SDP.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
+      "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
+      "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
       "effort": 120,
       "guard": "other",
       "guards": [
@@ -543,9 +543,9 @@
           "text": ""
         }
       ],
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.",
-      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
-      "verify": "verify against SDP.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
+      "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
+      "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
       "effort": 36,
       "guard": "other",
       "guards": [
@@ -592,9 +592,9 @@
           "text": ""
         }
       ],
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.",
-      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
-      "verify": "verify against SDP.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
+      "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
+      "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
       "effort": 36,
       "guard": "other",
       "guards": [
@@ -641,9 +641,9 @@
           "text": ""
         }
       ],
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.",
-      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
-      "verify": "verify against SDP.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
+      "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
+      "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -688,9 +688,9 @@
           "text": "                 min_complete,"
         }
       ],
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.",
-      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
-      "verify": "verify against SDP.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
+      "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
+      "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -735,9 +735,9 @@
           "text": "int uv__iou_cancel(uv_loop_t* loop, uv_fs_t* req) {"
         }
       ],
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.",
-      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
-      "verify": "verify against SDP.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
+      "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
+      "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -782,9 +782,9 @@
           "text": "  size_t maxlen;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -829,9 +829,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -876,9 +876,9 @@
           "text": "    return UV__ERR(errno);"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -923,9 +923,9 @@
           "text": "};"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -970,9 +970,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1017,9 +1017,9 @@
           "text": "  lfields = uv__get_internal_fields(loop);"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1064,9 +1064,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1111,9 +1111,9 @@
           "text": "  memset(&e, 0, sizeof(e));"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1158,9 +1158,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1205,9 +1205,9 @@
           "text": "  return rc;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1252,9 +1252,9 @@
           "text": "                               struct epoll_event* e) {"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1299,9 +1299,9 @@
           "text": "  uint32_t mask;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1346,9 +1346,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1393,9 +1393,9 @@
           "text": "  mask = ctl->sqmask;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1440,9 +1440,9 @@
           "text": "  uint32_t oldslot;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1487,9 +1487,9 @@
           "text": "  uint32_t slot;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1534,9 +1534,9 @@
           "text": "    if (op != EPOLL_CTL_ADD)"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1581,9 +1581,9 @@
           "text": "    if (cqe->res != -EEXIST)"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1628,9 +1628,9 @@
           "text": "  }"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1675,9 +1675,9 @@
           "text": "  struct epoll_event* pe;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1722,9 +1722,9 @@
           "text": "  struct epoll_event e;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1769,9 +1769,9 @@
           "text": "  struct uv__iou* iou;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1816,9 +1816,9 @@
           "text": "  int real_timeout;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1863,9 +1863,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1910,9 +1910,9 @@
           "text": "    e.events = w->pevents;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -1957,9 +1957,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -2004,9 +2004,9 @@
           "text": "    assert(op == EPOLL_CTL_ADD);"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -2051,9 +2051,9 @@
           "text": "    /* File descriptor that's been watched before, update event mask. */"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -2098,9 +2098,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -2145,9 +2145,9 @@
           "text": "    if (nfds == -1)"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -2192,9 +2192,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -2240,7 +2240,7 @@
         }
       ],
       "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
-      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
       "effort": 180,
       "guard": "none",
@@ -2287,7 +2287,7 @@
         }
       ],
       "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
-      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
       "effort": 54,
       "guard": "none",
@@ -2334,7 +2334,7 @@
         }
       ],
       "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
-      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
       "effort": 54,
       "guard": "none",
@@ -2381,7 +2381,7 @@
         }
       ],
       "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
-      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
       "effort": 54,
       "guard": "none",
@@ -2428,7 +2428,7 @@
         }
       ],
       "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
-      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
       "effort": 54,
       "guard": "none",
@@ -2475,7 +2475,7 @@
         }
       ],
       "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
-      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
       "effort": 54,
       "guard": "none",
@@ -2522,7 +2522,7 @@
         }
       ],
       "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
-      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
       "effort": 54,
       "guard": "none",
@@ -2569,7 +2569,7 @@
         }
       ],
       "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
-      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
       "effort": 54,
       "guard": "none",
@@ -2616,7 +2616,7 @@
         }
       ],
       "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
-      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
       "effort": 54,
       "guard": "none",
@@ -2663,7 +2663,7 @@
         }
       ],
       "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
-      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
       "effort": 54,
       "guard": "none",
@@ -2710,7 +2710,7 @@
         }
       ],
       "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
-      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
       "effort": 54,
       "guard": "none",
@@ -2757,7 +2757,7 @@
         }
       ],
       "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool.",
-      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
       "effort": 54,
       "guard": "none",
@@ -2803,9 +2803,9 @@
           "text": "  if (op == EPOLL_CTL_DEL) {"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 120,
       "guard": "none",
       "guards": []
@@ -2850,9 +2850,9 @@
           "text": "      errno = ENOENT;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -2897,9 +2897,9 @@
           "text": "     * 'fd'. But we need to guarantee that the last index on the list "
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -2944,9 +2944,9 @@
           "text": "      errno = ENOENT;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -2991,9 +2991,9 @@
           "text": "               int maxevents, int timeout) {"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3038,9 +3038,9 @@
           "text": "  struct pollfd* pfds;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3085,9 +3085,9 @@
           "text": "    pfd = &pfds[i];"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3132,9 +3132,9 @@
           "text": "    ev.is_msg = 1;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3179,9 +3179,9 @@
           "text": "  int is_msg;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 120,
       "guard": "other",
       "guards": [
@@ -3228,9 +3228,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "other",
       "guards": [
@@ -3277,9 +3277,9 @@
           "text": "/* utility functions */"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "other",
       "guards": [
@@ -3326,9 +3326,9 @@
           "text": "    return UV__ERR(errno);"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 120,
       "guard": "none",
       "guards": []
@@ -3373,9 +3373,9 @@
           "text": "  uintptr_t nfds;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3420,9 +3420,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3467,9 +3467,9 @@
           "text": "    /* Invalidate events with same file descriptor */"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3514,9 +3514,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3561,9 +3561,9 @@
           "text": "  uv__os390_epoll* ep;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3608,9 +3608,9 @@
           "text": "  int have_signals;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3655,9 +3655,9 @@
           "text": "  int real_timeout;"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3702,9 +3702,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3749,9 +3749,9 @@
           "text": "     * events, skip the syscall and squelch the events after epoll_wait()."
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3796,9 +3796,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3843,9 +3843,9 @@
           "text": "      if (epoll_ctl(loop->ep, EPOLL_CTL_MOD, w->fd, &e))"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3890,9 +3890,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3937,9 +3937,9 @@
           "text": "    uv__io_poll_check(loop, NULL);"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -3984,9 +3984,9 @@
           "text": ""
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 36,
       "guard": "none",
       "guards": []
@@ -4031,7 +4031,7 @@
           "text": "              NULL);"
         }
       ],
-      "message": "Linux process/namespace primitives; container semantics do not exist on QNX.",
+      "message": "Linux process/namespace primitives (known); container semantics do not exist on QNX (guess: no namespace equivalent known to this tool).",
       "remedy": "Use fork()/posix_spawn() and pthreads. Isolation features must be redesigned with QNX process management (no namespace equivalent is assumed).",
       "verify": "verify against SDP.",
       "effort": 120,
@@ -4083,7 +4083,7 @@
           "text": "#else"
         }
       ],
-      "message": "Linux process/namespace primitives; container semantics do not exist on QNX.",
+      "message": "Linux process/namespace primitives (known); container semantics do not exist on QNX (guess: no namespace equivalent known to this tool).",
       "remedy": "Use fork()/posix_spawn() and pthreads. Isolation features must be redesigned with QNX process management (no namespace equivalent is assumed).",
       "verify": "verify against SDP.",
       "effort": 36,
@@ -4135,61 +4135,13 @@
           "text": "    {"
         }
       ],
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.",
-      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
-      "verify": "verify against SDP.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
+      "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
+      "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
       "effort": 120,
       "guard": "other",
       "guards": [
         "#ifdef SYS__sysctl"
-      ]
-    },
-    {
-      "ruleId": "QNX-HDR-LINUX-DIR",
-      "title": "Includes a Linux kernel header",
-      "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "known",
-      "file": "src/unix/udp.c",
-      "line": 36,
-      "column": 1,
-      "match": "#include <linux/errqueue.h>",
-      "context": [
-        {
-          "n": 33,
-          "text": "#include <sys/un.h>"
-        },
-        {
-          "n": 34,
-          "text": ""
-        },
-        {
-          "n": 35,
-          "text": "#if defined(__linux__)"
-        },
-        {
-          "n": 36,
-          "text": "#include <linux/errqueue.h>"
-        },
-        {
-          "n": 37,
-          "text": "#endif"
-        },
-        {
-          "n": 38,
-          "text": ""
-        },
-        {
-          "n": 39,
-          "text": "#if defined(IPV6_JOIN_GROUP) && !defined(IPV6_ADD_MEMBERSHIP)"
-        }
-      ],
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
-      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
-      "effort": 30,
-      "guard": "linux-only",
-      "guards": [
-        "#if defined(__linux__)"
       ]
     },
     {
@@ -4232,9 +4184,9 @@
           "text": "  ASSERT_OK(uv_poll_init(uv_default_loop(), &poll_handle, fd));"
         }
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it.",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess).",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "effort": 60,
       "guard": "linux-only",
       "guards": [
@@ -4380,7 +4332,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 23,
       "guard": "linux-only",
@@ -4429,7 +4381,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 7,
       "guard": "linux-only",
@@ -4669,7 +4621,7 @@
           "text": "     * it still writes out data. Fortunately, we can detect it by checking if"
         }
       ],
-      "message": "Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile.",
+      "message": "Linux zero-copy file transfer calls. sendfile() also exists on BSDs with a different signature, so a same-named call may compile but misbehave.",
       "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
       "verify": "verify against SDP: some of these may exist with other semantics.",
       "effort": 60,
@@ -4718,7 +4670,7 @@
           "text": "     * so make sure to initialize it with the caller's value. */"
         }
       ],
-      "message": "Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile.",
+      "message": "Linux zero-copy file transfer calls. sendfile() also exists on BSDs with a different signature, so a same-named call may compile but misbehave.",
       "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
       "verify": "verify against SDP: some of these may exist with other semantics.",
       "effort": 18,
@@ -4768,7 +4720,7 @@
           "text": "     /*"
         }
       ],
-      "message": "Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile.",
+      "message": "Linux zero-copy file transfer calls. sendfile() also exists on BSDs with a different signature, so a same-named call may compile but misbehave.",
       "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
       "verify": "verify against SDP: some of these may exist with other semantics.",
       "effort": 18,
@@ -6136,7 +6088,7 @@
           "text": ""
         }
       ],
-      "message": "System V shared memory/semaphores/queues are believed unavailable in the base QNX system.",
+      "message": "Availability of System V shared memory/semaphores/queues in QNX 8.0 is unclear: QNX has historically not provided them in the base system (recalled, unverified).",
       "remedy": "POSIX shm_open()/sem_open()/mq_open() for a quick port; for a request/reply design use native message passing (ChannelCreate/ConnectAttach, MsgSend/MsgReceive/MsgReply).",
       "verify": "verify against SDP.",
       "effort": 90,
@@ -6183,7 +6135,7 @@
           "text": "  /* Clean up the dummy message sent above */"
         }
       ],
-      "message": "System V shared memory/semaphores/queues are believed unavailable in the base QNX system.",
+      "message": "Availability of System V shared memory/semaphores/queues in QNX 8.0 is unclear: QNX has historically not provided them in the base system (recalled, unverified).",
       "remedy": "POSIX shm_open()/sem_open()/mq_open() for a quick port; for a request/reply design use native message passing (ChannelCreate/ConnectAttach, MsgSend/MsgReceive/MsgReply).",
       "verify": "verify against SDP.",
       "effort": 27,
@@ -6230,7 +6182,7 @@
           "text": ""
         }
       ],
-      "message": "System V shared memory/semaphores/queues are believed unavailable in the base QNX system.",
+      "message": "Availability of System V shared memory/semaphores/queues in QNX 8.0 is unclear: QNX has historically not provided them in the base system (recalled, unverified).",
       "remedy": "POSIX shm_open()/sem_open()/mq_open() for a quick port; for a request/reply design use native message passing (ChannelCreate/ConnectAttach, MsgSend/MsgReceive/MsgReply).",
       "verify": "verify against SDP.",
       "effort": 27,
@@ -6277,7 +6229,7 @@
           "text": "    return 0;"
         }
       ],
-      "message": "System V shared memory/semaphores/queues are believed unavailable in the base QNX system.",
+      "message": "Availability of System V shared memory/semaphores/queues in QNX 8.0 is unclear: QNX has historically not provided them in the base system (recalled, unverified).",
       "remedy": "POSIX shm_open()/sem_open()/mq_open() for a quick port; for a request/reply design use native message passing (ChannelCreate/ConnectAttach, MsgSend/MsgReceive/MsgReply).",
       "verify": "verify against SDP.",
       "effort": 90,
@@ -6560,7 +6512,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 23,
       "guard": "linux-only",
@@ -6609,7 +6561,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -6658,7 +6610,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -6707,7 +6659,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -6757,7 +6709,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -6807,7 +6759,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -6856,7 +6808,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -6906,7 +6858,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -6956,12 +6908,61 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
       "guards": [
         "#if UV__CPU_AFFINITY_SUPPORTED"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/unix/udp.c",
+      "line": 36,
+      "column": 1,
+      "match": "#include <linux/errqueue.h>",
+      "context": [
+        {
+          "n": 33,
+          "text": "#include <sys/un.h>"
+        },
+        {
+          "n": 34,
+          "text": ""
+        },
+        {
+          "n": 35,
+          "text": "#if defined(__linux__)"
+        },
+        {
+          "n": 36,
+          "text": "#include <linux/errqueue.h>"
+        },
+        {
+          "n": 37,
+          "text": "#endif"
+        },
+        {
+          "n": 38,
+          "text": ""
+        },
+        {
+          "n": 39,
+          "text": "#if defined(IPV6_JOIN_GROUP) && !defined(IPV6_ADD_MEMBERSHIP)"
+        }
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
+      "effort": 30,
+      "guard": "linux-only",
+      "guards": [
+        "#if defined(__linux__)"
       ]
     },
     {
@@ -7528,9 +7529,9 @@
           "text": "#endif"
         }
       ],
-      "message": "These open() flags are Linux extensions.",
-      "remedy": "Drop or emulate: O_TMPFILE -> mkstemp()+unlink(); O_PATH -> open(O_RDONLY); O_NOATIME/O_DIRECT -> omit.",
-      "verify": "verify against SDP.",
+      "message": "These open() flags originated on Linux. O_DIRECT also exists on some BSDs with other semantics.",
+      "remedy": "Drop or emulate: O_TMPFILE -> mkstemp()+unlink(); O_PATH -> open(O_RDONLY) is not equivalent (symlink handling and permission checks differ), so check what the caller needs; O_NOATIME -> omit; O_DIRECT -> omit unless the SDP defines it with the semantics you need.",
+      "verify": "verify against SDP: grep O_DIRECT, O_PATH, O_TMPFILE, O_NOATIME in $QNX_TARGET/usr/include/fcntl.h.",
       "effort": 15,
       "guard": "other",
       "guards": [
@@ -7578,9 +7579,9 @@
           "text": "#endif"
         }
       ],
-      "message": "These open() flags are Linux extensions.",
-      "remedy": "Drop or emulate: O_TMPFILE -> mkstemp()+unlink(); O_PATH -> open(O_RDONLY); O_NOATIME/O_DIRECT -> omit.",
-      "verify": "verify against SDP.",
+      "message": "These open() flags originated on Linux. O_DIRECT also exists on some BSDs with other semantics.",
+      "remedy": "Drop or emulate: O_TMPFILE -> mkstemp()+unlink(); O_PATH -> open(O_RDONLY) is not equivalent (symlink handling and permission checks differ), so check what the caller needs; O_NOATIME -> omit; O_DIRECT -> omit unless the SDP defines it with the semantics you need.",
+      "verify": "verify against SDP: grep O_DIRECT, O_PATH, O_TMPFILE, O_NOATIME in $QNX_TARGET/usr/include/fcntl.h.",
       "effort": 5,
       "guard": "other",
       "guards": [
@@ -7628,9 +7629,9 @@
           "text": ""
         }
       ],
-      "message": "Or-ing these flags into the socket type is a Linux extension.",
-      "remedy": "Create the socket with the plain type and set O_NONBLOCK / FD_CLOEXEC with fcntl().",
-      "verify": "verify against SDP.",
+      "message": "Or-ing SOCK_NONBLOCK / SOCK_CLOEXEC into the socket type is not in POSIX.1-2017 (known). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present; FreeBSD has both (recalled). May be a non-issue on 8.0 (guess).",
+      "remedy": "Check <sys/socket.h> in the SDP first. If absent: create the socket with the plain type and set O_NONBLOCK / FD_CLOEXEC with fcntl().",
+      "verify": "verify against SDP: grep SOCK_NONBLOCK and SOCK_CLOEXEC in $QNX_TARGET/usr/include/sys/socket.h.",
       "effort": 10,
       "guard": "other",
       "guards": [
@@ -7677,9 +7678,9 @@
           "text": "#endif"
         }
       ],
-      "message": "Or-ing these flags into the socket type is a Linux extension.",
-      "remedy": "Create the socket with the plain type and set O_NONBLOCK / FD_CLOEXEC with fcntl().",
-      "verify": "verify against SDP.",
+      "message": "Or-ing SOCK_NONBLOCK / SOCK_CLOEXEC into the socket type is not in POSIX.1-2017 (known). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present; FreeBSD has both (recalled). May be a non-issue on 8.0 (guess).",
+      "remedy": "Check <sys/socket.h> in the SDP first. If absent: create the socket with the plain type and set O_NONBLOCK / FD_CLOEXEC with fcntl().",
+      "verify": "verify against SDP: grep SOCK_NONBLOCK and SOCK_CLOEXEC in $QNX_TARGET/usr/include/sys/socket.h.",
       "effort": 3,
       "guard": "other",
       "guards": [
@@ -7726,9 +7727,9 @@
           "text": ""
         }
       ],
-      "message": "pipe2/dup3 take Linux flag arguments (O_CLOEXEC, O_NONBLOCK).",
-      "remedy": "pipe()/dup2() then fcntl() for the flags (mind the small race window if other threads fork).",
-      "verify": "verify against SDP.",
+      "message": "pipe2/dup3 are not in POSIX.1-2017 (known). FreeBSD has both (recalled) and QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so they may exist on 8.0 (guess).",
+      "remedy": "Check <unistd.h> in the SDP first. If absent: pipe()/dup2() then fcntl() for the flags (mind the small race window if other threads fork).",
+      "verify": "verify against SDP: grep pipe2 and dup3 in $QNX_TARGET/usr/include/unistd.h.",
       "effort": 10,
       "guard": "other",
       "guards": [
@@ -7775,9 +7776,9 @@
           "text": "  (void) (fd);"
         }
       ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
       "effort": 20,
       "guard": "other",
       "guards": [
@@ -7825,8 +7826,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 20,
       "guard": "none",
       "guards": []
@@ -7872,8 +7873,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 6,
       "guard": "none",
       "guards": []
@@ -7919,8 +7920,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 6,
       "guard": "none",
       "guards": []
@@ -7966,8 +7967,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 6,
       "guard": "none",
       "guards": []
@@ -8248,8 +8249,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 20,
       "guard": "none",
       "guards": []
@@ -8295,8 +8296,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 6,
       "guard": "none",
       "guards": []
@@ -8342,8 +8343,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 6,
       "guard": "none",
       "guards": []
@@ -8389,8 +8390,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 6,
       "guard": "none",
       "guards": []
@@ -8436,8 +8437,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 6,
       "guard": "none",
       "guards": []
@@ -8483,8 +8484,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 6,
       "guard": "none",
       "guards": []
@@ -8529,9 +8530,9 @@
           "text": "  if (flags & UV_FS_O_NONBLOCK) {"
         }
       ],
-      "message": "pipe2/dup3 take Linux flag arguments (O_CLOEXEC, O_NONBLOCK).",
-      "remedy": "pipe()/dup2() then fcntl() for the flags (mind the small race window if other threads fork).",
-      "verify": "verify against SDP.",
+      "message": "pipe2/dup3 are not in POSIX.1-2017 (known). FreeBSD has both (recalled) and QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so they may exist on 8.0 (guess).",
+      "remedy": "Check <unistd.h> in the SDP first. If absent: pipe()/dup2() then fcntl() for the flags (mind the small race window if other threads fork).",
+      "verify": "verify against SDP: grep pipe2 and dup3 in $QNX_TARGET/usr/include/unistd.h.",
       "effort": 10,
       "guard": "other",
       "guards": [
@@ -8579,8 +8580,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 20,
       "guard": "none",
       "guards": []
@@ -8626,8 +8627,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 6,
       "guard": "none",
       "guards": []
@@ -8673,8 +8674,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 20,
       "guard": "none",
       "guards": []
@@ -8720,8 +8721,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 6,
       "guard": "none",
       "guards": []
@@ -8767,8 +8768,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 6,
       "guard": "none",
       "guards": []
@@ -8814,8 +8815,8 @@
         }
       ],
       "message": "Linux sysinfo structure/call (memory, uptime, load).",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "effort": 6,
       "guard": "none",
       "guards": []
@@ -8860,9 +8861,9 @@
           "text": ""
         }
       ],
-      "message": "Or-ing these flags into the socket type is a Linux extension.",
-      "remedy": "Create the socket with the plain type and set O_NONBLOCK / FD_CLOEXEC with fcntl().",
-      "verify": "verify against SDP.",
+      "message": "Or-ing SOCK_NONBLOCK / SOCK_CLOEXEC into the socket type is not in POSIX.1-2017 (known). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present; FreeBSD has both (recalled). May be a non-issue on 8.0 (guess).",
+      "remedy": "Check <sys/socket.h> in the SDP first. If absent: create the socket with the plain type and set O_NONBLOCK / FD_CLOEXEC with fcntl().",
+      "verify": "verify against SDP: grep SOCK_NONBLOCK and SOCK_CLOEXEC in $QNX_TARGET/usr/include/sys/socket.h.",
       "effort": 10,
       "guard": "other",
       "guards": [
@@ -8909,9 +8910,9 @@
           "text": "    return UV__ERR(errno);"
         }
       ],
-      "message": "Or-ing these flags into the socket type is a Linux extension.",
-      "remedy": "Create the socket with the plain type and set O_NONBLOCK / FD_CLOEXEC with fcntl().",
-      "verify": "verify against SDP.",
+      "message": "Or-ing SOCK_NONBLOCK / SOCK_CLOEXEC into the socket type is not in POSIX.1-2017 (known). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present; FreeBSD has both (recalled). May be a non-issue on 8.0 (guess).",
+      "remedy": "Check <sys/socket.h> in the SDP first. If absent: create the socket with the plain type and set O_NONBLOCK / FD_CLOEXEC with fcntl().",
+      "verify": "verify against SDP: grep SOCK_NONBLOCK and SOCK_CLOEXEC in $QNX_TARGET/usr/include/sys/socket.h.",
       "effort": 3,
       "guard": "other",
       "guards": [
@@ -8958,9 +8959,9 @@
           "text": "#elif defined(SO_REUSEPORT) && defined(UV__SOLARIS_11_4) && UV__SOLARIS_11_4"
         }
       ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
       "effort": 20,
       "guard": "other",
       "guards": [
@@ -9007,9 +9008,9 @@
           "text": "    /* Not all socket types accept SO_REUSEPORT. */"
         }
       ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
       "effort": 6,
       "guard": "other",
       "guards": [
@@ -9056,9 +9057,9 @@
           "text": "  if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)))"
         }
       ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
       "effort": 6,
       "guard": "other",
       "guards": [
@@ -9148,7 +9149,7 @@
           "text": "  if (expected == 0)"
         }
       ],
-      "message": "glibc _np extensions that may be missing.",
+      "message": "glibc _np extensions that may be missing (pthread_getattr_np may exist on QNX; guess).",
       "remedy": "pthread_yield -> sched_yield(); tryjoin/timedjoin -> a completion flag + condition variable with timed wait.",
       "verify": "verify against SDP.",
       "effort": 8,
@@ -16381,13 +16382,11 @@
       "id": "QNX-HDR-LINUX-DIR",
       "title": "Includes a Linux kernel header",
       "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "known",
-      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
-      "refs": [
-        "QNX SDP 8.0 System Architecture: a QNX target does not use the Linux kernel"
-      ],
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them."
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not."
     },
     {
       "id": "QNX-HDR-SYS-LINUX",
@@ -16405,13 +16404,13 @@
       "category": "linux-api",
       "severity": "blocker",
       "confidence": "guess",
-      "remedy": "Port the loop to poll()/select() for a portable first step. For a native event loop use ionotify() with sigevent pulses (SIGEV_PULSE) received through MsgReceive/ChannelCreate, or the dispatch_* framework's select layer.",
-      "verify": "verify against SDP whether sys/epoll.h exists in 8.0 before rewriting.",
+      "remedy": "First step: port the loop to poll()/select(). Closest analogue to try if the SDP provides it: kqueue/kevent via io-sock (guess; check <sys/event.h>). ionotify() with SIGEV_PULSE is native QNX, but it only works for resource managers that implement the notify handler for that fd; do not assume it covers sockets. For a pure resource-manager design use the dispatch_* framework.",
+      "verify": "verify against SDP: sys/epoll.h and sys/event.h under $QNX_TARGET/usr/include before rewriting.",
       "refs": [
         "QNX docs: ionotify()",
         "QNX docs: SIGEV_PULSE_INIT()"
       ],
-      "message": "epoll is Linux-only; QNX 8.0 is believed not to provide it."
+      "message": "epoll is Linux-only (known). QNX 8.0 is not believed to provide it (guess). BSD-style kqueue may be available through the BSD-derived io-sock stack and would be the closest analogue (guess)."
     },
     {
       "id": "QNX-API-INOTIFY",
@@ -16419,7 +16418,7 @@
       "category": "linux-api",
       "severity": "blocker",
       "confidence": "guess",
-      "remedy": "Options to evaluate: periodic stat() polling, or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
+      "remedy": "Options to evaluate: periodic stat() polling; kqueue EVFILT_VNODE if the SDP exposes sys/event.h for files (guess); or serving the watched files through your own resource manager so the writer notifies clients directly. Pick per use case.",
       "verify": "verify against SDP for any filesystem-change notification interface before choosing.",
       "message": "inotify is Linux-only; no direct QNX 8.0 equivalent is known to this tool."
     },
@@ -16444,7 +16443,7 @@
       "confidence": "guess",
       "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
       "verify": "verify against SDP: some of these may exist with other semantics.",
-      "message": "Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile."
+      "message": "Linux zero-copy file transfer calls. sendfile() also exists on BSDs with a different signature, so a same-named call may compile but misbehave."
     },
     {
       "id": "QNX-API-SOCK-FLAGS",
@@ -16452,9 +16451,9 @@
       "category": "linux-api",
       "severity": "minor",
       "confidence": "guess",
-      "remedy": "Create the socket with the plain type and set O_NONBLOCK / FD_CLOEXEC with fcntl().",
-      "verify": "verify against SDP.",
-      "message": "Or-ing these flags into the socket type is a Linux extension."
+      "remedy": "Check <sys/socket.h> in the SDP first. If absent: create the socket with the plain type and set O_NONBLOCK / FD_CLOEXEC with fcntl().",
+      "verify": "verify against SDP: grep SOCK_NONBLOCK and SOCK_CLOEXEC in $QNX_TARGET/usr/include/sys/socket.h.",
+      "message": "Or-ing SOCK_NONBLOCK / SOCK_CLOEXEC into the socket type is not in POSIX.1-2017 (known). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present; FreeBSD has both (recalled). May be a non-issue on 8.0 (guess)."
     },
     {
       "id": "QNX-API-PIPE2",
@@ -16462,9 +16461,9 @@
       "category": "linux-api",
       "severity": "minor",
       "confidence": "guess",
-      "remedy": "pipe()/dup2() then fcntl() for the flags (mind the small race window if other threads fork).",
-      "verify": "verify against SDP.",
-      "message": "pipe2/dup3 take Linux flag arguments (O_CLOEXEC, O_NONBLOCK)."
+      "remedy": "Check <unistd.h> in the SDP first. If absent: pipe()/dup2() then fcntl() for the flags (mind the small race window if other threads fork).",
+      "verify": "verify against SDP: grep pipe2 and dup3 in $QNX_TARGET/usr/include/unistd.h.",
+      "message": "pipe2/dup3 are not in POSIX.1-2017 (known). FreeBSD has both (recalled) and QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so they may exist on 8.0 (guess)."
     },
     {
       "id": "QNX-API-PRCTL",
@@ -16482,7 +16481,7 @@
       "category": "linux-api",
       "severity": "major",
       "confidence": "guess",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "refs": [
         "QNX docs: ThreadCtl()"
@@ -16495,9 +16494,9 @@
       "category": "linux-api",
       "severity": "blocker",
       "confidence": "guess",
-      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
-      "verify": "verify against SDP.",
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX."
+      "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
+      "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel)."
     },
     {
       "id": "QNX-API-CLONE-NS",
@@ -16507,7 +16506,7 @@
       "confidence": "guess",
       "remedy": "Use fork()/posix_spawn() and pthreads. Isolation features must be redesigned with QNX process management (no namespace equivalent is assumed).",
       "verify": "verify against SDP.",
-      "message": "Linux process/namespace primitives; container semantics do not exist on QNX."
+      "message": "Linux process/namespace primitives (known); container semantics do not exist on QNX (guess: no namespace equivalent known to this tool)."
     },
     {
       "id": "QNX-API-SOCKOPT-LINUX",
@@ -16515,9 +16514,9 @@
       "category": "linux-api",
       "severity": "minor",
       "confidence": "guess",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning)."
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only."
     },
     {
       "id": "QNX-API-OFLAGS",
@@ -16525,9 +16524,9 @@
       "category": "linux-api",
       "severity": "minor",
       "confidence": "guess",
-      "remedy": "Drop or emulate: O_TMPFILE -> mkstemp()+unlink(); O_PATH -> open(O_RDONLY); O_NOATIME/O_DIRECT -> omit.",
-      "verify": "verify against SDP.",
-      "message": "These open() flags are Linux extensions."
+      "remedy": "Drop or emulate: O_TMPFILE -> mkstemp()+unlink(); O_PATH -> open(O_RDONLY) is not equivalent (symlink handling and permission checks differ), so check what the caller needs; O_NOATIME -> omit; O_DIRECT -> omit unless the SDP defines it with the semantics you need.",
+      "verify": "verify against SDP: grep O_DIRECT, O_PATH, O_TMPFILE, O_NOATIME in $QNX_TARGET/usr/include/fcntl.h.",
+      "message": "These open() flags originated on Linux. O_DIRECT also exists on some BSDs with other semantics."
     },
     {
       "id": "QNX-API-SYSINFO",
@@ -16535,8 +16534,8 @@
       "category": "linux-api",
       "severity": "minor",
       "confidence": "guess",
-      "remedy": "Use sysconf(_SC_PHYS_PAGES/_SC_PAGESIZE) and clock_gettime for uptime; deeper stats come from the QNX system page.",
-      "verify": "verify against SDP.",
+      "remedy": "Use sysconf(_SC_PAGESIZE) and, where the SDP provides it, sysconf(_SC_PHYS_PAGES) (guess for QNX); uptime from clock_gettime; the QNX system page (<sys/syspage.h>, asinfo) is the usual source for memory facts (recalled), so check there before sysconf.",
+      "verify": "verify against SDP: sysconf names and syspage asinfo for memory totals.",
       "message": "Linux sysinfo structure/call (memory, uptime, load)."
     },
     {
@@ -16557,7 +16556,7 @@
       "confidence": "guess",
       "remedy": "pthread_yield -> sched_yield(); tryjoin/timedjoin -> a completion flag + condition variable with timed wait.",
       "verify": "verify against SDP.",
-      "message": "glibc _np extensions that may be missing."
+      "message": "glibc _np extensions that may be missing (pthread_getattr_np may exist on QNX; guess)."
     },
     {
       "id": "QNX-API-CLOCKS",
@@ -16582,7 +16581,7 @@
         "QNX docs: MsgReceive()",
         "QNX docs: MsgReply()"
       ],
-      "message": "System V shared memory/semaphores/queues are believed unavailable in the base QNX system."
+      "message": "Availability of System V shared memory/semaphores/queues in QNX 8.0 is unclear: QNX has historically not provided them in the base system (recalled, unverified)."
     },
     {
       "id": "QNX-ADV-LINUX-IFDEF",

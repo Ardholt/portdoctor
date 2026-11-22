@@ -94,25 +94,25 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <main id="main">
 <h2>Summary</h2>
 <div class="cards" role="list">
-<div class="card sev-blocker" role="listitem"><div class="n">3</div><div class="l"><span aria-hidden="true">■</span> blocker: Likely will not build or has no direct QNX equivalent</div></div>
-<div class="card sev-major" role="listitem"><div class="n">8</div><div class="l"><span aria-hidden="true">▲</span> major: Needs a semantic change to port</div></div>
+<div class="card sev-blocker" role="listitem"><div class="n">1</div><div class="l"><span aria-hidden="true">■</span> blocker: Likely will not build or has no direct QNX equivalent</div></div>
+<div class="card sev-major" role="listitem"><div class="n">10</div><div class="l"><span aria-hidden="true">▲</span> major: Needs a semantic change to port</div></div>
 <div class="card sev-minor" role="listitem"><div class="n">11</div><div class="l"><span aria-hidden="true">●</span> minor: Small mechanical change</div></div>
 <div class="card sev-info" role="listitem"><div class="n">21</div><div class="l"><span aria-hidden="true">○</span> info: Worth checking, probably fine</div></div>
 <div class="card" role="listitem"><div class="n">7.7 h</div><div class="l">estimated porting effort (heuristic)</div></div>
-<div class="card" role="listitem"><div class="n">11/43</div><div class="l">findings from rules marked <em>known</em>; the rest are <em>guess</em></div></div>
+<div class="card" role="listitem"><div class="n">9/43</div><div class="l">findings from rules marked <em>known</em>; the rest are <em>guess</em></div></div>
 <div class="card" role="listitem"><div class="n">0</div><div class="l">matches suppressed inside <code>#if __QNXNTO__</code> branches</div></div>
 </div>
 <h2>Where the work is <span class="meta">(by directory)</span></h2>
 <ul class="heat"><li><button type="button" class="tile" style="--i:55" data-dir="src" aria-pressed="false" aria-label="Directory src: 33 findings, 5.6 h. Press to filter.">
-<span class="d">src/</span><span class="m">33 findings &middot; 5.6 h</span><span class="m">■3 ▲8 ●4 ○18</span></button></li><li><button type="button" class="tile" style="--i:16" data-dir="." aria-pressed="false" aria-label="Directory .: 4 findings, 58 min. Press to filter.">
+<span class="d">src/</span><span class="m">33 findings &middot; 5.6 h</span><span class="m">■1 ▲10 ●4 ○18</span></button></li><li><button type="button" class="tile" style="--i:16" data-dir="." aria-pressed="false" aria-label="Directory .: 4 findings, 58 min. Press to filter.">
 <span class="d">(top level)</span><span class="m">4 findings &middot; 58 min</span><span class="m">●3 ○1</span></button></li><li><button type="button" class="tile" style="--i:13" data-dir="libtommath" aria-pressed="false" aria-label="Directory libtommath: 4 findings, 33 min. Press to filter.">
 <span class="d">libtommath/</span><span class="m">4 findings &middot; 33 min</span><span class="m">●2 ○2</span></button></li><li><button type="button" class="tile" style="--i:12" data-dir="libtomcrypt" aria-pressed="false" aria-label="Directory libtomcrypt: 2 findings, 30 min. Press to filter.">
 <span class="d">libtomcrypt/</span><span class="m">2 findings &middot; 30 min</span><span class="m">●2 </span></button></li></ul><p class="legend"><span>less effort</span><i></i><span>more effort (colour is relative to the busiest directory; counts and effort are in the text)</span></p>
 <h2 id="findings">Findings</h2>
 <div class="bar" role="search" aria-label="Filter findings">
 <input id="q" type="search" placeholder="Search file, rule, text ( / )" aria-label="Search findings">
-<button type="button" class="chip" data-sevbtn="blocker" aria-pressed="true" title="Toggle blocker (1)"><span aria-hidden="true">■</span> blocker <span class="sr">toggle</span>(3)</button>
-<button type="button" class="chip" data-sevbtn="major" aria-pressed="true" title="Toggle major (2)"><span aria-hidden="true">▲</span> major <span class="sr">toggle</span>(8)</button>
+<button type="button" class="chip" data-sevbtn="blocker" aria-pressed="true" title="Toggle blocker (1)"><span aria-hidden="true">■</span> blocker <span class="sr">toggle</span>(1)</button>
+<button type="button" class="chip" data-sevbtn="major" aria-pressed="true" title="Toggle major (2)"><span aria-hidden="true">▲</span> major <span class="sr">toggle</span>(10)</button>
 <button type="button" class="chip" data-sevbtn="minor" aria-pressed="true" title="Toggle minor (3)"><span aria-hidden="true">●</span> minor <span class="sr">toggle</span>(11)</button>
 <button type="button" class="chip" data-sevbtn="info" aria-pressed="true" title="Toggle info (4)"><span aria-hidden="true">○</span> info <span class="sr">toggle</span>(21)</button>
 <label class="note">Confidence <select id="conf" aria-label="Confidence filter"><option value="all">all</option><option value="known">known</option><option value="guess">guess</option></select></label>
@@ -123,28 +123,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 </div>
 <details class="file" open><summary><span class="path">src/includes.h</span>
 <span class="meta"><span class="vis">3</span>/3 findings &middot; 1.8 h</span></summary>
-<article class="finding" id="f-1" tabindex="-1" data-sev="blocker" data-conf="known" data-file="src/includes.h" data-guard="other" data-text="qnx-hdr-linux-dir includes a linux kernel header src/includes.h #include &lt;linux/types.h&gt; &lt;linux/...&gt; and &lt;asm/...&gt; are linux kernel uapi headers; qnx is not linux and its sdp does not provide them." aria-labelledby="f-1-t">
-<h3 id="f-1-t"><span class="badge b-blocker" title="Likely will not build or has no direct QNX equivalent"><span aria-hidden="true">■</span> blocker</span>
-<span>Includes a Linux kernel header</span>
-<span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
-<span class="loc">src/includes.h:179</span></h3>
-<p>&lt;linux/...&gt; and &lt;asm/...&gt; are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.</p><pre class="code" tabindex="0" aria-label="Code context for src/includes.h line 179"><span class="ln"><b>176</b>#endif /* SIZE_T_MAX */</span><span class="ln"><b>177</b> </span><span class="ln"><b>178</b>#ifdef HAVE_LINUX_PKT_SCHED_H</span><span class="ln hit"><b>179</b>#include &lt;linux/types.h&gt;</span><span class="ln"><b>180</b>#include &lt;linux/pkt_sched.h&gt;</span><span class="ln"><b>181</b>#endif</span><span class="ln"><b>182</b> </span></pre>
-<div class="remedy"><strong>Remedy</strong>Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead. <a href="#rule-QNX-HDR-LINUX-DIR">Rule QNX-HDR-LINUX-DIR</a></div>
-<p class="note">Inside conditional(s): <code>#ifndef DROPBEAR_INCLUDES_H_ &gt; #ifdef HAVE_LINUX_PKT_SCHED_H</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
-<p class="note">Estimated effort for this item: 1.0 h (heuristic)</p>
-</article>
-<article class="finding" id="f-2" tabindex="-1" data-sev="blocker" data-conf="known" data-file="src/includes.h" data-guard="other" data-text="qnx-hdr-linux-dir includes a linux kernel header src/includes.h #include &lt;linux/pkt_sched.h&gt; &lt;linux/...&gt; and &lt;asm/...&gt; are linux kernel uapi headers; qnx is not linux and its sdp does not provide them." aria-labelledby="f-2-t">
-<h3 id="f-2-t"><span class="badge b-blocker" title="Likely will not build or has no direct QNX equivalent"><span aria-hidden="true">■</span> blocker</span>
-<span>Includes a Linux kernel header</span>
-<span class="badge b-known" title="Documented QNX/POSIX behaviour (recalled, not checked against an SDP in this build)">known</span>
-<span class="loc">src/includes.h:180</span></h3>
-<p>&lt;linux/...&gt; and &lt;asm/...&gt; are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.</p><pre class="code" tabindex="0" aria-label="Code context for src/includes.h line 180"><span class="ln"><b>177</b> </span><span class="ln"><b>178</b>#ifdef HAVE_LINUX_PKT_SCHED_H</span><span class="ln"><b>179</b>#include &lt;linux/types.h&gt;</span><span class="ln hit"><b>180</b>#include &lt;linux/pkt_sched.h&gt;</span><span class="ln"><b>181</b>#endif</span><span class="ln"><b>182</b> </span><span class="ln"><b>183</b>#ifndef environ</span></pre>
-<div class="remedy"><strong>Remedy</strong>Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead. <a href="#rule-QNX-HDR-LINUX-DIR">Rule QNX-HDR-LINUX-DIR</a></div>
-<p class="note">Inside conditional(s): <code>#ifndef DROPBEAR_INCLUDES_H_ &gt; #ifdef HAVE_LINUX_PKT_SCHED_H</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
-<p class="note">Estimated effort for this item: 18 min (heuristic)</p>
-</article>
-<article class="finding" id="f-9" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/includes.h" data-guard="other" data-text="qnx-hdr-sys-linux includes a linux-specific &lt;sys/...&gt; header src/includes.h #include &lt;sys/prctl.h&gt; this glibc/linux &lt;sys/...&gt; header is believed to be absent from the qnx 8.0 sdp." aria-labelledby="f-9-t">
-<h3 id="f-9-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-7" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/includes.h" data-guard="other" data-text="qnx-hdr-sys-linux includes a linux-specific &lt;sys/...&gt; header src/includes.h #include &lt;sys/prctl.h&gt; this glibc/linux &lt;sys/...&gt; header is believed to be absent from the qnx 8.0 sdp." aria-labelledby="f-7-t">
+<h3 id="f-7-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>Includes a Linux-specific &lt;sys/...&gt; header</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">src/includes.h:131</span></h3>
@@ -152,11 +132,31 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <div class="remedy"><strong>Remedy</strong>Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch. <a href="#rule-QNX-HDR-SYS-LINUX">Rule QNX-HDR-SYS-LINUX</a></div>
 <p class="verify">⚠ verify against SDP: grep $QNX_TARGET/usr/include for the header.</p><p class="note">Inside conditional(s): <code>#ifndef DROPBEAR_INCLUDES_H_ &gt; #ifdef HAVE_SYS_PRCTL_H</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 30 min (heuristic)</p>
+</article>
+<article class="finding" id="f-8" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/includes.h" data-guard="other" data-text="qnx-hdr-linux-dir includes a linux kernel header src/includes.h #include &lt;linux/types.h&gt; &lt;linux/...&gt; and &lt;asm/...&gt; are linux kernel uapi headers. the qnx sdp is not believed to ship them (guess; not checked against an sdp). many uses are trivial (linux/limits.h, linux/types.h can often be replaced by posix headers); device-ioctl headers are not." aria-labelledby="f-8-t">
+<h3 id="f-8-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>Includes a Linux kernel header</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/includes.h:179</span></h3>
+<p>&lt;linux/...&gt; and &lt;asm/...&gt; are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.</p><pre class="code" tabindex="0" aria-label="Code context for src/includes.h line 179"><span class="ln"><b>176</b>#endif /* SIZE_T_MAX */</span><span class="ln"><b>177</b> </span><span class="ln"><b>178</b>#ifdef HAVE_LINUX_PKT_SCHED_H</span><span class="ln hit"><b>179</b>#include &lt;linux/types.h&gt;</span><span class="ln"><b>180</b>#include &lt;linux/pkt_sched.h&gt;</span><span class="ln"><b>181</b>#endif</span><span class="ln"><b>182</b> </span></pre>
+<div class="remedy"><strong>Remedy</strong>Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead. <a href="#rule-QNX-HDR-LINUX-DIR">Rule QNX-HDR-LINUX-DIR</a></div>
+<p class="verify">⚠ verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.</p><p class="note">Inside conditional(s): <code>#ifndef DROPBEAR_INCLUDES_H_ &gt; #ifdef HAVE_LINUX_PKT_SCHED_H</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 1.0 h (heuristic)</p>
+</article>
+<article class="finding" id="f-9" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/includes.h" data-guard="other" data-text="qnx-hdr-linux-dir includes a linux kernel header src/includes.h #include &lt;linux/pkt_sched.h&gt; &lt;linux/...&gt; and &lt;asm/...&gt; are linux kernel uapi headers. the qnx sdp is not believed to ship them (guess; not checked against an sdp). many uses are trivial (linux/limits.h, linux/types.h can often be replaced by posix headers); device-ioctl headers are not." aria-labelledby="f-9-t">
+<h3 id="f-9-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<span>Includes a Linux kernel header</span>
+<span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
+<span class="loc">src/includes.h:180</span></h3>
+<p>&lt;linux/...&gt; and &lt;asm/...&gt; are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.</p><pre class="code" tabindex="0" aria-label="Code context for src/includes.h line 180"><span class="ln"><b>177</b> </span><span class="ln"><b>178</b>#ifdef HAVE_LINUX_PKT_SCHED_H</span><span class="ln"><b>179</b>#include &lt;linux/types.h&gt;</span><span class="ln hit"><b>180</b>#include &lt;linux/pkt_sched.h&gt;</span><span class="ln"><b>181</b>#endif</span><span class="ln"><b>182</b> </span><span class="ln"><b>183</b>#ifndef environ</span></pre>
+<div class="remedy"><strong>Remedy</strong>Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead. <a href="#rule-QNX-HDR-LINUX-DIR">Rule QNX-HDR-LINUX-DIR</a></div>
+<p class="verify">⚠ verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.</p><p class="note">Inside conditional(s): <code>#ifndef DROPBEAR_INCLUDES_H_ &gt; #ifdef HAVE_LINUX_PKT_SCHED_H</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p class="note">Estimated effort for this item: 18 min (heuristic)</p>
 </article></details>
 <details class="file" open><summary><span class="path">src/dbrandom.c</span>
 <span class="meta"><span class="vis">9</span>/9 findings &middot; 1.5 h</span></summary>
-<article class="finding" id="f-3" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/dbrandom.c" data-guard="linux-only" data-text="qnx-path-proc linux /proc paths src/dbrandom.c /proc/loadavg qnx has a /proc, but it is a different interface (process address spaces, not linux text files)." aria-labelledby="f-3-t">
-<h3 id="f-3-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-1" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/dbrandom.c" data-guard="linux-only" data-text="qnx-path-proc linux /proc paths src/dbrandom.c /proc/loadavg qnx has a /proc, but it is a different interface (process address spaces, not linux text files)." aria-labelledby="f-1-t">
+<h3 id="f-1-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>Linux /proc paths</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">src/dbrandom.c:274</span></h3>
@@ -165,8 +165,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP: procfs layout on QNX 8.0.</p><p class="note">Inside a Linux-only <code>#if</code> block: probably already isolated, but check that a QNX branch exists.</p>
 <p class="note">Estimated effort for this item: 23 min (heuristic)</p>
 </article>
-<article class="finding" id="f-4" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/dbrandom.c" data-guard="linux-only" data-text="qnx-path-proc linux /proc paths src/dbrandom.c /proc/sys/ qnx has a /proc, but it is a different interface (process address spaces, not linux text files)." aria-labelledby="f-4-t">
-<h3 id="f-4-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-2" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/dbrandom.c" data-guard="linux-only" data-text="qnx-path-proc linux /proc paths src/dbrandom.c /proc/sys/ qnx has a /proc, but it is a different interface (process address spaces, not linux text files)." aria-labelledby="f-2-t">
+<h3 id="f-2-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>Linux /proc paths</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">src/dbrandom.c:275</span></h3>
@@ -175,8 +175,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP: procfs layout on QNX 8.0.</p><p class="note">Inside a Linux-only <code>#if</code> block: probably already isolated, but check that a QNX branch exists.</p>
 <p class="note">Estimated effort for this item: 7 min (heuristic)</p>
 </article>
-<article class="finding" id="f-5" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/dbrandom.c" data-guard="linux-only" data-text="qnx-path-proc linux /proc paths src/dbrandom.c /proc/net/ qnx has a /proc, but it is a different interface (process address spaces, not linux text files)." aria-labelledby="f-5-t">
-<h3 id="f-5-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-3" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/dbrandom.c" data-guard="linux-only" data-text="qnx-path-proc linux /proc paths src/dbrandom.c /proc/net/ qnx has a /proc, but it is a different interface (process address spaces, not linux text files)." aria-labelledby="f-3-t">
+<h3 id="f-3-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>Linux /proc paths</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">src/dbrandom.c:279</span></h3>
@@ -185,8 +185,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP: procfs layout on QNX 8.0.</p><p class="note">Inside a Linux-only <code>#if</code> block: probably already isolated, but check that a QNX branch exists.</p>
 <p class="note">Estimated effort for this item: 7 min (heuristic)</p>
 </article>
-<article class="finding" id="f-6" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/dbrandom.c" data-guard="linux-only" data-text="qnx-path-proc linux /proc paths src/dbrandom.c /proc/net/ qnx has a /proc, but it is a different interface (process address spaces, not linux text files)." aria-labelledby="f-6-t">
-<h3 id="f-6-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-4" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/dbrandom.c" data-guard="linux-only" data-text="qnx-path-proc linux /proc paths src/dbrandom.c /proc/net/ qnx has a /proc, but it is a different interface (process address spaces, not linux text files)." aria-labelledby="f-4-t">
+<h3 id="f-4-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>Linux /proc paths</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">src/dbrandom.c:280</span></h3>
@@ -195,8 +195,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP: procfs layout on QNX 8.0.</p><p class="note">Inside a Linux-only <code>#if</code> block: probably already isolated, but check that a QNX branch exists.</p>
 <p class="note">Estimated effort for this item: 7 min (heuristic)</p>
 </article>
-<article class="finding" id="f-7" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/dbrandom.c" data-guard="linux-only" data-text="qnx-path-proc linux /proc paths src/dbrandom.c /proc/net/ qnx has a /proc, but it is a different interface (process address spaces, not linux text files)." aria-labelledby="f-7-t">
-<h3 id="f-7-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-5" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/dbrandom.c" data-guard="linux-only" data-text="qnx-path-proc linux /proc paths src/dbrandom.c /proc/net/ qnx has a /proc, but it is a different interface (process address spaces, not linux text files)." aria-labelledby="f-5-t">
+<h3 id="f-5-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>Linux /proc paths</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">src/dbrandom.c:281</span></h3>
@@ -205,8 +205,8 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP: procfs layout on QNX 8.0.</p><p class="note">Inside a Linux-only <code>#if</code> block: probably already isolated, but check that a QNX branch exists.</p>
 <p class="note">Estimated effort for this item: 7 min (heuristic)</p>
 </article>
-<article class="finding" id="f-8" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/dbrandom.c" data-guard="linux-only" data-text="qnx-path-proc linux /proc paths src/dbrandom.c /proc/net/ qnx has a /proc, but it is a different interface (process address spaces, not linux text files)." aria-labelledby="f-8-t">
-<h3 id="f-8-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
+<article class="finding" id="f-6" tabindex="-1" data-sev="major" data-conf="guess" data-file="src/dbrandom.c" data-guard="linux-only" data-text="qnx-path-proc linux /proc paths src/dbrandom.c /proc/net/ qnx has a /proc, but it is a different interface (process address spaces, not linux text files)." aria-labelledby="f-6-t">
+<h3 id="f-6-t"><span class="badge b-major" title="Needs a semantic change to port"><span aria-hidden="true">▲</span> major</span>
 <span>Linux /proc paths</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">src/dbrandom.c:283</span></h3>
@@ -215,24 +215,24 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="verify">⚠ verify against SDP: procfs layout on QNX 8.0.</p><p class="note">Inside a Linux-only <code>#if</code> block: probably already isolated, but check that a QNX branch exists.</p>
 <p class="note">Estimated effort for this item: 7 min (heuristic)</p>
 </article>
-<article class="finding" id="f-18" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/dbrandom.c" data-guard="other" data-text="qnx-api-getrandom getrandom src/dbrandom.c getrandom( getrandom is a linux syscall wrapper." aria-labelledby="f-18-t">
+<article class="finding" id="f-18" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/dbrandom.c" data-guard="other" data-text="qnx-api-getrandom getrandom src/dbrandom.c getrandom( getrandom is a linux syscall wrapper. getrandom()/getentropy() may exist in qnx 8.0 (guess)." aria-labelledby="f-18-t">
 <h3 id="f-18-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
 <span>getrandom</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">src/dbrandom.c:174</span></h3>
-<p>getrandom is a Linux syscall wrapper.</p><pre class="code" tabindex="0" aria-label="Code context for src/dbrandom.c line 174"><span class="ln"><b>171</b>	ssize_t ret;</span><span class="ln"><b>172</b> </span><span class="ln"><b>173</b>	/* First try non-blocking so that we can warn about waiting */</span><span class="ln hit"><b>174</b>	ret = getrandom(buf, sizeof(buf), GRND_NONBLOCK);</span><span class="ln"><b>175</b>	if (ret == -1) {</span><span class="ln"><b>176</b>		if (errno == ENOSYS) {</span><span class="ln"><b>177</b>			/* Old kernel */</span></pre>
-<div class="remedy"><strong>Remedy</strong>Read from /dev/urandom (or /dev/random) with a small helper. <a href="#rule-QNX-API-GETRANDOM">Rule QNX-API-GETRANDOM</a></div>
-<p class="verify">⚠ verify against SDP whether getrandom/arc4random exist.</p><p class="note">Inside conditional(s): <code>#ifdef HAVE_GETRANDOM</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p>getrandom is a Linux syscall wrapper. getrandom()/getentropy() may exist in QNX 8.0 (guess).</p><pre class="code" tabindex="0" aria-label="Code context for src/dbrandom.c line 174"><span class="ln"><b>171</b>	ssize_t ret;</span><span class="ln"><b>172</b> </span><span class="ln"><b>173</b>	/* First try non-blocking so that we can warn about waiting */</span><span class="ln hit"><b>174</b>	ret = getrandom(buf, sizeof(buf), GRND_NONBLOCK);</span><span class="ln"><b>175</b>	if (ret == -1) {</span><span class="ln"><b>176</b>		if (errno == ENOSYS) {</span><span class="ln"><b>177</b>			/* Old kernel */</span></pre>
+<div class="remedy"><strong>Remedy</strong>Check &lt;sys/random.h&gt;/&lt;unistd.h&gt; in the SDP first. Fallback: read from /dev/urandom (or /dev/random), which QNX provides (recalled), with a small helper that handles short reads. <a href="#rule-QNX-API-GETRANDOM">Rule QNX-API-GETRANDOM</a></div>
+<p class="verify">⚠ verify against SDP: getrandom, getentropy, arc4random.</p><p class="note">Inside conditional(s): <code>#ifdef HAVE_GETRANDOM</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 15 min (heuristic)</p>
 </article>
-<article class="finding" id="f-19" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/dbrandom.c" data-guard="other" data-text="qnx-api-getrandom getrandom src/dbrandom.c getrandom( getrandom is a linux syscall wrapper." aria-labelledby="f-19-t">
+<article class="finding" id="f-19" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/dbrandom.c" data-guard="other" data-text="qnx-api-getrandom getrandom src/dbrandom.c getrandom( getrandom is a linux syscall wrapper. getrandom()/getentropy() may exist in qnx 8.0 (guess)." aria-labelledby="f-19-t">
 <h3 id="f-19-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
 <span>getrandom</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">src/dbrandom.c:189</span></h3>
-<p>getrandom is a Linux syscall wrapper.</p><pre class="code" tabindex="0" aria-label="Code context for src/dbrandom.c line 189"><span class="ln"><b>186</b> </span><span class="ln"><b>187</b>	/* Wait blocking if needed. Loop in case we get EINTR */</span><span class="ln"><b>188</b>	while (ret != sizeof(buf)) {</span><span class="ln hit"><b>189</b>		ret = getrandom(buf, sizeof(buf), 0);</span><span class="ln"><b>190</b> </span><span class="ln"><b>191</b>		if (ret == sizeof(buf)) {</span><span class="ln"><b>192</b>			/* Success */</span></pre>
-<div class="remedy"><strong>Remedy</strong>Read from /dev/urandom (or /dev/random) with a small helper. <a href="#rule-QNX-API-GETRANDOM">Rule QNX-API-GETRANDOM</a></div>
-<p class="verify">⚠ verify against SDP whether getrandom/arc4random exist.</p><p class="note">Inside conditional(s): <code>#ifdef HAVE_GETRANDOM</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p>getrandom is a Linux syscall wrapper. getrandom()/getentropy() may exist in QNX 8.0 (guess).</p><pre class="code" tabindex="0" aria-label="Code context for src/dbrandom.c line 189"><span class="ln"><b>186</b> </span><span class="ln"><b>187</b>	/* Wait blocking if needed. Loop in case we get EINTR */</span><span class="ln"><b>188</b>	while (ret != sizeof(buf)) {</span><span class="ln hit"><b>189</b>		ret = getrandom(buf, sizeof(buf), 0);</span><span class="ln"><b>190</b> </span><span class="ln"><b>191</b>		if (ret == sizeof(buf)) {</span><span class="ln"><b>192</b>			/* Success */</span></pre>
+<div class="remedy"><strong>Remedy</strong>Check &lt;sys/random.h&gt;/&lt;unistd.h&gt; in the SDP first. Fallback: read from /dev/urandom (or /dev/random), which QNX provides (recalled), with a small helper that handles short reads. <a href="#rule-QNX-API-GETRANDOM">Rule QNX-API-GETRANDOM</a></div>
+<p class="verify">⚠ verify against SDP: getrandom, getentropy, arc4random.</p><p class="note">Inside conditional(s): <code>#ifdef HAVE_GETRANDOM</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 5 min (heuristic)</p>
 </article>
 <article class="finding" id="f-25" tabindex="-1" data-sev="info" data-conf="known" data-file="src/dbrandom.c" data-guard="none" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch src/dbrandom.c #ifdef __linux__ a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-25-t">
@@ -247,14 +247,14 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 </article></details>
 <details class="file" open><summary><span class="path">src/dbutil.c</span>
 <span class="meta"><span class="vis">5</span>/5 findings &middot; 1.2 h</span></summary>
-<article class="finding" id="f-0" tabindex="-1" data-sev="blocker" data-conf="guess" data-file="src/dbutil.c" data-guard="linux-only" data-text="qnx-api-syscall raw linux syscall() src/dbutil.c syscall( linux syscall numbers (sys_*, __nr_*) have no meaning on qnx." aria-labelledby="f-0-t">
+<article class="finding" id="f-0" tabindex="-1" data-sev="blocker" data-conf="guess" data-file="src/dbutil.c" data-guard="linux-only" data-text="qnx-api-syscall raw linux syscall() src/dbutil.c syscall( linux syscall numbers (sys_*, __nr_*) have no meaning on qnx (known: qnx is not a linux kernel)." aria-labelledby="f-0-t">
 <h3 id="f-0-t"><span class="badge b-blocker" title="Likely will not build or has no direct QNX equivalent"><span aria-hidden="true">■</span> blocker</span>
 <span>Raw Linux syscall()</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">src/dbutil.c:761</span></h3>
-<p>Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.</p><pre class="code" tabindex="0" aria-label="Code context for src/dbutil.c line 761"><span class="ln"><b>758</b>	if (!linux_monotonic_failed) {</span><span class="ln"><b>759</b>		/* CLOCK_MONOTONIC isn&#39;t in some headers */</span><span class="ln"><b>760</b>		int clock_source_monotonic = 1; </span><span class="ln hit"><b>761</b>		if (syscall(SYS_clock_gettime, clock_source_monotonic, now) == 0) {</span><span class="ln"><b>762</b>			return;</span><span class="ln"><b>763</b>		} else {</span><span class="ln"><b>764</b>			/* Don&#39;t try again */</span></pre>
-<div class="remedy"><strong>Remedy</strong>Replace each call with the libc/POSIX function it wraps (gettid -&gt; pthread_self, futex -&gt; pthread_mutex/cond). <a href="#rule-QNX-API-SYSCALL">Rule QNX-API-SYSCALL</a></div>
-<p class="verify">⚠ verify against SDP.</p><p class="note">Inside a Linux-only <code>#if</code> block: probably already isolated, but check that a QNX branch exists.</p>
+<p>Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).</p><pre class="code" tabindex="0" aria-label="Code context for src/dbutil.c line 761"><span class="ln"><b>758</b>	if (!linux_monotonic_failed) {</span><span class="ln"><b>759</b>		/* CLOCK_MONOTONIC isn&#39;t in some headers */</span><span class="ln"><b>760</b>		int clock_source_monotonic = 1; </span><span class="ln hit"><b>761</b>		if (syscall(SYS_clock_gettime, clock_source_monotonic, now) == 0) {</span><span class="ln"><b>762</b>			return;</span><span class="ln"><b>763</b>		} else {</span><span class="ln"><b>764</b>			/* Don&#39;t try again */</span></pre>
+<div class="remedy"><strong>Remedy</strong>Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar. <a href="#rule-QNX-API-SYSCALL">Rule QNX-API-SYSCALL</a></div>
+<p class="verify">⚠ verify against SDP: whether gettid() or another numeric thread-id call exists.</p><p class="note">Inside a Linux-only <code>#if</code> block: probably already isolated, but check that a QNX branch exists.</p>
 <p class="note">Estimated effort for this item: 1.0 h (heuristic)</p>
 </article>
 <article class="finding" id="f-26" tabindex="-1" data-sev="info" data-conf="known" data-file="src/dbutil.c" data-guard="none" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch src/dbutil.c #ifdef __linux__ a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-26-t">
@@ -353,24 +353,24 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 </article></details>
 <details class="file" open><summary><span class="path">src/netio.c</span>
 <span class="meta"><span class="vis">9</span>/9 findings &middot; 26 min</span></summary>
-<article class="finding" id="f-20" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/netio.c" data-guard="other" data-text="qnx-api-sockopt-linux linux-specific socket options src/netio.c tcp_fastopen socket options that are linux extensions (some exist on bsd stacks with different meaning)." aria-labelledby="f-20-t">
+<article class="finding" id="f-20" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/netio.c" data-guard="other" data-text="qnx-api-sockopt-linux linux-specific socket options src/netio.c tcp_fastopen socket options that originated on linux. some exist on bsd-derived stacks with a different meaning or struct layout (tcp_fastopen and tcp_info exist on freebsd; tcp_info&#39;s struct differs). qnx 8.0 networking (io-sock) is bsd-derived (guess), so bsd-style apis may be present, so presence on 8.0 must be checked per option (guess). not all of these are linux-only." aria-labelledby="f-20-t">
 <h3 id="f-20-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
 <span>Linux-specific socket options</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">src/netio.c:423</span></h3>
-<p>Socket options that are Linux extensions (some exist on BSD stacks with different meaning).</p><pre class="code" tabindex="0" aria-label="Code context for src/netio.c line 423"><span class="ln"><b>420</b>#if DROPBEAR_SERVER_TCP_FAST_OPEN</span><span class="ln"><b>421</b>void set_listen_fast_open(int sock) {</span><span class="ln"><b>422</b>	int qlen = MAX(MAX_UNAUTH_PER_IP, 5);</span><span class="ln hit"><b>423</b>	if (setsockopt(sock, SOL_TCP, TCP_FASTOPEN, &amp;qlen, sizeof(qlen)) != 0) {</span><span class="ln"><b>424</b>		TRACE((&quot;set_listen_fast_open failed for socket %d: %s&quot;, sock, strerror(errno)))</span><span class="ln"><b>425</b>	}</span><span class="ln"><b>426</b>}</span></pre>
-<div class="remedy"><strong>Remedy</strong>Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant. <a href="#rule-QNX-API-SOCKOPT-LINUX">Rule QNX-API-SOCKOPT-LINUX</a></div>
-<p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#if DROPBEAR_SERVER_TCP_FAST_OPEN</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p>Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO&#39;s struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.</p><pre class="code" tabindex="0" aria-label="Code context for src/netio.c line 423"><span class="ln"><b>420</b>#if DROPBEAR_SERVER_TCP_FAST_OPEN</span><span class="ln"><b>421</b>void set_listen_fast_open(int sock) {</span><span class="ln"><b>422</b>	int qlen = MAX(MAX_UNAUTH_PER_IP, 5);</span><span class="ln hit"><b>423</b>	if (setsockopt(sock, SOL_TCP, TCP_FASTOPEN, &amp;qlen, sizeof(qlen)) != 0) {</span><span class="ln"><b>424</b>		TRACE((&quot;set_listen_fast_open failed for socket %d: %s&quot;, sock, strerror(errno)))</span><span class="ln"><b>425</b>	}</span><span class="ln"><b>426</b>}</span></pre>
+<div class="remedy"><strong>Remedy</strong>Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular). <a href="#rule-QNX-API-SOCKOPT-LINUX">Rule QNX-API-SOCKOPT-LINUX</a></div>
+<p class="verify">⚠ verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.</p><p class="note">Inside conditional(s): <code>#if DROPBEAR_SERVER_TCP_FAST_OPEN</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 20 min (heuristic)</p>
 </article>
-<article class="finding" id="f-21" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/netio.c" data-guard="other" data-text="qnx-api-sockopt-linux linux-specific socket options src/netio.c so_bindtodevice socket options that are linux extensions (some exist on bsd stacks with different meaning)." aria-labelledby="f-21-t">
+<article class="finding" id="f-21" tabindex="-1" data-sev="minor" data-conf="guess" data-file="src/netio.c" data-guard="other" data-text="qnx-api-sockopt-linux linux-specific socket options src/netio.c so_bindtodevice socket options that originated on linux. some exist on bsd-derived stacks with a different meaning or struct layout (tcp_fastopen and tcp_info exist on freebsd; tcp_info&#39;s struct differs). qnx 8.0 networking (io-sock) is bsd-derived (guess), so bsd-style apis may be present, so presence on 8.0 must be checked per option (guess). not all of these are linux-only." aria-labelledby="f-21-t">
 <h3 id="f-21-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
 <span>Linux-specific socket options</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">src/netio.c:622</span></h3>
-<p>Socket options that are Linux extensions (some exist on BSD stacks with different meaning).</p><pre class="code" tabindex="0" aria-label="Code context for src/netio.c line 622"><span class="ln"><b>619</b>		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*) &amp;val, sizeof(val));</span><span class="ln"><b>620</b> </span><span class="ln"><b>621</b>#ifdef SO_BINDTODEVICE</span><span class="ln hit"><b>622</b>		if(interface &amp;&amp; setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface)) &lt; 0) {</span><span class="ln"><b>623</b>			dropbear_log(LOG_WARNING, &quot;Couldn&#39;t set SO_BINDTODEVICE&quot;);</span><span class="ln"><b>624</b>			TRACE((&quot;Failed setsockopt with errno failure, %d %s&quot;, errno, strerror(errno)))</span><span class="ln"><b>625</b>		}</span></pre>
-<div class="remedy"><strong>Remedy</strong>Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant. <a href="#rule-QNX-API-SOCKOPT-LINUX">Rule QNX-API-SOCKOPT-LINUX</a></div>
-<p class="verify">⚠ verify against SDP.</p><p class="note">Inside conditional(s): <code>#ifdef SO_BINDTODEVICE</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
+<p>Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO&#39;s struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.</p><pre class="code" tabindex="0" aria-label="Code context for src/netio.c line 622"><span class="ln"><b>619</b>		setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void*) &amp;val, sizeof(val));</span><span class="ln"><b>620</b> </span><span class="ln"><b>621</b>#ifdef SO_BINDTODEVICE</span><span class="ln hit"><b>622</b>		if(interface &amp;&amp; setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, interface, strlen(interface)) &lt; 0) {</span><span class="ln"><b>623</b>			dropbear_log(LOG_WARNING, &quot;Couldn&#39;t set SO_BINDTODEVICE&quot;);</span><span class="ln"><b>624</b>			TRACE((&quot;Failed setsockopt with errno failure, %d %s&quot;, errno, strerror(errno)))</span><span class="ln"><b>625</b>		}</span></pre>
+<div class="remedy"><strong>Remedy</strong>Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular). <a href="#rule-QNX-API-SOCKOPT-LINUX">Rule QNX-API-SOCKOPT-LINUX</a></div>
+<p class="verify">⚠ verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.</p><p class="note">Inside conditional(s): <code>#ifdef SO_BINDTODEVICE</code>. PortDoctor does not judge whether these are enabled on QNX.</p>
 <p class="note">Estimated effort for this item: 6 min (heuristic)</p>
 </article>
 <article class="finding" id="f-30" tabindex="-1" data-sev="info" data-conf="guess" data-file="src/netio.c" data-guard="none" data-text="qnx-adv-unix-socket-ipc unix-domain socket ipc src/netio.c af_unix likely works unchanged (posix), listed because request/reply ipc is where qnx native message passing pays off." aria-labelledby="f-30-t">
@@ -445,14 +445,14 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 </article></details>
 <details class="file" open><summary><span class="path">libtommath/bn_s_mp_rand_platform.c</span>
 <span class="meta"><span class="vis">2</span>/2 findings &middot; 18 min</span></summary>
-<article class="finding" id="f-16" tabindex="-1" data-sev="minor" data-conf="guess" data-file="libtommath/bn_s_mp_rand_platform.c" data-guard="linux-only" data-text="qnx-api-getrandom getrandom libtommath/bn_s_mp_rand_platform.c getrandom( getrandom is a linux syscall wrapper." aria-labelledby="f-16-t">
+<article class="finding" id="f-16" tabindex="-1" data-sev="minor" data-conf="guess" data-file="libtommath/bn_s_mp_rand_platform.c" data-guard="linux-only" data-text="qnx-api-getrandom getrandom libtommath/bn_s_mp_rand_platform.c getrandom( getrandom is a linux syscall wrapper. getrandom()/getentropy() may exist in qnx 8.0 (guess)." aria-labelledby="f-16-t">
 <h3 id="f-16-t"><span class="badge b-minor" title="Small mechanical change"><span aria-hidden="true">●</span> minor</span>
 <span>getrandom</span>
 <span class="badge b-guess" title="Unverified claim about QNX 8.0: verify against the SDP">guess: verify against SDP</span>
 <span class="loc">libtommath/bn_s_mp_rand_platform.c:61</span></h3>
-<p>getrandom is a Linux syscall wrapper.</p><pre class="code" tabindex="0" aria-label="Code context for libtommath/bn_s_mp_rand_platform.c line 61"><span class="ln"><b>58</b>{</span><span class="ln"><b>59</b>   char *q = (char *)p;</span><span class="ln"><b>60</b>   while (n &gt; 0u) {</span><span class="ln hit"><b>61</b>      ssize_t ret = getrandom(q, n, 0);</span><span class="ln"><b>62</b>      if (ret &lt; 0) {</span><span class="ln"><b>63</b>         if (errno == EINTR) {</span><span class="ln"><b>64</b>            continue;</span></pre>
-<div class="remedy"><strong>Remedy</strong>Read from /dev/urandom (or /dev/random) with a small helper. <a href="#rule-QNX-API-GETRANDOM">Rule QNX-API-GETRANDOM</a></div>
-<p class="verify">⚠ verify against SDP whether getrandom/arc4random exist.</p><p class="note">Inside a Linux-only <code>#if</code> block: probably already isolated, but check that a QNX branch exists.</p>
+<p>getrandom is a Linux syscall wrapper. getrandom()/getentropy() may exist in QNX 8.0 (guess).</p><pre class="code" tabindex="0" aria-label="Code context for libtommath/bn_s_mp_rand_platform.c line 61"><span class="ln"><b>58</b>{</span><span class="ln"><b>59</b>   char *q = (char *)p;</span><span class="ln"><b>60</b>   while (n &gt; 0u) {</span><span class="ln hit"><b>61</b>      ssize_t ret = getrandom(q, n, 0);</span><span class="ln"><b>62</b>      if (ret &lt; 0) {</span><span class="ln"><b>63</b>         if (errno == EINTR) {</span><span class="ln"><b>64</b>            continue;</span></pre>
+<div class="remedy"><strong>Remedy</strong>Check &lt;sys/random.h&gt;/&lt;unistd.h&gt; in the SDP first. Fallback: read from /dev/urandom (or /dev/random), which QNX provides (recalled), with a small helper that handles short reads. <a href="#rule-QNX-API-GETRANDOM">Rule QNX-API-GETRANDOM</a></div>
+<p class="verify">⚠ verify against SDP: getrandom, getentropy, arc4random.</p><p class="note">Inside a Linux-only <code>#if</code> block: probably already isolated, but check that a QNX branch exists.</p>
 <p class="note">Estimated effort for this item: 8 min (heuristic)</p>
 </article>
 <article class="finding" id="f-23" tabindex="-1" data-sev="info" data-conf="known" data-file="libtommath/bn_s_mp_rand_platform.c" data-guard="other" data-text="qnx-adv-linux-ifdef linux-only preprocessor branch without qnx branch libtommath/bn_s_mp_rand_platform.c #if !defined(bn_s_read_wincsp_c) &amp;&amp; defined(__linux__ a linux conditional on this line does not mention qnx. qnx compilers predefine __qnxnto__ (and __qnx__)." aria-labelledby="f-23-t">
@@ -580,45 +580,45 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <p class="empty">No findings match the current filters.</p>
 <h2>Remedies and rule notes</h2>
 <section class="rule" id="rule-QNX-API-SYSCALL"><h3>QNX-API-SYSCALL <span class="badge b-blocker"><span aria-hidden="true">■</span> blocker</span> <span class="badge b-guess">guess</span></h3>
-<p><strong>Raw Linux syscall().</strong> Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.</p>
-<div class="remedy"><strong>Remedy</strong>Replace each call with the libc/POSIX function it wraps (gettid -&gt; pthread_self, futex -&gt; pthread_mutex/cond).</div>
-<p class="verify">⚠ verify against SDP.</p>
+<p><strong>Raw Linux syscall().</strong> Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).</p>
+<div class="remedy"><strong>Remedy</strong>Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.</div>
+<p class="verify">⚠ verify against SDP: whether gettid() or another numeric thread-id call exists.</p>
 
 <p class="note">1 occurrence: <a href="#f-0">src/dbutil.c:761</a></p></section>
-<section class="rule" id="rule-QNX-HDR-LINUX-DIR"><h3>QNX-HDR-LINUX-DIR <span class="badge b-blocker"><span aria-hidden="true">■</span> blocker</span> <span class="badge b-known">known</span></h3>
-<p><strong>Includes a Linux kernel header.</strong> &lt;linux/...&gt; and &lt;asm/...&gt; are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.</p>
-<div class="remedy"><strong>Remedy</strong>Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.</div>
-
-<p class="note">Documentation to read (names only, not fetched by this tool): QNX SDP 8.0 System Architecture: a QNX target does not use the Linux kernel</p>
-<p class="note">2 occurrences: <a href="#f-1">src/includes.h:179</a>, <a href="#f-2">src/includes.h:180</a></p></section>
 <section class="rule" id="rule-QNX-API-PRCTL"><h3>QNX-API-PRCTL <span class="badge b-major"><span aria-hidden="true">▲</span> major</span> <span class="badge b-guess">guess</span></h3>
 <p><strong>prctl.</strong> prctl is a Linux process-control multiplexer.</p>
 <div class="remedy"><strong>Remedy</strong>Map each option individually: PR_SET_NAME -&gt; pthread_setname_np(); PR_SET_PDEATHSIG -&gt; a parent-liveness check; PR_SET_DUMPABLE/NO_NEW_PRIVS -&gt; drop (no QNX analogue assumed).</div>
 <p class="verify">⚠ verify against SDP: confirm pthread_setname_np signature.</p>
 
 <p class="note">1 occurrence: <a href="#f-10">src/svr-main.c:79</a></p></section>
+<section class="rule" id="rule-QNX-HDR-LINUX-DIR"><h3>QNX-HDR-LINUX-DIR <span class="badge b-major"><span aria-hidden="true">▲</span> major</span> <span class="badge b-guess">guess</span></h3>
+<p><strong>Includes a Linux kernel header.</strong> &lt;linux/...&gt; and &lt;asm/...&gt; are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.</p>
+<div class="remedy"><strong>Remedy</strong>Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.</div>
+<p class="verify">⚠ verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.</p>
+
+<p class="note">2 occurrences: <a href="#f-8">src/includes.h:179</a>, <a href="#f-9">src/includes.h:180</a></p></section>
 <section class="rule" id="rule-QNX-HDR-SYS-LINUX"><h3>QNX-HDR-SYS-LINUX <span class="badge b-major"><span aria-hidden="true">▲</span> major</span> <span class="badge b-guess">guess</span></h3>
 <p><strong>Includes a Linux-specific &lt;sys/...&gt; header.</strong> This glibc/Linux &lt;sys/...&gt; header is believed to be absent from the QNX 8.0 SDP.</p>
 <div class="remedy"><strong>Remedy</strong>Remove the include together with the calls it supports (see the per-API findings), or guard it with #if defined(__linux__) and add a __QNXNTO__ branch.</div>
 <p class="verify">⚠ verify against SDP: grep $QNX_TARGET/usr/include for the header.</p>
 
-<p class="note">1 occurrence: <a href="#f-9">src/includes.h:131</a></p></section>
+<p class="note">1 occurrence: <a href="#f-7">src/includes.h:131</a></p></section>
 <section class="rule" id="rule-QNX-PATH-PROC"><h3>QNX-PATH-PROC <span class="badge b-major"><span aria-hidden="true">▲</span> major</span> <span class="badge b-guess">guess</span></h3>
 <p><strong>Linux /proc paths.</strong> QNX has a /proc, but it is a different interface (process address spaces, not Linux text files).</p>
 <div class="remedy"><strong>Remedy</strong>Replace with POSIX/QNX queries: sysconf(), getrusage(), the system page (&lt;sys/syspage.h&gt;) for CPU/memory facts, procfs ioctls (DCMD_PROC_*) for process info.</div>
 <p class="verify">⚠ verify against SDP: procfs layout on QNX 8.0.</p>
 <p class="note">Documentation to read (names only, not fetched by this tool): QNX docs: procfs / DCMD_PROC_INFO</p>
-<p class="note">6 occurrences: <a href="#f-3">src/dbrandom.c:274</a>, <a href="#f-4">src/dbrandom.c:275</a>, <a href="#f-5">src/dbrandom.c:279</a>, <a href="#f-6">src/dbrandom.c:280</a>, <a href="#f-7">src/dbrandom.c:281</a>, <a href="#f-8">src/dbrandom.c:283</a></p></section>
+<p class="note">6 occurrences: <a href="#f-1">src/dbrandom.c:274</a>, <a href="#f-2">src/dbrandom.c:275</a>, <a href="#f-3">src/dbrandom.c:279</a>, <a href="#f-4">src/dbrandom.c:280</a>, <a href="#f-5">src/dbrandom.c:281</a>, <a href="#f-6">src/dbrandom.c:283</a></p></section>
 <section class="rule" id="rule-QNX-API-GETRANDOM"><h3>QNX-API-GETRANDOM <span class="badge b-minor"><span aria-hidden="true">●</span> minor</span> <span class="badge b-guess">guess</span></h3>
-<p><strong>getrandom.</strong> getrandom is a Linux syscall wrapper.</p>
-<div class="remedy"><strong>Remedy</strong>Read from /dev/urandom (or /dev/random) with a small helper.</div>
-<p class="verify">⚠ verify against SDP whether getrandom/arc4random exist.</p>
+<p><strong>getrandom.</strong> getrandom is a Linux syscall wrapper. getrandom()/getentropy() may exist in QNX 8.0 (guess).</p>
+<div class="remedy"><strong>Remedy</strong>Check &lt;sys/random.h&gt;/&lt;unistd.h&gt; in the SDP first. Fallback: read from /dev/urandom (or /dev/random), which QNX provides (recalled), with a small helper that handles short reads.</div>
+<p class="verify">⚠ verify against SDP: getrandom, getentropy, arc4random.</p>
 
 <p class="note">3 occurrences: <a href="#f-16">libtommath/bn_s_mp_rand_platform.c:61</a>, <a href="#f-18">src/dbrandom.c:174</a>, <a href="#f-19">src/dbrandom.c:189</a></p></section>
 <section class="rule" id="rule-QNX-API-SOCKOPT-LINUX"><h3>QNX-API-SOCKOPT-LINUX <span class="badge b-minor"><span aria-hidden="true">●</span> minor</span> <span class="badge b-guess">guess</span></h3>
-<p><strong>Linux-specific socket options.</strong> Socket options that are Linux extensions (some exist on BSD stacks with different meaning).</p>
-<div class="remedy"><strong>Remedy</strong>Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.</div>
-<p class="verify">⚠ verify against SDP.</p>
+<p><strong>Linux-specific socket options.</strong> Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO&#39;s struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.</p>
+<div class="remedy"><strong>Remedy</strong>Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).</div>
+<p class="verify">⚠ verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.</p>
 
 <p class="note">2 occurrences: <a href="#f-20">src/netio.c:423</a>, <a href="#f-21">src/netio.c:622</a></p></section>
 <section class="rule" id="rule-QNX-BLD-HARDCODED-CC"><h3>QNX-BLD-HARDCODED-CC <span class="badge b-minor"><span aria-hidden="true">●</span> minor</span> <span class="badge b-known">known</span></h3>
@@ -674,7 +674,7 @@ footer{color:var(--muted);font-size:.85rem;margin-top:2.5rem}
 <dialog id="help" aria-labelledby="help-t"><h2 id="help-t" style="margin-top:0">Keyboard shortcuts</h2>
 <p><kbd>/</kbd> search &nbsp; <kbd>j</kbd> / <kbd>k</kbd> next / previous finding &nbsp; <kbd>1</kbd>&ndash;<kbd>4</kbd> toggle blocker, major, minor, info &nbsp; <kbd>t</kbd> theme &nbsp; <kbd>Esc</kbd> leave search or clear directory filter &nbsp; <kbd>?</kbd> this help</p>
 <form method="dialog"><button class="btn">Close</button></form></dialog>
-<script type="application/json" id="pd-data">{"tool":"portdoctor","version":"0.1.0","stats":{"filesScanned":832,"filesByKind":{"autoconf":1,"c":818,"make":13},"filesSkipped":0,"findings":43,"suppressedQnxBranch":0,"suppressedNonCall":1,"rules":55,"bySeverity":{"blocker":3,"major":8,"minor":11,"info":21},"effortMinutes":459}}</script>
+<script type="application/json" id="pd-data">{"tool":"portdoctor","version":"0.1.0","stats":{"filesScanned":832,"filesByKind":{"autoconf":1,"c":818,"make":13},"filesSkipped":0,"findings":43,"suppressedQnxBranch":0,"suppressedNonCall":1,"rules":55,"bySeverity":{"blocker":1,"major":10,"minor":11,"info":21},"effortMinutes":459}}</script>
 <script>
 (function(){
 var root=document.documentElement;root.classList.add('js');

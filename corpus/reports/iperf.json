@@ -16,8 +16,8 @@
     "suppressedNonCall": 0,
     "rules": 55,
     "bySeverity": {
-      "blocker": 6,
-      "major": 21,
+      "blocker": 0,
+      "major": 27,
       "minor": 7,
       "info": 1
     },
@@ -28,8 +28,8 @@
       "ruleId": "QNX-HDR-LINUX-DIR",
       "title": "Includes a Linux kernel header",
       "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "known",
+      "severity": "major",
+      "confidence": "guess",
       "file": "src/flowlabel.h",
       "line": 31,
       "column": 1,
@@ -64,8 +64,9 @@
           "text": "#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,7,0)"
         }
       ],
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
-      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
       "effort": 60,
       "guard": "other",
       "guards": [
@@ -76,8 +77,8 @@
       "ruleId": "QNX-HDR-LINUX-DIR",
       "title": "Includes a Linux kernel header",
       "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "known",
+      "severity": "major",
+      "confidence": "guess",
       "file": "src/flowlabel.h",
       "line": 32,
       "column": 1,
@@ -112,8 +113,9 @@
           "text": "#include <linux/in6.h>"
         }
       ],
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
-      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
       "effort": 18,
       "guard": "other",
       "guards": [
@@ -124,8 +126,8 @@
       "ruleId": "QNX-HDR-LINUX-DIR",
       "title": "Includes a Linux kernel header",
       "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "known",
+      "severity": "major",
+      "confidence": "guess",
       "file": "src/flowlabel.h",
       "line": 35,
       "column": 1,
@@ -160,8 +162,9 @@
           "text": "/*"
         }
       ],
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
-      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
       "effort": 18,
       "guard": "other",
       "guards": [
@@ -173,8 +176,8 @@
       "ruleId": "QNX-HDR-LINUX-DIR",
       "title": "Includes a Linux kernel header",
       "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "known",
+      "severity": "major",
+      "confidence": "guess",
       "file": "src/iperf.h",
       "line": 42,
       "column": 1,
@@ -209,109 +212,14 @@
           "text": "#endif"
         }
       ],
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
-      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
       "effort": 60,
       "guard": "other",
       "guards": [
         "#ifndef __IPERF_H",
         "#ifdef HAVE_LINUX_TCP_H"
-      ]
-    },
-    {
-      "ruleId": "QNX-HDR-LINUX-DIR",
-      "title": "Includes a Linux kernel header",
-      "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "known",
-      "file": "src/iperf_udp.c",
-      "line": 44,
-      "column": 1,
-      "match": "#include <linux/udp.h>",
-      "context": [
-        {
-          "n": 41,
-          "text": "#include <sys/time.h>"
-        },
-        {
-          "n": 42,
-          "text": "#include <sys/select.h>"
-        },
-        {
-          "n": 43,
-          "text": "#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)"
-        },
-        {
-          "n": 44,
-          "text": "#include <linux/udp.h>"
-        },
-        {
-          "n": 45,
-          "text": "#endif"
-        },
-        {
-          "n": 46,
-          "text": ""
-        },
-        {
-          "n": 47,
-          "text": "#include \"iperf.h\""
-        }
-      ],
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
-      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
-      "effort": 60,
-      "guard": "other",
-      "guards": [
-        "#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)"
-      ]
-    },
-    {
-      "ruleId": "QNX-HDR-LINUX-DIR",
-      "title": "Includes a Linux kernel header",
-      "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "known",
-      "file": "src/net.c",
-      "line": 42,
-      "column": 1,
-      "match": "#include <linux/udp.h>",
-      "context": [
-        {
-          "n": 39,
-          "text": "#include <fcntl.h>"
-        },
-        {
-          "n": 40,
-          "text": "#include <limits.h>"
-        },
-        {
-          "n": 41,
-          "text": "#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)"
-        },
-        {
-          "n": 42,
-          "text": "#include <linux/udp.h>"
-        },
-        {
-          "n": 43,
-          "text": "#endif"
-        },
-        {
-          "n": 44,
-          "text": ""
-        },
-        {
-          "n": 45,
-          "text": "#ifdef HAVE_SENDFILE"
-        }
-      ],
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
-      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
-      "effort": 60,
-      "guard": "other",
-      "guards": [
-        "#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)"
       ]
     },
     {
@@ -355,7 +263,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 45,
       "guard": "other",
@@ -404,7 +312,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -453,7 +361,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -502,7 +410,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -551,7 +459,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -600,7 +508,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -649,7 +557,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -698,7 +606,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -747,7 +655,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -796,7 +704,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -845,7 +753,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -894,12 +802,61 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
       "guards": [
         "#if defined(HAVE_SCHED_SETAFFINITY)"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/iperf_udp.c",
+      "line": 44,
+      "column": 1,
+      "match": "#include <linux/udp.h>",
+      "context": [
+        {
+          "n": 41,
+          "text": "#include <sys/time.h>"
+        },
+        {
+          "n": 42,
+          "text": "#include <sys/select.h>"
+        },
+        {
+          "n": 43,
+          "text": "#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)"
+        },
+        {
+          "n": 44,
+          "text": "#include <linux/udp.h>"
+        },
+        {
+          "n": 45,
+          "text": "#endif"
+        },
+        {
+          "n": 46,
+          "text": ""
+        },
+        {
+          "n": 47,
+          "text": "#include \"iperf.h\""
+        }
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
+      "effort": 60,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)"
       ]
     },
     {
@@ -943,7 +900,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 45,
       "guard": "other",
@@ -992,7 +949,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -1041,7 +998,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -1090,7 +1047,7 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
@@ -1139,12 +1096,61 @@
         }
       ],
       "message": "Linux affinity API.",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "effort": 14,
       "guard": "other",
       "guards": [
         "#ifdef TEST_PROC_AFFINITY"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/net.c",
+      "line": 42,
+      "column": 1,
+      "match": "#include <linux/udp.h>",
+      "context": [
+        {
+          "n": 39,
+          "text": "#include <fcntl.h>"
+        },
+        {
+          "n": 40,
+          "text": "#include <limits.h>"
+        },
+        {
+          "n": 41,
+          "text": "#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)"
+        },
+        {
+          "n": 42,
+          "text": "#include <linux/udp.h>"
+        },
+        {
+          "n": 43,
+          "text": "#endif"
+        },
+        {
+          "n": 44,
+          "text": ""
+        },
+        {
+          "n": 45,
+          "text": "#ifdef HAVE_SENDFILE"
+        }
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
+      "effort": 60,
+      "guard": "other",
+      "guards": [
+        "#if defined(HAVE_UDP_SEGMENT) || defined(HAVE_UDP_GRO)"
       ]
     },
     {
@@ -1237,7 +1243,7 @@
           "text": "#elif defined(__FreeBSD__)"
         }
       ],
-      "message": "Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile.",
+      "message": "Linux zero-copy file transfer calls. sendfile() also exists on BSDs with a different signature, so a same-named call may compile but misbehave.",
       "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
       "verify": "verify against SDP: some of these may exist with other semantics.",
       "effort": 60,
@@ -1287,7 +1293,7 @@
           "text": "\tsent = nleft;"
         }
       ],
-      "message": "Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile.",
+      "message": "Linux zero-copy file transfer calls. sendfile() also exists on BSDs with a different signature, so a same-named call may compile but misbehave.",
       "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
       "verify": "verify against SDP: some of these may exist with other semantics.",
       "effort": 18,
@@ -1337,7 +1343,7 @@
           "text": "\t/* Shouldn't happen. */"
         }
       ],
-      "message": "Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile.",
+      "message": "Linux zero-copy file transfer calls. sendfile() also exists on BSDs with a different signature, so a same-named call may compile but misbehave.",
       "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
       "verify": "verify against SDP: some of these may exist with other semantics.",
       "effort": 18,
@@ -1387,9 +1393,9 @@
           "text": "        }"
         }
       ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
       "effort": 20,
       "guard": "other",
       "guards": [
@@ -1436,9 +1442,9 @@
           "text": "            }"
         }
       ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
       "effort": 20,
       "guard": "other",
       "guards": [
@@ -1485,9 +1491,9 @@
           "text": "                                cleanup_server(test);"
         }
       ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
       "effort": 6,
       "guard": "other",
       "guards": [
@@ -1534,9 +1540,9 @@
           "text": "\t    freeaddrinfo(server_res);"
         }
       ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
       "effort": 20,
       "guard": "other",
       "guards": [
@@ -1583,9 +1589,9 @@
           "text": "    switch (domain) {"
         }
       ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
       "effort": 20,
       "guard": "other",
       "guards": [
@@ -1632,9 +1638,9 @@
           "text": "        {"
         }
       ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
       "effort": 6,
       "guard": "other",
       "guards": [
@@ -1681,9 +1687,9 @@
           "text": "    if (sp->test->debug) {"
         }
       ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
       "effort": 20,
       "guard": "other",
       "guards": [
@@ -1724,13 +1730,11 @@
       "id": "QNX-HDR-LINUX-DIR",
       "title": "Includes a Linux kernel header",
       "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "known",
-      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
-      "refs": [
-        "QNX SDP 8.0 System Architecture: a QNX target does not use the Linux kernel"
-      ],
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them."
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not."
     },
     {
       "id": "QNX-HDR-SYS-LINUX",
@@ -1750,7 +1754,7 @@
       "confidence": "guess",
       "remedy": "Fall back to a read()/write() loop (or mmap + write) behind a small helper; add a platform fast path only if profiling demands it.",
       "verify": "verify against SDP: some of these may exist with other semantics.",
-      "message": "Linux zero-copy file transfer calls; signatures also differ between Linux and BSD sendfile."
+      "message": "Linux zero-copy file transfer calls. sendfile() also exists on BSDs with a different signature, so a same-named call may compile but misbehave."
     },
     {
       "id": "QNX-API-AFFINITY",
@@ -1758,7 +1762,7 @@
       "category": "linux-api",
       "severity": "major",
       "confidence": "guess",
-      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) (runmask) for the calling thread; the mask is a bit set of CPU indices.",
+      "remedy": "Use ThreadCtl(_NTO_TCTL_RUNMASK, &mask) for the calling thread (recalled QNX API; needs privilege). The mask is a bit set of CPU indices. Semantics are narrower: Linux sched_setaffinity(pid, ...) can target another process or thread, the runmask call applies to the calling thread, so per-pid callers need restructuring.",
       "verify": "verify against SDP: ThreadCtl runmask argument layout.",
       "refs": [
         "QNX docs: ThreadCtl()"
@@ -1771,9 +1775,9 @@
       "category": "linux-api",
       "severity": "minor",
       "confidence": "guess",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning)."
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only."
     }
   ]
 }

@@ -16,8 +16,8 @@
     "suppressedNonCall": 1,
     "rules": 55,
     "bySeverity": {
-      "blocker": 3,
-      "major": 8,
+      "blocker": 1,
+      "major": 10,
       "minor": 11,
       "info": 21
     },
@@ -64,111 +64,13 @@
           "text": "\t\t\t/* Don't try again */"
         }
       ],
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX.",
-      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
-      "verify": "verify against SDP.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel).",
+      "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
+      "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
       "effort": 60,
       "guard": "linux-only",
       "guards": [
         "#if defined(__linux__) && defined(SYS_clock_gettime)"
-      ]
-    },
-    {
-      "ruleId": "QNX-HDR-LINUX-DIR",
-      "title": "Includes a Linux kernel header",
-      "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "known",
-      "file": "src/includes.h",
-      "line": 179,
-      "column": 1,
-      "match": "#include <linux/types.h>",
-      "context": [
-        {
-          "n": 176,
-          "text": "#endif /* SIZE_T_MAX */"
-        },
-        {
-          "n": 177,
-          "text": ""
-        },
-        {
-          "n": 178,
-          "text": "#ifdef HAVE_LINUX_PKT_SCHED_H"
-        },
-        {
-          "n": 179,
-          "text": "#include <linux/types.h>"
-        },
-        {
-          "n": 180,
-          "text": "#include <linux/pkt_sched.h>"
-        },
-        {
-          "n": 181,
-          "text": "#endif"
-        },
-        {
-          "n": 182,
-          "text": ""
-        }
-      ],
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
-      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
-      "effort": 60,
-      "guard": "other",
-      "guards": [
-        "#ifndef DROPBEAR_INCLUDES_H_",
-        "#ifdef HAVE_LINUX_PKT_SCHED_H"
-      ]
-    },
-    {
-      "ruleId": "QNX-HDR-LINUX-DIR",
-      "title": "Includes a Linux kernel header",
-      "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "known",
-      "file": "src/includes.h",
-      "line": 180,
-      "column": 1,
-      "match": "#include <linux/pkt_sched.h>",
-      "context": [
-        {
-          "n": 177,
-          "text": ""
-        },
-        {
-          "n": 178,
-          "text": "#ifdef HAVE_LINUX_PKT_SCHED_H"
-        },
-        {
-          "n": 179,
-          "text": "#include <linux/types.h>"
-        },
-        {
-          "n": 180,
-          "text": "#include <linux/pkt_sched.h>"
-        },
-        {
-          "n": 181,
-          "text": "#endif"
-        },
-        {
-          "n": 182,
-          "text": ""
-        },
-        {
-          "n": 183,
-          "text": "#ifndef environ"
-        }
-      ],
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them.",
-      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
-      "effort": 18,
-      "guard": "other",
-      "guards": [
-        "#ifndef DROPBEAR_INCLUDES_H_",
-        "#ifdef HAVE_LINUX_PKT_SCHED_H"
       ]
     },
     {
@@ -516,6 +418,106 @@
       ]
     },
     {
+      "ruleId": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/includes.h",
+      "line": 179,
+      "column": 1,
+      "match": "#include <linux/types.h>",
+      "context": [
+        {
+          "n": 176,
+          "text": "#endif /* SIZE_T_MAX */"
+        },
+        {
+          "n": 177,
+          "text": ""
+        },
+        {
+          "n": 178,
+          "text": "#ifdef HAVE_LINUX_PKT_SCHED_H"
+        },
+        {
+          "n": 179,
+          "text": "#include <linux/types.h>"
+        },
+        {
+          "n": 180,
+          "text": "#include <linux/pkt_sched.h>"
+        },
+        {
+          "n": 181,
+          "text": "#endif"
+        },
+        {
+          "n": 182,
+          "text": ""
+        }
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
+      "effort": 60,
+      "guard": "other",
+      "guards": [
+        "#ifndef DROPBEAR_INCLUDES_H_",
+        "#ifdef HAVE_LINUX_PKT_SCHED_H"
+      ]
+    },
+    {
+      "ruleId": "QNX-HDR-LINUX-DIR",
+      "title": "Includes a Linux kernel header",
+      "category": "linux-api",
+      "severity": "major",
+      "confidence": "guess",
+      "file": "src/includes.h",
+      "line": 180,
+      "column": 1,
+      "match": "#include <linux/pkt_sched.h>",
+      "context": [
+        {
+          "n": 177,
+          "text": ""
+        },
+        {
+          "n": 178,
+          "text": "#ifdef HAVE_LINUX_PKT_SCHED_H"
+        },
+        {
+          "n": 179,
+          "text": "#include <linux/types.h>"
+        },
+        {
+          "n": 180,
+          "text": "#include <linux/pkt_sched.h>"
+        },
+        {
+          "n": 181,
+          "text": "#endif"
+        },
+        {
+          "n": 182,
+          "text": ""
+        },
+        {
+          "n": 183,
+          "text": "#ifndef environ"
+        }
+      ],
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not.",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
+      "effort": 18,
+      "guard": "other",
+      "guards": [
+        "#ifndef DROPBEAR_INCLUDES_H_",
+        "#ifdef HAVE_LINUX_PKT_SCHED_H"
+      ]
+    },
+    {
       "ruleId": "QNX-API-PRCTL",
       "title": "prctl",
       "category": "linux-api",
@@ -839,9 +841,9 @@
           "text": "            continue;"
         }
       ],
-      "message": "getrandom is a Linux syscall wrapper.",
-      "remedy": "Read from /dev/urandom (or /dev/random) with a small helper.",
-      "verify": "verify against SDP whether getrandom/arc4random exist.",
+      "message": "getrandom is a Linux syscall wrapper. getrandom()/getentropy() may exist in QNX 8.0 (guess).",
+      "remedy": "Check <sys/random.h>/<unistd.h> in the SDP first. Fallback: read from /dev/urandom (or /dev/random), which QNX provides (recalled), with a small helper that handles short reads.",
+      "verify": "verify against SDP: getrandom, getentropy, arc4random.",
       "effort": 8,
       "guard": "linux-only",
       "guards": [
@@ -936,9 +938,9 @@
           "text": "\t\t\t/* Old kernel */"
         }
       ],
-      "message": "getrandom is a Linux syscall wrapper.",
-      "remedy": "Read from /dev/urandom (or /dev/random) with a small helper.",
-      "verify": "verify against SDP whether getrandom/arc4random exist.",
+      "message": "getrandom is a Linux syscall wrapper. getrandom()/getentropy() may exist in QNX 8.0 (guess).",
+      "remedy": "Check <sys/random.h>/<unistd.h> in the SDP first. Fallback: read from /dev/urandom (or /dev/random), which QNX provides (recalled), with a small helper that handles short reads.",
+      "verify": "verify against SDP: getrandom, getentropy, arc4random.",
       "effort": 15,
       "guard": "other",
       "guards": [
@@ -985,9 +987,9 @@
           "text": "\t\t\t/* Success */"
         }
       ],
-      "message": "getrandom is a Linux syscall wrapper.",
-      "remedy": "Read from /dev/urandom (or /dev/random) with a small helper.",
-      "verify": "verify against SDP whether getrandom/arc4random exist.",
+      "message": "getrandom is a Linux syscall wrapper. getrandom()/getentropy() may exist in QNX 8.0 (guess).",
+      "remedy": "Check <sys/random.h>/<unistd.h> in the SDP first. Fallback: read from /dev/urandom (or /dev/random), which QNX provides (recalled), with a small helper that handles short reads.",
+      "verify": "verify against SDP: getrandom, getentropy, arc4random.",
       "effort": 5,
       "guard": "other",
       "guards": [
@@ -1034,9 +1036,9 @@
           "text": "}"
         }
       ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
       "effort": 20,
       "guard": "other",
       "guards": [
@@ -1083,9 +1085,9 @@
           "text": "\t\t}"
         }
       ],
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning).",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only.",
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
       "effort": 6,
       "guard": "other",
       "guards": [
@@ -2128,13 +2130,11 @@
       "id": "QNX-HDR-LINUX-DIR",
       "title": "Includes a Linux kernel header",
       "category": "linux-api",
-      "severity": "blocker",
-      "confidence": "known",
-      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, ioctl numbers, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
-      "refs": [
-        "QNX SDP 8.0 System Architecture: a QNX target does not use the Linux kernel"
-      ],
-      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers; QNX is not Linux and its SDP does not provide them."
+      "severity": "major",
+      "confidence": "guess",
+      "remedy": "Replace each use with the POSIX/QNX equivalent of what the header supplied (types, constants). If it is a device ioctl header, the device needs a QNX resource-manager interface instead.",
+      "verify": "verify against SDP: ls $QNX_TARGET/usr/include/linux and asm* before treating these as missing.",
+      "message": "<linux/...> and <asm/...> are Linux kernel uapi headers. The QNX SDP is not believed to ship them (guess; not checked against an SDP). Many uses are trivial (linux/limits.h, linux/types.h can often be replaced by POSIX headers); device-ioctl headers are not."
     },
     {
       "id": "QNX-HDR-SYS-LINUX",
@@ -2162,9 +2162,9 @@
       "category": "linux-api",
       "severity": "minor",
       "confidence": "guess",
-      "remedy": "Read from /dev/urandom (or /dev/random) with a small helper.",
-      "verify": "verify against SDP whether getrandom/arc4random exist.",
-      "message": "getrandom is a Linux syscall wrapper."
+      "remedy": "Check <sys/random.h>/<unistd.h> in the SDP first. Fallback: read from /dev/urandom (or /dev/random), which QNX provides (recalled), with a small helper that handles short reads.",
+      "verify": "verify against SDP: getrandom, getentropy, arc4random.",
+      "message": "getrandom is a Linux syscall wrapper. getrandom()/getentropy() may exist in QNX 8.0 (guess)."
     },
     {
       "id": "QNX-API-SYSCALL",
@@ -2172,9 +2172,9 @@
       "category": "linux-api",
       "severity": "blocker",
       "confidence": "guess",
-      "remedy": "Replace each call with the libc/POSIX function it wraps (gettid -> pthread_self, futex -> pthread_mutex/cond).",
-      "verify": "verify against SDP.",
-      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX."
+      "remedy": "Replace each call with the libc/POSIX function it wraps, but check the semantics: pthread_self() is NOT a replacement for gettid (it returns an opaque pthread_t, not a numeric kernel thread id): decide what the id is for (logging, per-thread keys) and use pthread_self() only where an opaque handle is enough; a numeric thread id may need a QNX-specific call (check the SDP; guess). futex has no mechanical replacement: it is a redesign onto pthread mutex/condvar.",
+      "verify": "verify against SDP: whether gettid() or another numeric thread-id call exists.",
+      "message": "Linux syscall numbers (SYS_*, __NR_*) have no meaning on QNX (known: QNX is not a Linux kernel)."
     },
     {
       "id": "QNX-API-SOCKOPT-LINUX",
@@ -2182,9 +2182,9 @@
       "category": "linux-api",
       "severity": "minor",
       "confidence": "guess",
-      "remedy": "Guard each setsockopt with #ifdef so it compiles away when undefined; confirm semantics before relying on a same-named constant.",
-      "verify": "verify against SDP.",
-      "message": "Socket options that are Linux extensions (some exist on BSD stacks with different meaning)."
+      "remedy": "Guard each setsockopt/getsockopt with #ifdef so it compiles away when the macro is undefined. If the macro IS defined, confirm the semantics and struct layout before relying on a same-named constant (TCP_INFO in particular).",
+      "verify": "verify against SDP: grep each option in $QNX_TARGET/usr/include/netinet/tcp.h and sys/socket.h.",
+      "message": "Socket options that originated on Linux. Some exist on BSD-derived stacks with a different meaning or struct layout (TCP_FASTOPEN and TCP_INFO exist on FreeBSD; TCP_INFO's struct differs). QNX 8.0 networking (io-sock) is BSD-derived (guess), so BSD-style APIs may be present, so presence on 8.0 must be checked per option (guess). Not all of these are Linux-only."
     },
     {
       "id": "QNX-ADV-LINUX-IFDEF",
